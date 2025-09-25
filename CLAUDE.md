@@ -199,6 +199,7 @@ Tutorial progression teaching creature selection:
 - **Load systems explicitly** before emitting signals they need to handle
 - **Use explicit typing** for all variables to avoid inference warnings
 - **Create placeholder classes** for forward references immediately
+- **Prefix unused parameters** with underscore (`_config`) to avoid warnings
 
 ### Verification Checklist for Future Tasks:
 - [ ] No compilation errors in Godot console

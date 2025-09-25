@@ -65,7 +65,7 @@ func load_game(slot: int = 0) -> bool:
 	GameCore.get_signal_bus().load_completed.emit(true)
 	return true
 
-func _migrate_save(config: ConfigFile, from_version: int) -> void:
+func _migrate_save(_config: ConfigFile, _from_version: int) -> void:
 	# Handle save migration between versions
 	pass
 
