@@ -157,3 +157,52 @@ Tutorial progression teaching creature selection:
 - Use `take_over_path()` after saving Resources to handle cache bugs
 - Prefer ConfigFile for settings, ResourceSaver for complex game data
 - Always use typed GDScript for better performance and error checking
+
+## Stage 1 Lessons Learned
+
+### Task 1 (Project Setup) - COMPLETED
+**Key Issues Discovered & Solutions:**
+
+1. **Autoload Class Naming Conflict**
+   - **Issue**: `class_name GameCore` conflicts with autoload singleton name
+   - **Solution**: Remove `class_name` from autoload scripts, use `extends Node` only
+   - **Why**: Godot 4.5 autoloads should not have class_name declarations
+
+2. **Type Inference Warnings**
+   - **Issue**: `var version := config.get_value()` causes Variant typing warnings
+   - **Solution**: Use explicit typing: `var version: int = config.get_value()`
+   - **Why**: Godot 4.5 treats warnings as errors in strict mode
+
+3. **Input Map Configuration**
+   - **Issue**: Input actions need proper modifier key settings in project.godot
+   - **Solution**: Set `"ctrl_pressed":true` for Ctrl+key combinations manually
+   - **Why**: Godot editor may not export modifier keys correctly to project file
+
+4. **Lazy Loading Verification**
+   - **Issue**: Systems won't load until first accessed, signals may not connect
+   - **Solution**: Force system loading before emitting relevant signals
+   - **Pattern**: `GameCore.get_system("save")` before `save_requested.emit()`
+
+5. **Missing Placeholder Classes**
+   - **Issue**: SignalBus references QuestData before it exists, causing parse errors
+   - **Solution**: Create minimal placeholder Resource classes early
+   - **Why**: GDScript requires all referenced types to exist for compilation
+
+6. **Input Action Conflicts**
+   - **Issue**: Multiple actions can map to same key (S for both shop and save)
+   - **Solution**: Use modifiers properly - S for shop, Ctrl+S for save
+   - **Testing**: Add debug prints to verify correct action triggering
+
+### Best Practices Established:
+- **Always test compilation** after each script creation
+- **Add debug output** for input and signal verification during development
+- **Load systems explicitly** before emitting signals they need to handle
+- **Use explicit typing** for all variables to avoid inference warnings
+- **Create placeholder classes** for forward references immediately
+
+### Verification Checklist for Future Tasks:
+- [ ] No compilation errors in Godot console
+- [ ] All referenced classes exist (even as placeholders)
+- [ ] Input actions work as expected with debug output
+- [ ] Systems load correctly when accessed
+- [ ] Signals flow from source to destination with debug confirmation
