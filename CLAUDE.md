@@ -88,20 +88,22 @@ ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 9. **Stage 9**: Polish & Additional Vendors (2 weeks)
 10. **Stage 10**: Balancing & MVP Completion (1-2 weeks)
 
-### Stage 1 Task Order (REVISED)
-New architecture-focused implementation order:
-1. **GameCore Setup** - Single autoload with subsystems
-2. **SignalBus** - Centralized signal management
-3. **CreatureData Resource** - Pure data (no signals!)
-4. **SpeciesData Resource** - Template system with caching
-5. **Stat/Tag Systems** - As utility classes
-6. **CreatureEntity** - Node for behavior/signals
-7. **System Controllers** - Lazy-loaded subsystems
-8. **ConfigFile Saves** - Robust persistence
-9. **Collection Management** - With object pooling
-10. **Resource Tracking** - Optimized economy
+### Stage 1 Tasks - Detailed Implementation Order
+Full task list with file references:
+1. **Project Setup** (`docs/implementation/stages/stage_1/01_project_setup.md`) - GameCore autoload
+2. **SignalBus** (`docs/implementation/stages/stage_1/02_signal_bus.md`) - Centralized signals
+3. **CreatureData** (`docs/implementation/stages/stage_1/03_creature_resource.md`) - Pure data resource
+4. **SpeciesData** (`docs/implementation/stages/stage_1/04_species_resource.md`) - Template system
+5. **Stat System** (`docs/implementation/stages/stage_1/05_stat_system.md`) - Calculation utilities
+6. **Tag System** (`docs/implementation/stages/stage_1/06_tag_system.md`) - Tag management
+7. **CreatureEntity** (`docs/implementation/stages/stage_1/07_creature_entity.md`) - Behavior node
+8. **Controllers** (`docs/implementation/stages/stage_1/08_system_controllers.md`) - Subsystems
+9. **Save System** (`docs/implementation/stages/stage_1/09_save_system.md`) - ConfigFile persistence
+10. **Collection Manager** (`docs/implementation/stages/stage_1/10_collection_manager.md`) - Pooling
+11. **Resource Tracker** (`docs/implementation/stages/stage_1/11_resource_tracking.md`) - Economy
+12. **Stage 1 Testing** (`docs/implementation/stages/stage_1/12_stage_1_testing.md`) - Integration tests
 
-⚠️ **CRITICAL**: See `docs/implementation/IMPROVED_ARCHITECTURE.md` for details
+⚠️ **CRITICAL**: See `docs/implementation/IMPROVED_ARCHITECTURE.md` for architecture details
 
 ## Commands
 
@@ -124,6 +126,12 @@ godot --export "Windows Desktop" builds/game.exe
 
 ## Key Implementation Notes
 
+### Documentation Structure
+- **docs/design/**: Game mechanics and systems (16 files)
+- **docs/implementation/**: Technical specs and stage tasks (14 files)
+- **docs/project/**: Project management documents
+- Full documentation map in `README.md` and `docs/STRUCTURE.md`
+
 ### Art Assets
 - **Using Tiny Swords asset pack** for creature sprites
 - 11 mapped species using available sprites (spiders, turtles, monks, etc.)
@@ -143,3 +151,9 @@ Tutorial progression teaching creature selection:
 - Quest line net profit: +4,690 gold
 - Creature costs: 50-800 gold depending on rarity
 - Weekly food cost: ~25 gold per active creature
+
+### Critical Godot 4.5 Gotchas
+- Resources with signals can cause issues - keep data and behavior separate
+- Use `take_over_path()` after saving Resources to handle cache bugs
+- Prefer ConfigFile for settings, ResourceSaver for complex game data
+- Always use typed GDScript for better performance and error checking
