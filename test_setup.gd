@@ -1,8 +1,10 @@
-@tool
-extends EditorScript
+extends Node
 
-func _run() -> void:
+func _ready() -> void:
 	print("=== Testing Project Setup ===")
+
+	# Wait a frame for autoloads to initialize
+	await get_tree().process_frame
 
 	# Test GameCore accessibility
 	if GameCore != null:

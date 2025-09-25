@@ -198,6 +198,11 @@ Tutorial progression teaching creature selection:
    - **Solution**: Comment out unused signals during early development, uncomment as needed
    - **Why**: Godot warns about declared but unused signals to prevent code bloat
 
+8. **Tool Mode vs Runtime Testing**
+   - **Issue**: `@tool` EditorScript can't access autoload methods (placeholder instance error)
+   - **Solution**: Use regular Node with `_ready()` and scene for testing instead of EditorScript
+   - **Pattern**: Create test.tscn scene with test script, run scene for integration testing
+
 ### Best Practices Established:
 - **Always test compilation** after each script creation
 - **Add debug output** for input and signal verification during development
