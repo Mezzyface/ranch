@@ -28,7 +28,8 @@ func save_game(slot: int = 0) -> bool:
 	var error := config.save(SAVE_PATH % slot)
 	var success := error == OK
 
-	GameCore.get_signal_bus().save_completed.emit(success)
+	print("SaveSystem: Save ", "completed" if success else "failed")
+	# GameCore.get_signal_bus().save_completed.emit(success)  # Will use in later tasks
 	return success
 
 func load_game(slot: int = 0) -> bool:
@@ -36,14 +37,14 @@ func load_game(slot: int = 0) -> bool:
 	var path := SAVE_PATH % slot
 
 	if not FileAccess.file_exists(path):
-		push_warning("Save file doesn't exist: " + path)
-		GameCore.get_signal_bus().load_completed.emit(false)
+		print("SaveSystem: Save file doesn't exist: " + path)
+		# GameCore.get_signal_bus().load_completed.emit(false)  # Will use in later tasks
 		return false
 
 	var error := config.load(path)
 	if error != OK:
-		push_error("Failed to load save file: " + path)
-		GameCore.get_signal_bus().load_completed.emit(false)
+		print("SaveSystem: Failed to load save file: " + path)
+		# GameCore.get_signal_bus().load_completed.emit(false)  # Will use in later tasks
 		return false
 
 	# Check version
@@ -62,7 +63,8 @@ func load_game(slot: int = 0) -> bool:
 				var creature_dict: Dictionary = config.get_value("creatures", creature_id, {})
 				creature_system.add_creature_from_dict(creature_dict)
 
-	GameCore.get_signal_bus().load_completed.emit(true)
+	print("SaveSystem: Load completed successfully")
+	# GameCore.get_signal_bus().load_completed.emit(true)  # Will use in later tasks
 	return true
 
 func _migrate_save(_config: ConfigFile, _from_version: int) -> void:

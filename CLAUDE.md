@@ -193,6 +193,11 @@ Tutorial progression teaching creature selection:
    - **Solution**: Use modifiers properly - S for shop, Ctrl+S for save
    - **Testing**: Add debug prints to verify correct action triggering
 
+7. **Unused Signal Warnings**
+   - **Issue**: SignalBus declares all signals upfront, causing "never used" warnings
+   - **Solution**: Comment out unused signals during early development, uncomment as needed
+   - **Why**: Godot warns about declared but unused signals to prevent code bloat
+
 ### Best Practices Established:
 - **Always test compilation** after each script creation
 - **Add debug output** for input and signal verification during development
