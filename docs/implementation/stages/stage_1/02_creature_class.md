@@ -122,109 +122,157 @@ CreatureResource (Resource)
 class_name Creature
 extends Resource
 
+# Signals for state changes (Godot 4.x style)
+signal stats_changed(stat_name: String, old_value: int, new_value: int)
+signal age_changed(new_age_weeks: int)
+signal tag_added(tag_name: String)
+signal tag_removed(tag_name: String)
+
 # Identity
 @export var id: String = ""
-@export var name: String = ""
-# NOTE: species is a string ID that references a SpeciesResource
-# The SpeciesResource contains all species-specific data (stats, sprites, etc.)
-@export var species: String = ""  # References species_id in SpeciesResource
+@export var creature_name: String = ""  # Renamed to avoid conflict with Resource.name
+# NOTE: species_id references a SpeciesResource
+@export var species_id: String = ""  # References species_id in SpeciesResource
 
-# Core Stats (0-1000)
-@export var strength: int = 50:
+# Core Stats (0-1000) with Godot 4.x typed setters
+@export_range(0, 1000) var strength: int = 50:
     set(value):
+        var old_value := strength
         strength = clampi(value, 0, 1000)
-@export var constitution: int = 50:
-    set(value):
-        constitution = clampi(value, 0, 1000)
-@export var dexterity: int = 50:
-    set(value):
-        dexterity = clampi(value, 0, 1000)
-@export var intelligence: int = 50:
-    set(value):
-        intelligence = clampi(value, 0, 1000)
-@export var wisdom: int = 50:
-    set(value):
-        wisdom = clampi(value, 0, 1000)
-@export var discipline: int = 50:
-    set(value):
-        discipline = clampi(value, 0, 1000)
+        if old_value != strength:
+            stats_changed.emit("strength", old_value, strength)
 
-# Tags
-# NOTE: Using Array[String] for Stage 1 implementation
-# TODO: Convert to Array[Enums.CreatureTag] when tag system is fully implemented
+@export_range(0, 1000) var constitution: int = 50:
+    set(value):
+        var old_value := constitution
+        constitution = clampi(value, 0, 1000)
+        if old_value != constitution:
+            stats_changed.emit("constitution", old_value, constitution)
+
+@export_range(0, 1000) var dexterity: int = 50:
+    set(value):
+        var old_value := dexterity
+        dexterity = clampi(value, 0, 1000)
+        if old_value != dexterity:
+            stats_changed.emit("dexterity", old_value, dexterity)
+
+@export_range(0, 1000) var intelligence: int = 50:
+    set(value):
+        var old_value := intelligence
+        intelligence = clampi(value, 0, 1000)
+        if old_value != intelligence:
+            stats_changed.emit("intelligence", old_value, intelligence)
+
+@export_range(0, 1000) var wisdom: int = 50:
+    set(value):
+        var old_value := wisdom
+        wisdom = clampi(value, 0, 1000)
+        if old_value != wisdom:
+            stats_changed.emit("wisdom", old_value, wisdom)
+
+@export_range(0, 1000) var discipline: int = 50:
+    set(value):
+        var old_value := discipline
+        discipline = clampi(value, 0, 1000)
+        if old_value != discipline:
+            stats_changed.emit("discipline", old_value, discipline)
+
+# Tags (Godot 4.x typed arrays)
 @export var tags: Array[String] = []
 
-# Age System
-@export var age_weeks: int = 0
-@export var lifespan: int = 520  # 10 years default
+# Age System with ranges
+@export_range(0, 1000) var age_weeks: int = 0:
+    set(value):
+        var old_age := age_weeks
+        age_weeks = maxi(0, value)
+        if old_age != age_weeks:
+            age_changed.emit(age_weeks)
 
-# State
+@export_range(100, 1000) var lifespan: int = 520  # 10 years default
+
+# State Management
 @export var is_active: bool = false
-@export var stamina_current: int = 100
-@export var stamina_max: int = 100
+@export_range(0, 200) var stamina_current: int = 100:
+    set(value):
+        stamina_current = clampi(value, 0, stamina_max)
+@export_range(50, 200) var stamina_max: int = 100
 
-# Breeding
-# NOTE: Using String for Stage 1 implementation
-# TODO: Convert to Enums.EggGroup when breeding system is implemented
+# Breeding Properties
 @export var egg_group: String = ""
 @export var parent_ids: Array[String] = []
-@export var generation: int = 1
+@export_range(1, 10) var generation: int = 1
 
-# Constructor
-func _init():
+# Constructor with proper initialization
+func _init() -> void:
     if id.is_empty():
         id = generate_unique_id()
 
-# Use global enum from Enums.gd
-func get_age_category() -> Enums.AgeCategory:
-    var life_percentage = (age_weeks / float(lifespan)) * 100
-    if life_percentage < 25:  # Updated to match enum.md specification
-        return Enums.AgeCategory.YOUNG
-    elif life_percentage < 75:  # Updated to match enum.md specification
+# Age category calculation with proper enum typing
+func get_age_category() -> int:  # Returns int since Enums.AgeCategory will be int-based
+    var life_percentage := (age_weeks / float(lifespan)) * 100
+    if life_percentage < 10:
+        return Enums.AgeCategory.BABY
+    elif life_percentage < 25:
+        return Enums.AgeCategory.JUVENILE
+    elif life_percentage < 75:
         return Enums.AgeCategory.ADULT
-    else:
+    elif life_percentage < 90:
         return Enums.AgeCategory.ELDER
+    else:
+        return Enums.AgeCategory.ANCIENT
 
 func get_age_modifier() -> float:
     match get_age_category():
-        Enums.AgeCategory.YOUNG:
-            return 1.2  # +20% performance (updated to match design)
+        Enums.AgeCategory.BABY:
+            return 0.6  # -40% performance
+        Enums.AgeCategory.JUVENILE:
+            return 0.8  # -20% performance
         Enums.AgeCategory.ADULT:
             return 1.0  # No modifier
         Enums.AgeCategory.ELDER:
-            return 0.8  # -20% performance (updated to match design)
+            return 0.8  # -20% performance
+        Enums.AgeCategory.ANCIENT:
+            return 0.6  # -40% performance
         _:
             return 1.0
 
-# Stat Accessors
+# Stat Accessors with typed return values
 func get_stat(stat_name: String) -> int:
     match stat_name.to_upper():
-        "STR": return strength
-        "CON": return constitution
-        "DEX": return dexterity
-        "INT": return intelligence
-        "WIS": return wisdom
-        "DIS": return discipline
-        _: return 0
+        "STR", "STRENGTH": return strength
+        "CON", "CONSTITUTION": return constitution
+        "DEX", "DEXTERITY": return dexterity
+        "INT", "INTELLIGENCE": return intelligence
+        "WIS", "WISDOM": return wisdom
+        "DIS", "DISCIPLINE": return discipline
+        _:
+            push_warning("Invalid stat name: " + stat_name)
+            return 0
 
-func set_stat(stat_name: String, value: int):
+func set_stat(stat_name: String, value: int) -> void:
     match stat_name.to_upper():
-        "STR": strength = value
-        "CON": constitution = value
-        "DEX": dexterity = value
-        "INT": intelligence = value
-        "WIS": wisdom = value
-        "DIS": discipline = value
+        "STR", "STRENGTH": strength = value
+        "CON", "CONSTITUTION": constitution = value
+        "DEX", "DEXTERITY": dexterity = value
+        "INT", "INTELLIGENCE": intelligence = value
+        "WIS", "WISDOM": wisdom = value
+        "DIS", "DISCIPLINE": discipline = value
+        _:
+            push_warning("Invalid stat name: " + stat_name)
 
-# Tag Management
+# Tag Management with signals
 func add_tag(tag: String) -> bool:
     if not tag in tags and is_valid_tag(tag):
         tags.append(tag)
+        tag_added.emit(tag)
         return true
     return false
 
 func remove_tag(tag: String) -> bool:
-    return tags.erase(tag)
+    var removed := tags.erase(tag)
+    if removed:
+        tag_removed.emit(tag)
+    return removed
 
 func has_tag(tag: String) -> bool:
     return tag in tags
@@ -234,6 +282,12 @@ func has_all_tags(required_tags: Array[String]) -> bool:
         if not has_tag(tag):
             return false
     return true
+
+func has_any_tag(required_tags: Array[String]) -> bool:
+    for tag in required_tags:
+        if has_tag(tag):
+            return true
+    return false
 
 # Validation
 func is_valid_tag(tag: String) -> bool:
@@ -246,33 +300,39 @@ func is_valid_tag(tag: String) -> bool:
     ]
     return tag in VALID_TAGS
 
-# Age Progression
-func age_one_week():
+# Age Progression with stamina effects
+func age_one_week() -> void:
     age_weeks += 1
-    # Additional aging effects in future
+    # Reduce stamina for active creatures
+    if is_active:
+        stamina_current = maxi(0, stamina_current - 10)
 
-# Stamina Management
+# Stamina Management with typed returns
 func consume_stamina(amount: int) -> bool:
     if stamina_current >= amount:
         stamina_current -= amount
         return true
     return false
 
-func restore_stamina(amount: int):
+func restore_stamina(amount: int) -> void:
     stamina_current = mini(stamina_current + amount, stamina_max)
 
-# Utility
-func generate_unique_id() -> String:
-    # Simple UUID generation
-    randomize()
-    return "creature_" + str(Time.get_unix_time_from_system()) + "_" + str(randi())
+func rest_fully() -> void:
+    stamina_current = stamina_max
 
-# Serialization
+# Utility with Godot 4.x Time API
+func generate_unique_id() -> String:
+    # Use Godot 4.x Time API for unique ID
+    var timestamp := Time.get_unix_time_from_system()
+    var random_suffix := randi() % 999999
+    return "creature_%d_%06d" % [timestamp, random_suffix]
+
+# Serialization with proper property names
 func to_dict() -> Dictionary:
     return {
         "id": id,
-        "name": name,
-        "species": species,
+        "creature_name": creature_name,  # Updated property name
+        "species_id": species_id,  # Updated property name
         "stats": {
             "strength": strength,
             "constitution": constitution,
@@ -293,12 +353,12 @@ func to_dict() -> Dictionary:
     }
 
 static func from_dict(data: Dictionary) -> Creature:
-    var creature = Creature.new()
+    var creature := Creature.new()
     creature.id = data.get("id", "")
-    creature.name = data.get("name", "")
-    creature.species = data.get("species", "")
+    creature.creature_name = data.get("creature_name", "")  # Updated property name
+    creature.species_id = data.get("species_id", "")  # Updated property name
 
-    var stats = data.get("stats", {})
+    var stats := data.get("stats", {}) as Dictionary
     creature.strength = stats.get("strength", 50)
     creature.constitution = stats.get("constitution", 50)
     creature.dexterity = stats.get("dexterity", 50)
@@ -306,14 +366,14 @@ static func from_dict(data: Dictionary) -> Creature:
     creature.wisdom = stats.get("wisdom", 50)
     creature.discipline = stats.get("discipline", 50)
 
-    creature.tags = data.get("tags", [])
+    creature.tags = Array(data.get("tags", []), TYPE_STRING, "", null)
     creature.age_weeks = data.get("age_weeks", 0)
     creature.lifespan = data.get("lifespan", 520)
     creature.is_active = data.get("is_active", false)
     creature.stamina_current = data.get("stamina_current", 100)
     creature.stamina_max = data.get("stamina_max", 100)
     creature.egg_group = data.get("egg_group", "")
-    creature.parent_ids = data.get("parent_ids", [])
+    creature.parent_ids = Array(data.get("parent_ids", []), TYPE_STRING, "", null)
     creature.generation = data.get("generation", 1)
 
     return creature

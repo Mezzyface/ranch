@@ -200,65 +200,97 @@ Main (Node2D)
 
 ### GameManager Singleton Base
 ```gdscript
+class_name GameManager
 extends Node
 
-signal game_started
-signal game_loaded
-signal game_saved
+signal game_started()
+signal game_loaded()
+signal game_saved()
+signal week_advanced(new_week: int)
 
 var current_week: int = 1
 var game_state: Dictionary = {}
 
-func _ready():
+func _ready() -> void:
     print("GameManager initialized")
+    set_process_mode(Node.PROCESS_MODE_ALWAYS)
 
-func start_new_game():
+func start_new_game() -> void:
     current_week = 1
     game_state.clear()
-    emit_signal("game_started")
+    game_started.emit()
 
-func advance_week():
+func advance_week() -> void:
     current_week += 1
+    week_advanced.emit(current_week)
     # Will trigger other system updates in future tasks
 ```
 
 ### DataManager Singleton Base
 ```gdscript
+class_name DataManager
 extends Node
 
 var creature_definitions: Dictionary = {}
 var item_definitions: Dictionary = {}
 var quest_definitions: Dictionary = {}
+var species_resources: Dictionary = {}
 
-func _ready():
+func _ready() -> void:
     print("DataManager initialized")
+    set_process_mode(Node.PROCESS_MODE_ALWAYS)
     # Will load data files in future tasks
 
 func get_creature_definition(id: String) -> Dictionary:
     return creature_definitions.get(id, {})
+
+func get_species_resource(species_id: String) -> Resource:
+    return species_resources.get(species_id, null)
 ```
 
 ### SaveManager Singleton Base
 ```gdscript
+class_name SaveManager
 extends Node
 
-const SAVE_PATH = "user://savegame.dat"
+const SAVE_PATH: String = "user://savegame.dat"
+const SAVE_VERSION: int = 1
+
+signal game_saved(success: bool)
+signal game_loaded(success: bool)
+
+func _ready() -> void:
+    print("SaveManager initialized")
+    set_process_mode(Node.PROCESS_MODE_ALWAYS)
 
 func save_game(data: Dictionary) -> bool:
-    var file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+    data["version"] = SAVE_VERSION
+    data["timestamp"] = Time.get_unix_time_from_system()
+
+    var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
     if file:
         file.store_var(data)
         file.close()
+        game_saved.emit(true)
         return true
+    game_saved.emit(false)
     return false
 
 func load_game() -> Dictionary:
     if FileAccess.file_exists(SAVE_PATH):
-        var file = FileAccess.open(SAVE_PATH, FileAccess.READ)
+        var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
         if file:
-            var data = file.get_var()
+            var data: Dictionary = file.get_var()
             file.close()
-            return data
+
+            # Version check for future compatibility
+            if data.get("version", 0) == SAVE_VERSION:
+                game_loaded.emit(true)
+                return data
+            else:
+                push_warning("Save file version mismatch")
+                game_loaded.emit(false)
+    game_loaded.emit(false)
     return {}
 ```
 
