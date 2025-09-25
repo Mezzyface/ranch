@@ -109,9 +109,13 @@ A creature collection game where players:
 - [x] Documentation complete
 - [x] Design specifications finalized
 - [x] Implementation tasks defined
-- [ ] Godot project created
-- [ ] Core systems implemented
+- [x] Godot project created
+- [x] Task 1: Project Setup & GameCore architecture
+- [x] Task 2: SignalBus enhancement with creature signals
+- [ ] Task 3+: CreatureData Resource and remaining core systems
 - [ ] Stage 1 testing complete
+
+**Progress: 2/12 Stage 1 tasks complete (17%)**
 
 ### Upcoming Stages
 - **Stage 2**: Time Management & Basic UI (2 weeks)

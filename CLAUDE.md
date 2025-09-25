@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository Overview
 
-A creature collection/breeding game built with Godot 4.5. Currently in planning/documentation phase with no code implementation yet. The game features creature collection, training, breeding, and quest completion through strategic creature management.
+A creature collection/breeding game built with Godot 4.5. Currently implementing Stage 1 (Core Foundation) with basic GameCore autoload and SignalBus architecture completed. The game features creature collection, training, breeding, and quest completion through strategic creature management.
 
 ## Core Architecture (v2.0 - Improved)
 
@@ -91,8 +91,8 @@ ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 ### Stage 1 Tasks - Detailed Implementation Order
 Full task list with file references:
 1. **✅ Project Setup** (`docs/implementation/stages/stage_1/01_project_setup.md`) - GameCore autoload COMPLETE
-2. **🚀 SignalBus** (`docs/implementation/stages/stage_1/02_signal_bus.md`) - Centralized signals NEXT
-3. **CreatureData** (`docs/implementation/stages/stage_1/03_creature_resource.md`) - Pure data resource
+2. **✅ SignalBus** (`docs/implementation/stages/stage_1/02_signal_bus.md`) - Enhanced signal management COMPLETE
+3. **🚀 CreatureData** (`docs/implementation/stages/stage_1/03_creature_resource.md`) - Pure data resource NEXT
 4. **SpeciesData** (`docs/implementation/stages/stage_1/04_species_resource.md`) - Template system
 5. **Stat System** (`docs/implementation/stages/stage_1/05_stat_system.md`) - Calculation utilities
 6. **Tag System** (`docs/implementation/stages/stage_1/06_tag_system.md`) - Tag management
@@ -107,10 +107,16 @@ Full task list with file references:
 
 ## Commands
 
-### Development Commands (After Godot Project Creation)
+### Development Commands
 ```bash
 # Open Godot project
 godot project.godot
+
+# Run integration tests (current)
+godot test_setup.tscn
+
+# Check project compilation
+godot --check-only project.godot
 
 # Run tests (after test framework setup)
 godot --script res://tests/run_tests.gd
@@ -121,9 +127,10 @@ godot --export "Windows Desktop" builds/game.exe
 
 ### Current Status
 - **✅ Godot project created** - Complete with GameCore architecture
-- **✅ Task 1 implemented** - Project setup fully tested and verified
-- **🚀 Ready for Task 2** - SignalBus enhancement and creature signals
-- **All tests passing** - Clean console, lazy loading confirmed
+- **✅ Task 1 COMPLETE** - Project setup fully tested and verified
+- **✅ Task 2 COMPLETE** - SignalBus enhancement with creature signals, connection management, and validation
+- **🚀 Ready for Task 3** - CreatureData Resource (pure data implementation)
+- **All tests passing** - Enhanced SignalBus validation confirmed, clean console output
 
 ## Key Implementation Notes
 
@@ -218,3 +225,43 @@ Tutorial progression teaching creature selection:
 - [ ] Input actions work as expected with debug output
 - [ ] Systems load correctly when accessed
 - [ ] Signals flow from source to destination with debug confirmation
+
+## Stage 1 Task 2 Lessons Learned
+
+### ✅ Task 2 (SignalBus Enhancement) - COMPLETED & VERIFIED
+**Key Achievements:**
+
+1. **Enhanced Signal Architecture**
+   - **Success**: Uncommented creature lifecycle signals while keeping unused signals commented
+   - **Pattern**: Declare signals as needed, not all upfront to avoid unused warnings
+   - **Result**: Clean console with expected "unused signal" warnings for future features
+
+2. **Robust Connection Management**
+   - **Success**: `connect_signal_safe()` and `disconnect_signal_safe()` with full validation
+   - **Pattern**: Return boolean success values, track connections for debugging
+   - **Result**: Bulletproof signal connections with comprehensive error handling
+
+3. **Validated Signal Emission**
+   - **Success**: Emission wrapper methods prevent invalid data from propagating
+   - **Pattern**: Validate inputs before emission, use debug logging for verification
+   - **Result**: Red error messages in console confirm validation works (this is good!)
+
+4. **Debug System Architecture**
+   - **Success**: Toggle debug mode, connection tracking, comprehensive logging
+   - **Pattern**: Debug information helps during development, can be disabled in production
+   - **Result**: Excellent visibility into signal flow for troubleshooting
+
+### New Best Practices Established:
+- **Signal validation is critical** - Never emit with null/invalid data
+- **Connection tracking aids debugging** - Know what's connected where
+- **Expected warnings are acceptable** - Yellow unused signal warnings are normal during development
+- **Red validation errors are good** - They prove the system is protecting against bad data
+- **Comprehensive test coverage** - Test both success and failure cases
+- **Debug logging during development** - Essential for verifying signal flow
+
+### Updated Verification Checklist:
+- [ ] Expected unused signal warnings (yellow) are acceptable
+- [ ] Validation error messages (red) prove protection works
+- [ ] Signal emissions work with valid data
+- [ ] Connection management tracks properly
+- [ ] Debug mode toggle functions correctly
