@@ -3,7 +3,7 @@ extends Node2D
 
 func _ready() -> void:
 	print("Main scene loaded successfully")
-	print("GameCore available: ", GameCore.instance != null)
+	print("GameCore available: ", GameCore != null)
 	print("SignalBus available: ", GameCore.get_signal_bus() != null)
 
 func _input(event: InputEvent) -> void:

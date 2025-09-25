@@ -1,11 +1,7 @@
 extends Node
 
-static var instance: Node
 var signal_bus: SignalBus
 var _systems: Dictionary = {}
-
-func _enter_tree() -> void:
-	instance = self
 
 func _ready() -> void:
 	# Create SignalBus first
@@ -16,13 +12,13 @@ func _ready() -> void:
 	print("GameCore initialized")
 	# Systems will be lazy-loaded as needed
 
-static func get_signal_bus() -> SignalBus:
-	return instance.signal_bus
+func get_signal_bus() -> SignalBus:
+	return signal_bus
 
-static func get_system(system_name: String) -> Node:
-	if not instance._systems.has(system_name):
-		instance._load_system(system_name)
-	return instance._systems.get(system_name)
+func get_system(system_name: String) -> Node:
+	if not _systems.has(system_name):
+		_load_system(system_name)
+	return _systems.get(system_name)
 
 func _load_system(system_name: String) -> void:
 	var system: Node

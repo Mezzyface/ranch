@@ -5,7 +5,7 @@ func _run() -> void:
 	print("=== Testing Project Setup ===")
 
 	# Test GameCore accessibility
-	if GameCore != null and GameCore.instance != null:
+	if GameCore != null:
 		print("✅ GameCore autoload working")
 	else:
 		print("❌ GameCore autoload failed")
