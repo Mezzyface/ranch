@@ -1,15 +1,23 @@
 # Task 08: Player Collection Management
 
 ## Overview
-Implement the player's creature collection system that manages active and stable creatures, enforces limits, and provides collection operations.
+Implement the player's creature collection system as a GameCore subsystem that manages active and stable creatures, enforces limits, and provides collection operations using the improved CreatureData/CreatureEntity architecture.
 
 ## Dependencies
-- Task 02: Creature Class (complete)
+- Task 01: GameCore Setup (complete)
+- Task 02: CreatureData/CreatureEntity separation (complete)
 - Task 05: Creature Generation (complete)
 - Task 07: Save/Load System (complete)
 - Design documents: `creature.md`, `time.md`
 
 ## Context
+**CRITICAL ARCHITECTURE CHANGES**:
+- CollectionSystem as GameCore subsystem (NOT autoload)
+- Stores CreatureData, creates CreatureEntity only when needed for behavior
+- All signals go through SignalBus
+- Lazy-loaded by GameCore when needed
+- Integrates with SaveSystem for persistence
+
 From the design documents:
 - Players have a creature collection with active and stable states
 - Active creatures participate in activities and age
@@ -61,34 +69,31 @@ From the design documents:
 
 ## Implementation Steps
 
-1. **Create Collection Manager**
-   - Active/stable lists
-   - Collection operations
-   - Limit enforcement
-   - Event signals
+1. **Create CollectionSystem Class**
+   - Extends Node, managed by GameCore
+   - Connects to SignalBus for all signals
+   - Lazy-loaded subsystem
 
-2. **Implement Roster System**
-   - Active slot management
-   - Swap mechanics
-   - Validation rules
-   - Quick operations
+2. **Implement Data Management**
+   - Store CreatureData arrays
+   - Create CreatureEntity on demand
+   - Active/stable state management
 
-3. **Add Collection Tools**
+3. **Add Collection Operations**
+   - CRUD operations on creatures
+   - State transitions
+   - Batch operations
+
+4. **Create Utility Methods**
    - Sorting algorithms
    - Filter system
    - Search functionality
    - Statistics calculator
 
-4. **Create Collection UI Helper**
-   - Display formatting
-   - Collection views
-   - Operation shortcuts
-   - Visual indicators
-
 ## Test Criteria
 
 ### Unit Tests
-- [ ] Add creatures to collection
+- [ ] Add CreatureData to collection
 - [ ] Move creatures between active/stable
 - [ ] Enforce active roster limits
 - [ ] Remove creatures from collection
@@ -102,192 +107,258 @@ From the design documents:
 - [ ] Batch operations work
 
 ### Integration Tests
-- [ ] Active creatures age properly
+- [ ] Active creatures age properly through AgeSystem
 - [ ] Stable creatures don't age
 - [ ] Collection integrates with save system
-- [ ] UI updates reflect collection changes
+- [ ] SignalBus properly routes collection events
+- [ ] CreatureEntity creation on demand works
 - [ ] Memory efficient with large collections
 
 ## Code Implementation
 
-### CollectionManager Singleton (`scripts/systems/collection_manager.gd`)
+### CollectionSystem - GameCore Subsystem
 ```gdscript
+# scripts/systems/collection_system.gd
+class_name CollectionSystem
 extends Node
 
-signal creature_added(creature: Creature)
-signal creature_removed(creature: Creature)
-signal creature_moved_to_active(creature: Creature)
-signal creature_moved_to_stable(creature: Creature)
-signal collection_changed()
+var signal_bus: SignalBus
 
 const DEFAULT_ACTIVE_SLOTS = 5
 const MAX_ACTIVE_SLOTS = 10
 
-var active_creatures: Array[Creature] = []
-var stable_creatures: Array[Creature] = []
+# Data storage - only CreatureData, not entities
+var active_creature_data: Array[CreatureData] = []
+var stable_creature_data: Array[CreatureData] = []
 var max_active_slots: int = DEFAULT_ACTIVE_SLOTS
 
-# Collection Management
-func add_creature(creature: Creature, add_to_active: bool = false) -> bool:
-    if add_to_active and active_creatures.size() >= max_active_slots:
+# Entity cache - created on demand
+var _active_entities: Dictionary = {}  # id -> CreatureEntity
+
+func _ready() -> void:
+    signal_bus = GameCore.get_signal_bus()
+    print("CollectionSystem initialized")
+
+# Collection Management - Data Level
+func add_creature_data(creature_data: CreatureData, add_to_active: bool = false) -> bool:
+    if add_to_active and active_creature_data.size() >= max_active_slots:
         push_warning("Active roster is full")
         add_to_active = false
 
     if add_to_active:
-        active_creatures.append(creature)
-        # NOTE: Using CreatureState enum would be cleaner here
-        # TODO: Update to creature.state = Enums.CreatureState.ACTIVE when enum is implemented
-        creature.is_active = true
-        emit_signal("creature_added", creature)
-        emit_signal("creature_moved_to_active", creature)
+        active_creature_data.append(creature_data)
+        creature_data.is_active = true
+        if signal_bus:
+            signal_bus.creature_added_to_active.emit(creature_data)
     else:
-        stable_creatures.append(creature)
-        creature.is_active = false
-        emit_signal("creature_added", creature)
-        emit_signal("creature_moved_to_stable", creature)
+        stable_creature_data.append(creature_data)
+        creature_data.is_active = false
+        if signal_bus:
+            signal_bus.creature_added_to_stable.emit(creature_data)
 
-    emit_signal("collection_changed")
+    if signal_bus:
+        signal_bus.creature_added_to_collection.emit(creature_data)
+        signal_bus.collection_changed.emit()
+
     return true
 
-func remove_creature(creature: Creature) -> bool:
+func remove_creature_data(creature_data: CreatureData) -> bool:
     var removed = false
 
-    if creature in active_creatures:
-        active_creatures.erase(creature)
+    if creature_data in active_creature_data:
+        active_creature_data.erase(creature_data)
+        # Clean up entity cache
+        if _active_entities.has(creature_data.id):
+            _active_entities.erase(creature_data.id)
         removed = true
-    elif creature in stable_creatures:
-        stable_creatures.erase(creature)
+    elif creature_data in stable_creature_data:
+        stable_creature_data.erase(creature_data)
         removed = true
 
     if removed:
-        emit_signal("creature_removed", creature)
-        emit_signal("collection_changed")
+        if signal_bus:
+            signal_bus.creature_removed_from_collection.emit(creature_data)
+            signal_bus.collection_changed.emit()
 
     return removed
 
-# Roster Management
-func move_to_active(creature: Creature) -> bool:
-    if active_creatures.size() >= max_active_slots:
+# Roster Management - Data Level
+func move_to_active(creature_data: CreatureData) -> bool:
+    if active_creature_data.size() >= max_active_slots:
         push_warning("Active roster is full")
         return false
 
-    if creature in active_creatures:
+    if creature_data in active_creature_data:
         return true  # Already active
 
-    if creature in stable_creatures:
-        stable_creatures.erase(creature)
-        active_creatures.append(creature)
-        creature.is_active = true
-        emit_signal("creature_moved_to_active", creature)
-        emit_signal("collection_changed")
+    if creature_data in stable_creature_data:
+        stable_creature_data.erase(creature_data)
+        active_creature_data.append(creature_data)
+        creature_data.is_active = true
+
+        if signal_bus:
+            signal_bus.creature_moved_to_active.emit(creature_data)
+            signal_bus.collection_changed.emit()
         return true
 
     return false
 
-func move_to_stable(creature: Creature) -> bool:
-    if creature in stable_creatures:
+func move_to_stable(creature_data: CreatureData) -> bool:
+    if creature_data in stable_creature_data:
         return true  # Already stable
 
-    if creature in active_creatures:
-        active_creatures.erase(creature)
-        stable_creatures.append(creature)
-        creature.is_active = false
-        emit_signal("creature_moved_to_stable", creature)
-        emit_signal("collection_changed")
+    if creature_data in active_creature_data:
+        active_creature_data.erase(creature_data)
+        stable_creature_data.append(creature_data)
+        creature_data.is_active = false
+
+        # Clean up entity cache
+        if _active_entities.has(creature_data.id):
+            _active_entities.erase(creature_data.id)
+
+        if signal_bus:
+            signal_bus.creature_moved_to_stable.emit(creature_data)
+            signal_bus.collection_changed.emit()
         return true
 
     return false
 
-func swap_creatures(creature1: Creature, creature2: Creature) -> bool:
-    var c1_active = creature1 in active_creatures
-    var c2_active = creature2 in active_creatures
+func swap_creatures(creature1_data: CreatureData, creature2_data: CreatureData) -> bool:
+    var c1_active = creature1_data in active_creature_data
+    var c2_active = creature2_data in active_creature_data
 
     if c1_active and c2_active:
         # Both active, just swap positions
-        var idx1 = active_creatures.find(creature1)
-        var idx2 = active_creatures.find(creature2)
-        active_creatures[idx1] = creature2
-        active_creatures[idx2] = creature1
+        var idx1 = active_creature_data.find(creature1_data)
+        var idx2 = active_creature_data.find(creature2_data)
+        active_creature_data[idx1] = creature2_data
+        active_creature_data[idx2] = creature1_data
     elif not c1_active and not c2_active:
         # Both stable, just swap positions
-        var idx1 = stable_creatures.find(creature1)
-        var idx2 = stable_creatures.find(creature2)
-        stable_creatures[idx1] = creature2
-        stable_creatures[idx2] = creature1
+        var idx1 = stable_creature_data.find(creature1_data)
+        var idx2 = stable_creature_data.find(creature2_data)
+        stable_creature_data[idx1] = creature2_data
+        stable_creature_data[idx2] = creature1_data
     else:
         # One active, one stable - swap states
         if c1_active:
-            move_to_stable(creature1)
-            move_to_active(creature2)
+            move_to_stable(creature1_data)
+            move_to_active(creature2_data)
         else:
-            move_to_stable(creature2)
-            move_to_active(creature1)
+            move_to_stable(creature2_data)
+            move_to_active(creature1_data)
 
-    emit_signal("collection_changed")
+    if signal_bus:
+        signal_bus.collection_changed.emit()
     return true
 
-# Collection Queries
-func get_all_creatures() -> Array[Creature]:
-    return active_creatures + stable_creatures
+# Entity Management - On-Demand Creation
+func get_active_creature_entities() -> Array[CreatureEntity]:
+    var entities: Array[CreatureEntity] = []
 
-func get_creature_by_id(id: String) -> Creature:
-    for creature in active_creatures:
-        if creature.id == id:
-            return creature
+    for creature_data in active_creature_data:
+        var entity = get_or_create_entity(creature_data)
+        if entity:
+            entities.append(entity)
 
-    for creature in stable_creatures:
-        if creature.id == id:
-            return creature
+    return entities
+
+func get_or_create_entity(creature_data: CreatureData) -> CreatureEntity:
+    # Return cached entity if exists
+    if _active_entities.has(creature_data.id):
+        return _active_entities[creature_data.id]
+
+    # Create new entity for active creature
+    if creature_data.is_active:
+        var entity = CreatureEntity.new(creature_data)
+        _active_entities[creature_data.id] = entity
+        return entity
+
+    # Don't create entities for stable creatures
+    return null
+
+# Collection Queries - Data Level
+func get_all_creature_data() -> Array[CreatureData]:
+    return active_creature_data + stable_creature_data
+
+func get_active_creature_data() -> Array[CreatureData]:
+    return active_creature_data.duplicate()
+
+func get_stable_creature_data() -> Array[CreatureData]:
+    return stable_creature_data.duplicate()
+
+func get_creature_data_by_id(id: String) -> CreatureData:
+    for creature_data in active_creature_data:
+        if creature_data.id == id:
+            return creature_data
+
+    for creature_data in stable_creature_data:
+        if creature_data.id == id:
+            return creature_data
 
     return null
 
-func get_creatures_by_species(species: String) -> Array[Creature]:
-    var result: Array[Creature] = []
+func get_active_creature_ids() -> Array[String]:
+    var ids: Array[String] = []
+    for creature_data in active_creature_data:
+        ids.append(creature_data.id)
+    return ids
 
-    for creature in get_all_creatures():
-        if creature.species == species:
-            result.append(creature)
+func set_active_creature_ids(ids: Array[String]) -> void:
+    # Used by SaveSystem for loading
+    for creature_data in get_all_creature_data():
+        if creature_data.id in ids:
+            move_to_active(creature_data)
+        else:
+            move_to_stable(creature_data)
+
+func get_creatures_by_species(species_id: String) -> Array[CreatureData]:
+    var result: Array[CreatureData] = []
+
+    for creature_data in get_all_creature_data():
+        if creature_data.species_id == species_id:
+            result.append(creature_data)
 
     return result
 
-func get_creatures_with_tag(tag: String) -> Array[Creature]:
-    var result: Array[Creature] = []
+func get_creatures_with_tag(tag: String) -> Array[CreatureData]:
+    var result: Array[CreatureData] = []
 
-    for creature in get_all_creatures():
-        if creature.has_tag(tag):
-            result.append(creature)
+    for creature_data in get_all_creature_data():
+        if creature_data.has_tag(tag):
+            result.append(creature_data)
 
     return result
 
 func get_creatures_meeting_requirements(
     min_stats: Dictionary = {},
     required_tags: Array[String] = []
-) -> Array[Creature]:
-    var result: Array[Creature] = []
+) -> Array[CreatureData]:
+    var result: Array[CreatureData] = []
 
-    for creature in get_all_creatures():
+    for creature_data in get_all_creature_data():
         var meets_requirements = true
 
         # Check stat requirements
         for stat_name in min_stats:
-            if creature.get_stat(stat_name) < min_stats[stat_name]:
+            if creature_data.get_stat(stat_name) < min_stats[stat_name]:
                 meets_requirements = false
                 break
 
         # Check tag requirements
         if meets_requirements:
             for tag in required_tags:
-                if not creature.has_tag(tag):
+                if not creature_data.has_tag(tag):
                     meets_requirements = false
                     break
 
         if meets_requirements:
-            result.append(creature)
+            result.append(creature_data)
 
     return result
 
 # Sorting Functions
-func sort_by_stat(creatures: Array[Creature], stat_name: String, descending: bool = true) -> Array[Creature]:
+func sort_by_stat(creatures: Array[CreatureData], stat_name: String, descending: bool = true) -> Array[CreatureData]:
     var sorted = creatures.duplicate()
 
     sorted.sort_custom(func(a, b):
@@ -298,18 +369,18 @@ func sort_by_stat(creatures: Array[Creature], stat_name: String, descending: boo
 
     return sorted
 
-func sort_by_total_stats(creatures: Array[Creature], descending: bool = true) -> Array[Creature]:
+func sort_by_total_stats(creatures: Array[CreatureData], descending: bool = true) -> Array[CreatureData]:
     var sorted = creatures.duplicate()
 
     sorted.sort_custom(func(a, b):
-        var a_total = StatManager.calculate_total_stats(a)
-        var b_total = StatManager.calculate_total_stats(b)
+        var a_total = _calculate_total_stats(a)
+        var b_total = _calculate_total_stats(b)
         return a_total > b_total if descending else a_total < b_total
     )
 
     return sorted
 
-func sort_by_age(creatures: Array[Creature], descending: bool = false) -> Array[Creature]:
+func sort_by_age(creatures: Array[CreatureData], descending: bool = false) -> Array[CreatureData]:
     var sorted = creatures.duplicate()
 
     sorted.sort_custom(func(a, b):
@@ -318,18 +389,18 @@ func sort_by_age(creatures: Array[Creature], descending: bool = false) -> Array[
 
     return sorted
 
-func sort_by_name(creatures: Array[Creature]) -> Array[Creature]:
+func sort_by_name(creatures: Array[CreatureData]) -> Array[CreatureData]:
     var sorted = creatures.duplicate()
 
     sorted.sort_custom(func(a, b):
-        return a.name.naturalnocasecmp_to(b.name) < 0
+        return a.creature_name.naturalnocasecmp_to(b.creature_name) < 0
     )
 
     return sorted
 
 # Collection Statistics
 func get_collection_stats() -> Dictionary:
-    var all_creatures = get_all_creatures()
+    var all_creatures = get_all_creature_data()
 
     if all_creatures.is_empty():
         return {
@@ -340,10 +411,10 @@ func get_collection_stats() -> Dictionary:
 
     var stats = {
         "total_count": all_creatures.size(),
-        "active_count": active_creatures.size(),
-        "stable_count": stable_creatures.size(),
+        "active_count": active_creature_data.size(),
+        "stable_count": stable_creature_data.size(),
         "species_distribution": {},
-        "age_distribution": {"young": 0, "adult": 0, "elder": 0},
+        "age_distribution": {"baby": 0, "juvenile": 0, "adult": 0, "elder": 0, "ancient": 0},
         "tag_frequency": {},
         "average_stats": {
             "strength": 0,
@@ -355,34 +426,36 @@ func get_collection_stats() -> Dictionary:
         }
     }
 
-    for creature in all_creatures:
+    for creature_data in all_creatures:
         # Species distribution
-        if not stats.species_distribution.has(creature.species):
-            stats.species_distribution[creature.species] = 0
-        stats.species_distribution[creature.species] += 1
+        if not stats.species_distribution.has(creature_data.species_id):
+            stats.species_distribution[creature_data.species_id] = 0
+        stats.species_distribution[creature_data.species_id] += 1
 
-        # Age distribution
-        match creature.get_age_category():
-            Creature.AgeCategory.YOUNG:
-                stats.age_distribution.young += 1
-            Creature.AgeCategory.ADULT:
-                stats.age_distribution.adult += 1
-            Creature.AgeCategory.ELDER:
-                stats.age_distribution.elder += 1
+        # Age distribution using AgeSystem
+        var age_system = GameCore.get_system("age") as AgeSystem
+        if age_system:
+            var age_category = age_system.get_age_category(creature_data)
+            match age_category:
+                0: stats.age_distribution.baby += 1
+                1: stats.age_distribution.juvenile += 1
+                2: stats.age_distribution.adult += 1
+                3: stats.age_distribution.elder += 1
+                4: stats.age_distribution.ancient += 1
 
         # Tag frequency
-        for tag in creature.tags:
+        for tag in creature_data.tags:
             if not stats.tag_frequency.has(tag):
                 stats.tag_frequency[tag] = 0
             stats.tag_frequency[tag] += 1
 
         # Average stats
-        stats.average_stats.strength += creature.strength
-        stats.average_stats.constitution += creature.constitution
-        stats.average_stats.dexterity += creature.dexterity
-        stats.average_stats.intelligence += creature.intelligence
-        stats.average_stats.wisdom += creature.wisdom
-        stats.average_stats.discipline += creature.discipline
+        stats.average_stats.strength += creature_data.strength
+        stats.average_stats.constitution += creature_data.constitution
+        stats.average_stats.dexterity += creature_data.dexterity
+        stats.average_stats.intelligence += creature_data.intelligence
+        stats.average_stats.wisdom += creature_data.wisdom
+        stats.average_stats.discipline += creature_data.discipline
 
     # Calculate averages
     var count = all_creatures.size()
@@ -397,23 +470,23 @@ func get_collection_stats() -> Dictionary:
 
 # Utility Functions
 func has_active_slots() -> bool:
-    return active_creatures.size() < max_active_slots
+    return active_creature_data.size() < max_active_slots
 
 func get_available_active_slots() -> int:
-    return max_active_slots - active_creatures.size()
+    return max_active_slots - active_creature_data.size()
 
-func expand_active_slots(additional_slots: int = 1):
+func expand_active_slots(additional_slots: int = 1) -> void:
     max_active_slots = mini(max_active_slots + additional_slots, MAX_ACTIVE_SLOTS)
 
-func release_creature(creature: Creature) -> bool:
-    return remove_creature(creature)
+func release_creature(creature_data: CreatureData) -> bool:
+    return remove_creature_data(creature_data)
 
-func release_multiple(creatures: Array[Creature]):
-    for creature in creatures:
-        release_creature(creature)
+func release_multiple(creatures: Array[CreatureData]) -> void:
+    for creature_data in creatures:
+        release_creature(creature_data)
 
 # Team Building Helpers
-func find_best_team_for_quest(requirements: Dictionary) -> Array[Creature]:
+func find_best_team_for_quest(requirements: Dictionary) -> Array[CreatureData]:
     var candidates = get_creatures_meeting_requirements(
         requirements.get("min_stats", {}),
         requirements.get("required_tags", [])
@@ -423,7 +496,7 @@ func find_best_team_for_quest(requirements: Dictionary) -> Array[Creature]:
     candidates = sort_by_total_stats(candidates)
 
     # Return top candidates up to active slot limit
-    var team: Array[Creature] = []
+    var team: Array[CreatureData] = []
     for i in mini(candidates.size(), max_active_slots):
         team.append(candidates[i])
 
@@ -431,7 +504,7 @@ func find_best_team_for_quest(requirements: Dictionary) -> Array[Creature]:
 
 func find_breeding_pairs(egg_group: String = "") -> Array[Dictionary]:
     var pairs: Array[Dictionary] = []
-    var all_creatures = get_all_creatures()
+    var all_creatures = get_all_creature_data()
 
     for i in range(all_creatures.size()):
         for j in range(i + 1, all_creatures.size()):
@@ -450,59 +523,41 @@ func find_breeding_pairs(egg_group: String = "") -> Array[Dictionary]:
     return pairs
 
 # Batch Operations
-func activate_all_of_species(species: String):
-    var creatures = get_creatures_by_species(species)
-    for creature in creatures:
+func activate_all_of_species(species_id: String) -> void:
+    var creatures = get_creatures_by_species(species_id)
+    for creature_data in creatures:
         if has_active_slots():
-            move_to_active(creature)
+            move_to_active(creature_data)
 
-func retire_elderly():
-    var elderly: Array[Creature] = []
+func retire_elderly() -> void:
+    var age_system = GameCore.get_system("age") as AgeSystem
+    if not age_system:
+        return
 
-    for creature in active_creatures:
-        if AgeManager.should_retire(creature):
-            elderly.append(creature)
+    var elderly: Array[CreatureData] = []
 
-    for creature in elderly:
-        move_to_stable(creature)
+    for creature_data in active_creature_data:
+        if age_system.should_retire(creature_data):
+            elderly.append(creature_data)
+
+    for creature_data in elderly:
+        move_to_stable(creature_data)
 
 # Save/Load Integration
-func save_collection() -> Dictionary:
-    var data = {
-        "active_creatures": [],
-        "stable_creatures": [],
-        "max_active_slots": max_active_slots
-    }
+func clear_all_creatures() -> void:
+    active_creature_data.clear()
+    stable_creature_data.clear()
+    _active_entities.clear()
 
-    for creature in active_creatures:
-        data.active_creatures.append(creature.to_dict())
-
-    for creature in stable_creatures:
-        data.stable_creatures.append(creature.to_dict())
-
-    return data
-
-func load_collection(data: Dictionary):
-    active_creatures.clear()
-    stable_creatures.clear()
-
-    max_active_slots = data.get("max_active_slots", DEFAULT_ACTIVE_SLOTS)
-
-    for creature_data in data.get("active_creatures", []):
-        var creature = Creature.from_dict(creature_data)
-        creature.is_active = true
-        active_creatures.append(creature)
-
-    for creature_data in data.get("stable_creatures", []):
-        var creature = Creature.from_dict(creature_data)
-        creature.is_active = false
-        stable_creatures.append(creature)
-
-    emit_signal("collection_changed")
+# Helper methods
+func _calculate_total_stats(creature_data: CreatureData) -> int:
+    return creature_data.strength + creature_data.constitution + creature_data.dexterity + \
+           creature_data.intelligence + creature_data.wisdom + creature_data.discipline
 ```
 
-### Collection Filter System (`scripts/ui/collection_filter.gd`)
+### Collection Filter System - Utility Class
 ```gdscript
+# scripts/utils/collection_filter.gd
 class_name CollectionFilter
 extends RefCounted
 
@@ -513,21 +568,22 @@ enum FilterType {
     STAT_MINIMUM,
     STAT_MAXIMUM,
     AGE_CATEGORY,
-    EGG_GROUP
+    EGG_GROUP,
+    ACTIVE_STATUS
 }
 
 var filters: Array[Dictionary] = []
 
-func add_filter(type: FilterType, value):
+func add_filter(type: FilterType, value) -> void:
     filters.append({
         "type": type,
         "value": value
     })
 
-func clear_filters():
+func clear_filters() -> void:
     filters.clear()
 
-func apply_filters(creatures: Array[Creature]) -> Array[Creature]:
+func apply_filters(creatures: Array[CreatureData]) -> Array[CreatureData]:
     var filtered = creatures.duplicate()
 
     for filter in filters:
@@ -535,56 +591,66 @@ func apply_filters(creatures: Array[Creature]) -> Array[Creature]:
 
     return filtered
 
-func _apply_single_filter(creatures: Array[Creature], filter: Dictionary) -> Array[Creature]:
-    var result: Array[Creature] = []
+func _apply_single_filter(creatures: Array[CreatureData], filter: Dictionary) -> Array[CreatureData]:
+    var result: Array[CreatureData] = []
 
-    for creature in creatures:
+    for creature_data in creatures:
         var passes = false
 
         match filter.type:
             FilterType.SPECIES:
-                passes = creature.species == filter.value
+                passes = creature_data.species_id == filter.value
 
             FilterType.TAG:
-                passes = creature.has_tag(filter.value)
+                passes = creature_data.has_tag(filter.value)
 
             FilterType.STAT_MINIMUM:
                 var stat_name = filter.value.stat
                 var min_value = filter.value.min
-                passes = creature.get_stat(stat_name) >= min_value
+                passes = creature_data.get_stat(stat_name) >= min_value
 
             FilterType.STAT_MAXIMUM:
                 var stat_name = filter.value.stat
                 var max_value = filter.value.max
-                passes = creature.get_stat(stat_name) <= max_value
+                passes = creature_data.get_stat(stat_name) <= max_value
 
             FilterType.AGE_CATEGORY:
-                passes = creature.get_age_category() == filter.value
+                var age_system = GameCore.get_system("age") as AgeSystem
+                if age_system:
+                    passes = age_system.get_age_category(creature_data) == filter.value
 
             FilterType.EGG_GROUP:
-                passes = creature.egg_group == filter.value
+                passes = creature_data.egg_group == filter.value
+
+            FilterType.ACTIVE_STATUS:
+                passes = creature_data.is_active == filter.value
 
             FilterType.NONE:
                 passes = true
 
         if passes:
-            result.append(creature)
+            result.append(creature_data)
 
     return result
 ```
 
 ## Success Metrics
+- CollectionSystem loads as GameCore subsystem in < 10ms
 - Collection operations complete in < 10ms
 - Handle 1000+ creatures efficiently
 - Sorting/filtering responsive with large collections
 - No memory leaks with collection operations
 - Save/load preserves collection integrity
+- CreatureEntity creation on-demand works correctly
+- All signals properly routed through SignalBus
 
 ## Notes
+- CollectionSystem is a GameCore subsystem, not an autoload
+- Stores CreatureData, creates CreatureEntity only when needed
+- Entity cache managed automatically
 - Consider pagination for large collections
 - Cache statistics for performance
-- Add collection achievements/milestones
-- Plan for collection sharing features
+- Add collection achievements/milestones in future stages
 
 ## Estimated Time
 4-5 hours for implementation and testing

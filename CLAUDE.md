@@ -19,9 +19,10 @@ A creature collection/breeding game built with Godot 4.5. Currently in planning/
 - **MVC Pattern**: Resources for data, Nodes for behavior, clear separation
 - **Single GameCore**: One autoload managing subsystems (NOT multiple singletons)
 - **SignalBus**: Centralized signal routing (Resources don't emit signals)
-- **ConfigFile Saves**: Robust save system with versioning (NOT store_var)
+- **Flexible Save System**: ConfigFile for settings, ResourceSaver for complex data (NOT store_var)
 - **Lazy Loading**: Subsystems and resources loaded on demand
 - **Object Pooling**: UI elements reused for performance
+- **Cache Management**: Handle Godot 4 resource cache bugs with workarounds
 
 ## Godot 4.5 Implementation Guidelines
 
@@ -46,10 +47,21 @@ var data: CreatureData
 # CORRECT: Use SignalBus for communication
 SignalBus.creature_created.emit(creature_data)
 
-# CORRECT: ConfigFile for saves (NOT store_var)
+# Save System Options (choose based on needs):
+# Option 1: ConfigFile for simple data/settings
 var config := ConfigFile.new()
 config.set_value("creatures", id, creature.to_dict())
 config.save("user://save.cfg")
+
+# Option 2: ResourceSaver for complex Resources (Godot's native approach)
+ResourceSaver.save(creature_data, "user://creature_%s.tres" % id)
+# WARNING: Resources can contain scripts - validate loaded data!
+
+# Resource Cache Workaround (Godot 4 bug):
+# After saving:
+resource.take_over_path(resource.resource_path)
+# When loading:
+ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 ```
 
 ### Performance Considerations
@@ -57,6 +69,8 @@ config.save("user://save.cfg")
 - **Resource Preloading**: Cache frequently used species templates
 - **Lazy Loading**: Load creature sprites only when visible
 - **Dictionary Caching**: Store calculated stats to avoid recomputation
+- **Signal Connections**: Prefer loaded Resources over .new() for reliable signals
+- **Cache Invalidation**: Use take_over_path() after saving Resources to update cache
 
 ## Implementation Plan
 

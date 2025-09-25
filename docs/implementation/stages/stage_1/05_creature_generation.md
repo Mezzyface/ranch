@@ -1,15 +1,23 @@
 # Task 05: Creature Generation System
 
 ## Overview
-Implement the creature generation system that creates new creatures with randomized stats within defined ranges, appropriate tags, and species-specific characteristics.
+Implement the creature generation system that creates new creatures with randomized stats within defined ranges, appropriate tags, and species-specific characteristics using the improved CreatureData/CreatureEntity separation.
 
 ## Dependencies
-- Task 02: Creature Class (complete)
+- Task 01: GameCore Setup (complete)
+- Task 02: CreatureData/CreatureEntity separation (complete)
 - Task 03: Stat System (complete)
 - Task 04: Tag System (complete)
 - Design documents: `creature.md`, `shop.md`
 
 ## Context
+**CRITICAL ARCHITECTURE CHANGES**:
+- Generate CreatureData (pure data), not full CreatureEntity
+- Use TagSystem through GameCore for tag validation
+- All generation goes through GameCore subsystems
+- CreatureEntity created only when needed for behavior
+- Will be updated to use SpeciesSystem in Task 10
+
 From the design documents:
 - Creatures are generated from eggs with guaranteed stat ranges
 - Each species has defined stat distributions and tag sets
@@ -66,14 +74,14 @@ Define creature species with their characteristics:
 
 ## Implementation Steps
 
-1. **Create Species Database**
-   - Species definitions with all parameters
-   - Stat ranges and tag sets
-   - Lifespan and egg groups
+1. **Create CreatureGenerator Class**
+   - Static utility class (RefCounted)
+   - Generates CreatureData instances
+   - Uses GameCore subsystems for validation
 
 2. **Implement Generation Algorithm**
    - Stat randomization within ranges
-   - Tag assignment
+   - Tag assignment through TagSystem
    - Name generation
 
 3. **Create Factory Methods**
@@ -83,7 +91,7 @@ Define creature species with their characteristics:
 
 4. **Add Validation**
    - Verify generated stats within bounds
-   - Ensure required tags present
+   - Use TagSystem to validate tags
    - Validate species parameters
 
 ## Test Criteria
@@ -91,7 +99,7 @@ Define creature species with their characteristics:
 ### Unit Tests
 - [ ] Generate 100 Scuttleguards with valid stats
 - [ ] All generated stats within species ranges
-- [ ] Required tags always present
+- [ ] Required tags always present via TagSystem
 - [ ] Names generated correctly
 - [ ] Age categories set appropriately
 
@@ -102,27 +110,31 @@ Define creature species with their characteristics:
 - [ ] Edge cases handled (min/max values)
 
 ### Integration Tests
+- [ ] Generated CreatureData works with CreatureEntity
 - [ ] Generated creatures work with stat system
-- [ ] Generated creatures work with tag system
 - [ ] Generated creatures can be saved/loaded
 - [ ] Generated creatures meet quest requirements
+- [ ] TagSystem properly validates generated tags
 
 ## Code Implementation
 
-### Species Database (`scripts/data/species_database.gd`)
+### CreatureGenerator - Updated for Improved Architecture
 ```gdscript
+# scripts/generation/creature_generator.gd
+class_name CreatureGenerator
+extends RefCounted
+
+enum GenerationType {
+    UNIFORM,    # Equal probability across range
+    GAUSSIAN,   # Bell curve distribution
+    HIGH_ROLL,  # Favor higher values
+    LOW_ROLL    # Favor lower values
+}
+
+# Species database - will be replaced by SpeciesSystem in Task 10
 # NOTE: This is a simplified version for Stage 1
-# TODO: Migrate to using SpeciesResource system (see ../../../design/systems/species.md)
-# The SpeciesResource system provides better organization with:
-# - Visual assets (sprite frames, icons)
-# - Stat ranges and generation rules
-# - Tags and breeding information
-# - Economic data (prices, rarity)
-# For now, using dictionary-based data for quick prototyping
-
-class_name SpeciesDatabase
-extends Resource
-
+# TODO: Migrate to using SpeciesSystem when implemented in Task 10
+# This hardcoded data will be replaced by SpeciesResource files
 const SPECIES_DATA = {
     "scuttleguard": {
         "display_name": "Scuttleguard",
@@ -135,13 +147,9 @@ const SPECIES_DATA = {
             "wisdom": {"min": 110, "max": 170},
             "discipline": {"min": 90, "max": 150}
         },
-        # NOTE: Using strings for tags in Stage 1
-        # TODO: Convert to Enums.CreatureTag values when enum system is implemented
         "guaranteed_tags": ["Small", "Territorial", "Dark Vision"],
         "optional_tags": ["Nocturnal"],
         "lifespan_weeks": 520,
-        # NOTE: Using string for egg_group in Stage 1
-        # TODO: Convert to Enums.EggGroup when breeding system is implemented
         "egg_group": "Field",
         "rarity": "common",
         "base_price": 200
@@ -202,25 +210,6 @@ const SPECIES_DATA = {
         "egg_group": "Bug",
         "rarity": "common",
         "base_price": 400
-    },
-
-    "cave_stalker": {
-        "display_name": "Cave Stalker",
-        "description": "Stealthy cave dweller with excellent mobility",
-        "stat_ranges": {
-            "strength": {"min": 90, "max": 150},
-            "constitution": {"min": 110, "max": 170},
-            "dexterity": {"min": 150, "max": 250},
-            "intelligence": {"min": 80, "max": 130},
-            "wisdom": {"min": 140, "max": 230},
-            "discipline": {"min": 130, "max": 190}
-        },
-        "guaranteed_tags": ["Small", "Dark Vision", "Stealthy", "Sure-Footed"],
-        "optional_tags": ["Nocturnal"],
-        "lifespan_weeks": 520,
-        "egg_group": "Field",
-        "rarity": "uncommon",
-        "base_price": 600
     }
 }
 
@@ -241,87 +230,75 @@ const NAME_POOLS = {
     "glow_grub": [
         "Glow", "Lumina", "Spark", "Shimmer", "Gleam", "Radiance",
         "Beacon", "Flash", "Bright", "Flicker"
-    ],
-    "cave_stalker": [
-        "Shadow", "Shade", "Prowl", "Stealth", "Silent", "Whisper",
-        "Phantom", "Ghost", "Specter", "Wraith"
     ]
 }
 
-static func get_species_data(species_id: String) -> Dictionary:
-    return SPECIES_DATA.get(species_id, {})
-
-static func species_exists(species_id: String) -> bool:
-    return SPECIES_DATA.has(species_id)
-
-static func get_all_species() -> Array[String]:
-    var result: Array[String] = []
-    for species in SPECIES_DATA:
-        result.append(species)
-    return result
-
-static func get_random_name(species_id: String) -> String:
-    if NAME_POOLS.has(species_id):
-        var names = NAME_POOLS[species_id]
-        return names[randi() % names.size()]
-    return "Unknown"
-```
-
-### Creature Generator (`scripts/creatures/creature_generator.gd`)
-```gdscript
-class_name CreatureGenerator
-extends RefCounted
-
-enum GenerationType {
-    UNIFORM,    # Equal probability across range
-    GAUSSIAN,   # Bell curve distribution
-    HIGH_ROLL,  # Favor higher values
-    LOW_ROLL    # Favor lower values
-}
-
-# Generate a creature from species ID
-static func generate_creature(
+# Generate a CreatureData from species ID
+static func generate_creature_data(
     species_id: String,
     generation_type: GenerationType = GenerationType.UNIFORM,
     age_weeks: int = 0
-) -> Creature:
-    if not SpeciesDatabase.species_exists(species_id):
+) -> CreatureData:
+    if not species_exists(species_id):
         push_error("Unknown species: " + species_id)
         return null
 
-    var species_data = SpeciesDatabase.get_species_data(species_id)
-    var creature = Creature.new()
+    var species_data = get_species_data(species_id)
+    var creature_data = CreatureData.new()
 
     # Set basic properties
-    creature.species = species_id
-    creature.name = SpeciesDatabase.get_random_name(species_id)
-    creature.lifespan = species_data.lifespan_weeks
-    creature.egg_group = species_data.egg_group
-    creature.age_weeks = age_weeks
+    creature_data.species_id = species_id
+    creature_data.creature_name = get_random_name(species_id)
+    creature_data.lifespan = species_data.lifespan_weeks
+    creature_data.egg_group = species_data.egg_group
+    creature_data.age_weeks = age_weeks
 
     # Generate stats
     var stat_ranges = species_data.stat_ranges
-    creature.strength = _generate_stat(stat_ranges.strength, generation_type)
-    creature.constitution = _generate_stat(stat_ranges.constitution, generation_type)
-    creature.dexterity = _generate_stat(stat_ranges.dexterity, generation_type)
-    creature.intelligence = _generate_stat(stat_ranges.intelligence, generation_type)
-    creature.wisdom = _generate_stat(stat_ranges.wisdom, generation_type)
-    creature.discipline = _generate_stat(stat_ranges.discipline, generation_type)
+    creature_data.strength = _generate_stat(stat_ranges.strength, generation_type)
+    creature_data.constitution = _generate_stat(stat_ranges.constitution, generation_type)
+    creature_data.dexterity = _generate_stat(stat_ranges.dexterity, generation_type)
+    creature_data.intelligence = _generate_stat(stat_ranges.intelligence, generation_type)
+    creature_data.wisdom = _generate_stat(stat_ranges.wisdom, generation_type)
+    creature_data.discipline = _generate_stat(stat_ranges.discipline, generation_type)
 
-    # Assign tags
+    # Assign guaranteed tags (no validation needed - they're guaranteed valid)
     for tag in species_data.guaranteed_tags:
-        creature.add_tag(tag)
+        creature_data.tags.append(tag)
 
-    # Optional tags (25% chance each)
+    # Optional tags (25% chance each) - validate through TagSystem if available
+    var tag_system = GameCore.get_system("tag") as TagSystem
     for tag in species_data.get("optional_tags", []):
         if randf() < 0.25:
-            creature.add_tag(tag)
+            if tag_system:
+                # Use TagSystem validation
+                var can_add = tag_system.can_add_tag_to_creature(creature_data, tag)
+                if can_add.can_add:
+                    creature_data.tags.append(tag)
+            else:
+                # Fallback for testing without GameCore
+                creature_data.tags.append(tag)
 
     # Set stamina based on constitution
-    creature.stamina_max = 50 + (creature.constitution / 10)
-    creature.stamina_current = creature.stamina_max
+    creature_data.stamina_max = 50 + (creature_data.constitution / 10)
+    creature_data.stamina_current = creature_data.stamina_max
 
-    return creature
+    return creature_data
+
+# Generate CreatureEntity from species ID (includes behavior)
+# NOTE: Only use when behavior is immediately needed
+static func generate_creature_entity(
+    species_id: String,
+    generation_type: GenerationType = GenerationType.UNIFORM,
+    age_weeks: int = 0
+) -> CreatureEntity:
+    var creature_data = generate_creature_data(species_id, generation_type, age_weeks)
+    if not creature_data:
+        return null
+
+    # CreatureEntity will be managed by CollectionSystem
+    var creature_entity = CreatureEntity.new(creature_data)
+    return creature_entity
 
 # Generate stat value based on range and type
 static func _generate_stat(stat_range: Dictionary, generation_type: GenerationType) -> int:
@@ -354,18 +331,24 @@ static func _generate_stat(stat_range: Dictionary, generation_type: GenerationTy
     return min_val + int(normalized_value * range_size)
 
 # Generate a starter creature for new players
-static func generate_starter_creature(species_id: String) -> Creature:
-    var creature = generate_creature(species_id, GenerationType.GAUSSIAN, 26)  # 6 months old
-    creature.is_active = true
+static func generate_starter_creature(species_id: String) -> CreatureEntity:
+    var creature_entity = generate_creature_entity(species_id, GenerationType.GAUSSIAN, 26)  # 6 months old
+    if not creature_entity:
+        return null
+
+    creature_entity.set_active(true)
+
     # Starters get a slight stat boost
-    creature.strength = mini(creature.strength + 5, 1000)
-    creature.constitution = mini(creature.constitution + 5, 1000)
-    creature.wisdom = mini(creature.wisdom + 5, 1000)
-    creature.discipline = mini(creature.discipline + 5, 1000)
-    return creature
+    var data = creature_entity.data
+    data.strength = mini(data.strength + 5, 1000)
+    data.constitution = mini(data.constitution + 5, 1000)
+    data.wisdom = mini(data.wisdom + 5, 1000)
+    data.discipline = mini(data.discipline + 5, 1000)
+
+    return creature_entity
 
 # Generate creature from shop egg
-static func generate_from_egg(species_id: String, quality: String = "normal") -> Creature:
+static func generate_from_egg(species_id: String, quality: String = "normal") -> CreatureData:
     var generation_type = GenerationType.UNIFORM
 
     match quality:
@@ -377,77 +360,85 @@ static func generate_from_egg(species_id: String, quality: String = "normal") ->
             generation_type = GenerationType.GAUSSIAN
 
     # Eggs hatch as young creatures (5% of lifespan)
-    var species_data = SpeciesDatabase.get_species_data(species_id)
+    var species_data = get_species_data(species_id)
     var age = int(species_data.lifespan_weeks * 0.05)
 
-    return generate_creature(species_id, generation_type, age)
+    return generate_creature_data(species_id, generation_type, age)
 
 # Batch generation for testing or population
-static func generate_population(
+static func generate_population_data(
     species_id: String,
     count: int,
     generation_type: GenerationType = GenerationType.UNIFORM
-) -> Array[Creature]:
-    var population: Array[Creature] = []
+) -> Array[CreatureData]:
+    var population: Array[CreatureData] = []
 
     for i in count:
         var age = randi_range(26, 260)  # Random ages 6 months to 5 years
-        var creature = generate_creature(species_id, generation_type, age)
-        if creature:
-            population.append(creature)
+        var creature_data = generate_creature_data(species_id, generation_type, age)
+        if creature_data:
+            population.append(creature_data)
 
     return population
 
 # Validate generated creature meets species specifications
-static func validate_creature(creature: Creature) -> Dictionary:
+static func validate_creature_data(creature_data: CreatureData) -> Dictionary:
     var result = {
         "valid": true,
         "errors": []
     }
 
-    if not SpeciesDatabase.species_exists(creature.species):
+    if not species_exists(creature_data.species_id):
         result.valid = false
-        result.errors.append("Invalid species: " + creature.species)
+        result.errors.append("Invalid species: " + creature_data.species_id)
         return result
 
-    var species_data = SpeciesDatabase.get_species_data(creature.species)
+    var species_data = get_species_data(creature_data.species_id)
     var stat_ranges = species_data.stat_ranges
 
     # Check stat ranges
-    if creature.strength < stat_ranges.strength.min or creature.strength > stat_ranges.strength.max:
+    if creature_data.strength < stat_ranges.strength.min or creature_data.strength > stat_ranges.strength.max:
         result.valid = false
         result.errors.append("Strength out of range")
 
-    if creature.constitution < stat_ranges.constitution.min or creature.constitution > stat_ranges.constitution.max:
+    if creature_data.constitution < stat_ranges.constitution.min or creature_data.constitution > stat_ranges.constitution.max:
         result.valid = false
         result.errors.append("Constitution out of range")
 
-    if creature.dexterity < stat_ranges.dexterity.min or creature.dexterity > stat_ranges.dexterity.max:
+    if creature_data.dexterity < stat_ranges.dexterity.min or creature_data.dexterity > stat_ranges.dexterity.max:
         result.valid = false
         result.errors.append("Dexterity out of range")
 
-    if creature.intelligence < stat_ranges.intelligence.min or creature.intelligence > stat_ranges.intelligence.max:
+    if creature_data.intelligence < stat_ranges.intelligence.min or creature_data.intelligence > stat_ranges.intelligence.max:
         result.valid = false
         result.errors.append("Intelligence out of range")
 
-    if creature.wisdom < stat_ranges.wisdom.min or creature.wisdom > stat_ranges.wisdom.max:
+    if creature_data.wisdom < stat_ranges.wisdom.min or creature_data.wisdom > stat_ranges.wisdom.max:
         result.valid = false
         result.errors.append("Wisdom out of range")
 
-    if creature.discipline < stat_ranges.discipline.min or creature.discipline > stat_ranges.discipline.max:
+    if creature_data.discipline < stat_ranges.discipline.min or creature_data.discipline > stat_ranges.discipline.max:
         result.valid = false
         result.errors.append("Discipline out of range")
 
-    # Check required tags
-    for tag in species_data.guaranteed_tags:
-        if not creature.has_tag(tag):
+    # Check required tags using TagSystem if available
+    var tag_system = GameCore.get_system("tag") as TagSystem
+    if tag_system:
+        var tag_validation = tag_system.validate_tag_combination(creature_data.tags)
+        if not tag_validation.valid:
             result.valid = false
-            result.errors.append("Missing required tag: " + tag)
+            result.errors.append_array(tag_validation.errors)
+    else:
+        # Fallback validation without TagSystem
+        for tag in species_data.guaranteed_tags:
+            if not creature_data.has_tag(tag):
+                result.valid = false
+                result.errors.append("Missing required tag: " + tag)
 
     return result
 
 # Generate stats summary for debugging
-static func get_generation_statistics(creatures: Array[Creature]) -> Dictionary:
+static func get_generation_statistics(creatures: Array[CreatureData]) -> Dictionary:
     if creatures.is_empty():
         return {}
 
@@ -497,20 +488,62 @@ static func get_generation_statistics(creatures: Array[Creature]) -> Dictionary:
         stats[stat_name]["average"] = stats[stat_name].total / creatures.size()
 
     return stats
+
+# Utility methods for species data (temporary - will move to SpeciesSystem)
+static func get_species_data(species_id: String) -> Dictionary:
+    return SPECIES_DATA.get(species_id, {})
+
+static func species_exists(species_id: String) -> bool:
+    return SPECIES_DATA.has(species_id)
+
+static func get_all_species() -> Array[String]:
+    var result: Array[String] = []
+    for species in SPECIES_DATA:
+        result.append(species)
+    return result
+
+static func get_random_name(species_id: String) -> String:
+    if NAME_POOLS.has(species_id):
+        var names = NAME_POOLS[species_id]
+        return names[randi() % names.size()]
+    return "Unknown"
+```
+
+### Generation Example Usage
+```gdscript
+# Example of how to use the new generation system
+
+# Generate just data (for save/load, serialization)
+var creature_data = CreatureGenerator.generate_creature_data("scuttleguard")
+
+# Generate full entity (for gameplay, behaviors)
+var creature_entity = CreatureGenerator.generate_creature_entity("scuttleguard")
+
+# Generate starter for new game
+var starter = CreatureGenerator.generate_starter_creature("scuttleguard")
+
+# Generate from egg
+var hatched_data = CreatureGenerator.generate_from_egg("wind_dancer", "premium")
 ```
 
 ## Success Metrics
-- Generation of 1000 creatures takes < 100ms
+- Generation of 1000 CreatureData instances takes < 100ms
 - All generated creatures pass validation
 - Stat distributions match expected patterns
 - No memory leaks with large populations
-- Generated creatures work in game systems
+- Generated creatures work with all game systems
+- TagSystem integration functions correctly
+- CreatureData/CreatureEntity separation maintained
+- Integration with SpeciesSystem (after Task 10)
 
 ## Notes
+- CreatureGenerator is a utility class, not a GameCore subsystem
+- Generates CreatureData by default, CreatureEntity only when needed
+- Uses TagSystem through GameCore for validation
+- Will be updated to use SpeciesSystem in Task 10
 - Consider seed-based generation for reproducibility
 - Cache species data for performance
-- Add more species as game expands
-- Consider rare/legendary generation types
+- Hardcoded species data is temporary for Stage 1 only
 
 ## Estimated Time
 4-5 hours for implementation and testing

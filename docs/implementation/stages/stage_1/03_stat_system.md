@@ -1,394 +1,289 @@
 # Task 03: Stat System Implementation
 
 ## Overview
-Implement the complete stat system with 6 core stats, their growth patterns, validation, and modification mechanics as defined in the game design.
+Create a stat management system as a GameCore subsystem (NOT an autoload) that handles all stat calculations, modifications, and validations for creatures. Works with CreatureData resources and CreatureEntity nodes.
 
 ## Dependencies
-- Task 01: Project Setup (complete)
-- Task 02: Creature Class (complete)
-- Design document: `stats.md`
+- Task 01: Project Setup with GameCore (complete)
+- Task 02: CreatureData and CreatureEntity (complete)
+- Access to design documents: `stats.md`
 
 ## Context
-From `stats.md`:
-- 6 core stats: Strength (STR), Constitution (CON), Dexterity (DEX), Intelligence (INT), Wisdom (WIS), Discipline (DIS)
-- Stats range from 0-1000 with logarithmic growth
-- Each stat serves specific gameplay purposes
-- Stats are modified by age, food, and training
-- Stats determine quest eligibility and competition performance
+From the design documentation:
+- 6 core stats: STR, CON, DEX, INT, WIS, DIS
+- Stat range: 0-1000
+- Stats affected by age modifiers
+- Stats used in quest requirements and competitions
+
+**CRITICAL**: This is a subsystem of GameCore, NOT a separate autoload!
 
 ## Requirements
 
-### Stat Definitions
-Create a comprehensive stat system that includes:
+### StatSystem Subsystem
+Location: `scripts/systems/stat_system.gd`
+- Lazy-loaded by GameCore when first accessed
+- Provides stat calculation utilities
+- Handles stat validation and boundaries
+- Manages stat modifiers and effects
 
-1. **Stat Enumeration**
-   - STR (Strength): Physical power, combat ability
-   - CON (Constitution): Health, endurance, stamina
-   - DEX (Dexterity): Speed, agility, precision
-   - INT (Intelligence): Mental capacity, learning
-   - WIS (Wisdom): Awareness, intuition, perception
-   - DIS (Discipline): Obedience, reliability, focus
+### Core Functionality
+1. **Stat Calculations**
+   - Base stat values (0-1000)
+   - Age modifiers application
+   - Temporary effects tracking
+   - Combined stat calculations
 
-2. **Growth Patterns**
-   - Base growth: +5 to +15 per training session
-   - Diminishing returns above 500
-   - Soft cap at 800 (very slow growth)
-   - Hard cap at 1000
+2. **Stat Validation**
+   - Ensure values stay within bounds
+   - Validate stat modifications
+   - Check stat requirements for quests
 
-3. **Stat Modifiers**
-   - Age modifiers (young +10%, adult 0%, elder -10%)
-   - Food bonuses (+50% training effectiveness)
-   - Temporary effects (competition bonuses, etc.)
-
-4. **Validation Rules**
-   - Stats cannot be negative
-   - Stats cannot exceed 1000
-   - Modified stats respect boundaries
-   - Growth calculations prevent overflow
-
-### StatManager Singleton
-Create a manager for stat-related operations:
-```
-StatManager (Node)
-├── Stat calculations
-├── Growth formulas
-├── Modifier tracking
-└── Validation methods
-```
+3. **Stat Comparisons**
+   - Compare creature stats for competitions
+   - Calculate stat-based performance scores
+   - Determine stat advantages/disadvantages
 
 ## Implementation Steps
 
-1. **Create Stat Constants**
-   - Define stat enums
-   - Set growth constants
-   - Define modifier types
+1. **Create StatSystem as GameCore Subsystem**
+   - Create `scripts/systems/stat_system.gd`
+   - Extends Node (NOT autoloaded)
+   - Lazy-loaded by GameCore
 
-2. **Implement Growth System**
-   - Base growth calculation
-   - Diminishing returns formula
-   - Food modifier application
-   - Age modifier application
+2. **Add to GameCore Loader**
+   - Update GameCore._load_system() to include "stat" case
+   - System created only when first requested
 
-3. **Create StatModifier Class**
-   - Temporary stat modifications
-   - Duration tracking
-   - Stacking rules
+3. **Implement Core Methods**
+   - Stat calculations with modifiers
+   - Validation functions
+   - Comparison utilities
 
-4. **Implement Validation System**
-   - Boundary checking
-   - Growth validation
-   - Modifier validation
+4. **Connect to SignalBus**
+   - Listen for stat change events
+   - Emit stat-related signals through SignalBus
 
-5. **Add Utility Functions**
-   - Stat comparison methods
-   - Requirement checking
-   - Performance calculations
+5. **Create Unit Tests**
+   - Test stat boundaries
+   - Test modifier calculations
+   - Test validation logic
 
 ## Test Criteria
 
 ### Unit Tests
-- [ ] Stats initialize at correct default values
-- [ ] Stat growth stays within expected ranges
-- [ ] Diminishing returns apply correctly above 500
-- [ ] Stats cannot exceed 1000
-- [ ] Stats cannot go below 0
+- [ ] Stats clamp to 0-1000 range
 - [ ] Age modifiers apply correctly
-- [ ] Food bonuses calculate properly
-- [ ] Multiple modifiers stack correctly
-
-### Growth Pattern Tests
-- [ ] Training from 0-100: +10-15 per session
-- [ ] Training from 100-500: +7-12 per session
-- [ ] Training from 500-800: +3-7 per session
-- [ ] Training from 800-1000: +1-3 per session
+- [ ] Stat calculations are accurate
+- [ ] Invalid stat names are rejected
+- [ ] Modifiers stack properly
 
 ### Integration Tests
-- [ ] Creature stats update correctly
-- [ ] Modified stats calculate properly for requirements
-- [ ] Performance scores use modified stats
-- [ ] Stat changes persist through save/load
+- [ ] StatSystem loads via GameCore
+- [ ] Works with CreatureData resources
+- [ ] Signals emit through SignalBus
+- [ ] No memory leaks with 1000+ creatures
 
-## Code Implementation
+## Code Template
 
-### Stat Constants (`scripts/systems/stat_constants.gd`)
+### StatSystem - GameCore Subsystem
 ```gdscript
-class_name StatConstants
-extends Resource
-
-# Use global enums from Enums.gd instead of defining locally
-# StatType enum is defined in global Enums.gd
-
-const STAT_NAMES = {
-    Enums.StatType.STRENGTH: "STR",
-    Enums.StatType.CONSTITUTION: "CON",
-    Enums.StatType.DEXTERITY: "DEX",
-    Enums.StatType.INTELLIGENCE: "INT",
-    Enums.StatType.WISDOM: "WIS",
-    Enums.StatType.DISCIPLINE: "DIS"
-}
-
-const STAT_DESCRIPTIONS = {
-    Enums.StatType.STRENGTH: "Physical power and combat ability",
-    Enums.StatType.CONSTITUTION: "Health, endurance, and stamina",
-    Enums.StatType.DEXTERITY: "Speed, agility, and precision",
-    Enums.StatType.INTELLIGENCE: "Mental capacity and learning",
-    Enums.StatType.WISDOM: "Awareness, intuition, and perception",
-    Enums.StatType.DISCIPLINE: "Obedience, reliability, and focus"
-}
-
-# Growth Constants
-const BASE_GROWTH_MIN = 5
-const BASE_GROWTH_MAX = 15
-const DIMINISHING_THRESHOLD = 500
-const SOFT_CAP = 800
-const HARD_CAP = 1000
-
-# Modifier Types could be global enum but kept local if only used in stat system
-enum ModifierType {
-    AGE,
-    FOOD,
-    TEMPORARY,
-    EQUIPMENT,
-    STATUS_EFFECT
-}
-```
-
-### StatModifier Class (`scripts/creatures/stat_modifier.gd`)
-```gdscript
-class_name StatModifier
-extends Resource
-
-@export var modifier_type: StatConstants.ModifierType
-@export var stat_type: Enums.StatType  # Using global enum
-@export var value: float = 0.0  # Percentage or flat value
-@export var is_percentage: bool = true
-@export var duration_weeks: int = -1  # -1 for permanent
-@export var remaining_weeks: int = 0
-
-func _init(
-    type: StatConstants.ModifierType = StatConstants.ModifierType.TEMPORARY,
-    stat: Enums.StatType = Enums.StatType.STRENGTH,  # Using global enum
-    mod_value: float = 0.0,
-    percentage: bool = true,
-    duration: int = -1
-):
-    modifier_type = type
-    stat_type = stat
-    value = mod_value
-    is_percentage = percentage
-    duration_weeks = duration
-    remaining_weeks = duration
-
-func apply_to_value(base_value: int) -> int:
-    if is_percentage:
-        return int(base_value * (1.0 + value))
-    else:
-        return base_value + int(value)
-
-func tick_week():
-    if duration_weeks > 0 and remaining_weeks > 0:
-        remaining_weeks -= 1
-
-func is_expired() -> bool:
-    return duration_weeks > 0 and remaining_weeks <= 0
-
-func to_dict() -> Dictionary:
-    return {
-        "modifier_type": modifier_type,
-        "stat_type": stat_type,
-        "value": value,
-        "is_percentage": is_percentage,
-        "duration_weeks": duration_weeks,
-        "remaining_weeks": remaining_weeks
-    }
-
-static func from_dict(data: Dictionary) -> StatModifier:
-    var modifier = StatModifier.new()
-    modifier.modifier_type = data.get("modifier_type", 0)
-    modifier.stat_type = data.get("stat_type", 0)
-    modifier.value = data.get("value", 0.0)
-    modifier.is_percentage = data.get("is_percentage", true)
-    modifier.duration_weeks = data.get("duration_weeks", -1)
-    modifier.remaining_weeks = data.get("remaining_weeks", 0)
-    return modifier
-```
-
-### StatManager Singleton (`scripts/systems/stat_manager.gd`)
-```gdscript
+# scripts/systems/stat_system.gd
+class_name StatSystem
 extends Node
 
-# Growth calculation with diminishing returns
-func calculate_stat_growth(current_value: int, base_growth: int, food_bonus: float = 0.0) -> int:
-    # Apply diminishing returns based on current value
-    var growth_multiplier = 1.0
+# Stat name constants
+const STAT_NAMES := {
+    "STR": "strength",
+    "CON": "constitution",
+    "DEX": "dexterity",
+    "INT": "intelligence",
+    "WIS": "wisdom",
+    "DIS": "discipline"
+}
 
-    if current_value >= StatConstants.SOFT_CAP:
-        growth_multiplier = 0.2  # 80% reduction above soft cap
-    elif current_value >= StatConstants.DIMINISHING_THRESHOLD:
-        # Linear reduction from 100% to 50% between 500 and 800
-        var progress = (current_value - StatConstants.DIMINISHING_THRESHOLD) / 300.0
-        growth_multiplier = 1.0 - (0.5 * progress)
+const STAT_MIN := 0
+const STAT_MAX := 1000
 
-    # Calculate final growth
-    var modified_growth = base_growth * growth_multiplier
+var signal_bus: SignalBus
+var active_modifiers: Dictionary = {} # creature_id -> modifiers
 
-    # Apply food bonus
-    if food_bonus > 0:
-        modified_growth *= (1.0 + food_bonus)
+func _ready() -> void:
+    signal_bus = GameCore.get_signal_bus()
+    print("StatSystem initialized")
 
-    # Ensure we don't exceed hard cap
-    var final_value = current_value + int(modified_growth)
-    if final_value > StatConstants.HARD_CAP:
-        return StatConstants.HARD_CAP - current_value
+# Calculate effective stat value with all modifiers
+func get_effective_stat(creature_data: CreatureData, stat_name: String) -> int:
+    var base_value := creature_data.get_stat(stat_name)
+    if base_value == 0:
+        return 0
 
-    return int(modified_growth)
+    # Apply age modifier
+    var age_modifier := creature_data.get_age_modifier()
+    var modified_value := int(base_value * age_modifier)
 
-# Generate random base growth value
-func get_random_base_growth() -> int:
-    return randi_range(StatConstants.BASE_GROWTH_MIN, StatConstants.BASE_GROWTH_MAX)
+    # Apply temporary modifiers if any
+    if creature_data.id in active_modifiers:
+        var mods = active_modifiers[creature_data.id]
+        if stat_name in mods:
+            modified_value += mods[stat_name]
 
-# Apply all modifiers to a base stat value
-func apply_modifiers(base_value: int, modifiers: Array[StatModifier]) -> int:
-    var modified_value = base_value
-    var percentage_mod = 1.0
-    var flat_mod = 0
+    return clampi(modified_value, STAT_MIN, STAT_MAX)
 
-    for modifier in modifiers:
-        if modifier.is_expired():
-            continue
+# Validate a stat modification
+func validate_stat_change(current_value: int, change: int) -> int:
+    return clampi(current_value + change, STAT_MIN, STAT_MAX)
 
-        if modifier.is_percentage:
-            percentage_mod += modifier.value
-        else:
-            flat_mod += int(modifier.value)
+# Apply temporary modifier to creature
+func apply_modifier(creature_id: String, stat_name: String, value: int, duration_weeks: int = 1) -> void:
+    if not creature_id in active_modifiers:
+        active_modifiers[creature_id] = {}
 
-    # Apply percentage modifiers first, then flat
-    modified_value = int(modified_value * percentage_mod)
-    modified_value += flat_mod
+    active_modifiers[creature_id][stat_name] = value
 
-    # Clamp to valid range
-    return clampi(modified_value, 0, StatConstants.HARD_CAP)
+    # Schedule removal (would connect to time system)
+    if duration_weeks > 0:
+        _schedule_modifier_removal(creature_id, stat_name, duration_weeks)
 
-# Check if creature meets stat requirement
-func meets_requirement(creature_stat: int, required_stat: int, comparison: String = ">=") -> bool:
-    match comparison:
-        ">=": return creature_stat >= required_stat
-        ">": return creature_stat > required_stat
-        "<=": return creature_stat <= required_stat
-        "<": return creature_stat < required_stat
-        "==": return creature_stat == required_stat
-        _: return false
+# Remove modifier
+func remove_modifier(creature_id: String, stat_name: String) -> void:
+    if creature_id in active_modifiers:
+        active_modifiers[creature_id].erase(stat_name)
+        if active_modifiers[creature_id].is_empty():
+            active_modifiers.erase(creature_id)
 
-# Calculate performance score for competitions
-func calculate_performance_score(
-    primary_stat: int,
-    secondary_stats: Array[int],
-    modifiers: Array[StatModifier] = []
-) -> float:
-    # Apply modifiers to primary stat
-    var modified_primary = apply_modifiers(primary_stat, modifiers)
+# Calculate total stats for performance
+func calculate_total_stats(creature_data: CreatureData) -> int:
+    var total := 0
+    for stat_key in STAT_NAMES:
+        total += get_effective_stat(creature_data, STAT_NAMES[stat_key])
+    return total
 
-    # Base formula: Primary × 3 + Secondary × 1.5 each
-    var score = modified_primary * 3.0
+# Check if creature meets stat requirements
+func meets_requirements(creature_data: CreatureData, requirements: Dictionary) -> bool:
+    for stat_name in requirements:
+        var required_value = requirements[stat_name]
+        var creature_value = get_effective_stat(creature_data, stat_name)
+        if creature_value < required_value:
+            return false
+    return true
 
-    for secondary in secondary_stats:
-        score += secondary * 1.5
+# Compare two creatures' stats
+func compare_stats(creature_a: CreatureData, creature_b: CreatureData, stat_name: String) -> int:
+    var a_value := get_effective_stat(creature_a, stat_name)
+    var b_value := get_effective_stat(creature_b, stat_name)
+    return a_value - b_value
 
-    # Add random variance (±15%)
-    var variance = randf_range(0.85, 1.15)
-    score *= variance
+# Calculate stat-based performance score
+func calculate_performance(creature_data: CreatureData, weights: Dictionary = {}) -> float:
+    var default_weights := {
+        "strength": 0.15,
+        "constitution": 0.15,
+        "dexterity": 0.15,
+        "intelligence": 0.15,
+        "wisdom": 0.15,
+        "discipline": 0.25
+    }
+
+    if weights.is_empty():
+        weights = default_weights
+
+    var score := 0.0
+    for stat_name in weights:
+        var stat_value := get_effective_stat(creature_data, stat_name)
+        score += stat_value * weights[stat_name]
 
     return score
 
-# Get stat growth description for UI
-func get_growth_description(current_value: int) -> String:
-    if current_value >= StatConstants.SOFT_CAP:
-        return "Very Slow (soft capped)"
-    elif current_value >= 700:
-        return "Slow"
-    elif current_value >= StatConstants.DIMINISHING_THRESHOLD:
-        return "Moderate"
-    elif current_value >= 200:
-        return "Good"
-    else:
-        return "Excellent"
+# Get stat growth rate based on training
+func calculate_growth_rate(current_value: int, trainer_skill: int = 50) -> int:
+    # Higher current values grow slower (diminishing returns)
+    var difficulty_modifier := 1.0 - (current_value / float(STAT_MAX))
+    var trainer_modifier := trainer_skill / 100.0
+    var base_growth := randi_range(1, 5)
 
-# Training effectiveness based on current stat
-func get_training_effectiveness(current_value: int) -> float:
-    if current_value >= StatConstants.SOFT_CAP:
-        return 0.2
-    elif current_value >= StatConstants.DIMINISHING_THRESHOLD:
-        var progress = (current_value - StatConstants.DIMINISHING_THRESHOLD) / 300.0
-        return 1.0 - (0.5 * progress)
-    else:
-        return 1.0
+    return int(base_growth * difficulty_modifier * trainer_modifier)
 
-# Validate stat value
-func validate_stat_value(value: int) -> int:
-    return clampi(value, 0, StatConstants.HARD_CAP)
+# Validate stat distribution for new creatures
+func validate_stat_distribution(stats: Dictionary) -> bool:
+    var total := 0
+    for stat_name in stats:
+        var value = stats[stat_name]
+        if value < STAT_MIN or value > STAT_MAX:
+            return false
+        total += value
 
-# Get age modifier for creature
-func get_age_modifier(age_category: Enums.AgeCategory) -> float:  # Using global enum
-    match age_category:
-        Enums.AgeCategory.YOUNG:
-            return 0.2  # +20% (updated to match design specs)
-        Enums.AgeCategory.ADULT:
-            return 0.0  # No modifier
-        Enums.AgeCategory.ELDER:
-            return -0.2  # -20% (updated to match design specs)
-        _:
-            return 0.0
+    # Check if total is reasonable for starting creature
+    var max_starting_total := 300  # 50 average per stat
+    return total <= max_starting_total
 
-# Calculate total stats for creature evaluation
-func calculate_total_stats(creature: Creature, include_modifiers: bool = false) -> int:
-    var total = 0
-    total += creature.strength
-    total += creature.constitution
-    total += creature.dexterity
-    total += creature.intelligence
-    total += creature.wisdom
-    total += creature.discipline
+# Get readable stat name
+func get_stat_display_name(stat_key: String) -> String:
+    match stat_key.to_upper():
+        "STR", "STRENGTH": return "Strength"
+        "CON", "CONSTITUTION": return "Constitution"
+        "DEX", "DEXTERITY": return "Dexterity"
+        "INT", "INTELLIGENCE": return "Intelligence"
+        "WIS", "WISDOM": return "Wisdom"
+        "DIS", "DISCIPLINE": return "Discipline"
+        _: return stat_key.capitalize()
 
-    if include_modifiers:
-        var age_mod = get_age_modifier(creature.get_age_category())
-        total = int(total * (1.0 + age_mod))
+# Schedule modifier removal (placeholder for time system integration)
+func _schedule_modifier_removal(creature_id: String, stat_name: String, duration_weeks: int) -> void:
+    # Will connect to time system in later task
+    pass
 
-    return total
+# Get stat breakdown for UI display
+func get_stat_breakdown(creature_data: CreatureData, stat_name: String) -> Dictionary:
+    var base := creature_data.get_stat(stat_name)
+    var age_mod := creature_data.get_age_modifier()
+    var age_adjusted := int(base * age_mod)
+    var temp_mod := 0
 
-# Get stat distribution analysis
-func analyze_stat_distribution(creature: Creature) -> Dictionary:
-    var stats = [
-        creature.strength,
-        creature.constitution,
-        creature.dexterity,
-        creature.intelligence,
-        creature.wisdom,
-        creature.discipline
-    ]
-
-    stats.sort()
+    if creature_data.id in active_modifiers and stat_name in active_modifiers[creature_data.id]:
+        temp_mod = active_modifiers[creature_data.id][stat_name]
 
     return {
-        "min": stats[0],
-        "max": stats[5],
-        "average": calculate_total_stats(creature) / 6,
-        "median": (stats[2] + stats[3]) / 2,
-        "spread": stats[5] - stats[0]
+        "base": base,
+        "age_modifier": age_mod,
+        "age_adjusted": age_adjusted,
+        "temporary_modifier": temp_mod,
+        "final": get_effective_stat(creature_data, stat_name)
     }
 ```
 
+### Update GameCore to Include StatSystem
+```gdscript
+# In GameCore._load_system() method, add:
+"stat":
+    system = preload("res://scripts/systems/stat_system.gd").new()
+```
+
+### Example Usage
+```gdscript
+# From any script:
+var stat_system = GameCore.get_system("stat") as StatSystem
+
+# Get effective stat
+var strength = stat_system.get_effective_stat(creature_data, "strength")
+
+# Check requirements
+var meets_reqs = stat_system.meets_requirements(creature_data, {"strength": 100, "dexterity": 75})
+
+# Apply temporary boost
+stat_system.apply_modifier(creature_data.id, "strength", 50, 4)  # +50 STR for 4 weeks
+```
+
 ## Success Metrics
-- Stat calculations complete in < 1ms
-- Growth patterns match design specifications
-- Modifiers apply correctly without overflow
-- All edge cases handled (0, 1000, negative inputs)
-- Clear error messages for invalid operations
+- Stat calculations complete in < 1ms per creature
+- System handles 10,000+ stat queries per second
+- Memory usage < 1MB for tracking modifiers
+- All stat operations maintain data integrity
 
 ## Notes
-- Keep calculations deterministic where possible
-- Use integer math to avoid floating point issues
-- Consider caching frequently calculated values
-- Ensure thread safety for concurrent access
+- StatSystem is stateless except for temporary modifiers
+- All permanent stat changes go through CreatureEntity
+- System designed for future expansion (buffs/debuffs)
+- Thread-safe for potential multiplayer
 
 ## Estimated Time
-3-4 hours for implementation and testing
+2-3 hours for implementation and testing

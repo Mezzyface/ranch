@@ -1,383 +1,300 @@
 # Task 09: Resource Tracking System
 
 ## Overview
-Implement the resource tracking system for managing player gold, food inventory, items, and other consumable resources throughout the game.
+Implement the resource tracking system as a GameCore subsystem that manages gold currency, food inventory, and consumable items with automatic validation and change notifications using the improved architecture.
 
 ## Dependencies
-- Task 01: Project Setup (complete)
+- Task 01: GameCore Setup (complete)
 - Task 07: Save/Load System (complete)
-- Design documents: `game.md`, `food.md`, `shop.md`
+- Design documents: `economy.md`, `food.md`
 
 ## Context
+**CRITICAL ARCHITECTURE CHANGES**:
+- ResourceSystem as GameCore subsystem (NOT autoload)
+- All signals go through SignalBus
+- Integrates with SaveSystem for persistence
+- Lazy-loaded by GameCore when needed
+- Supports future shop and feeding systems
+
 From the design documents:
-- Gold is the primary currency for purchasing creatures and items
-- Food items affect training effectiveness and creature performance
-- Starting resources: 500 gold + basic food supplies
-- Resources must persist through save/load
-- Track spending and earning for statistics
+- Players start with 500 gold
+- Gold spent on creatures, food, training
+- Gold earned from quests and competitions
+- Food items have different effects and costs
+- Weekly food consumption for active creatures
 
 ## Requirements
 
-### Resource Types
+### Resource Categories
 1. **Currency**
-   - Gold: Primary currency
-   - Premium currency (future expansion)
+   - Gold as primary currency
+   - Transaction validation
+   - Balance tracking
+   - Spending history
 
-2. **Food Items**
-   - Basic rations (Grain, Hay, Berries)
-   - Training foods (stat-specific)
-   - Competition foods
-   - Premium foods
+2. **Food Inventory**
+   - Basic foods (grain, hay, berries, water)
+   - Training foods (protein mix, endurance blend, etc.)
+   - Premium foods (golden nectar, vitality elixir)
+   - Specialty foods (breeding supplements, combat rations)
 
-3. **Special Items**
-   - Quest rewards
-   - Rare items
-   - Breeding items
-   - Facility upgrades
+3. **Consumable Items**
+   - Health potions
+   - Energy boosters
+   - Special quest items
+   - Equipment (future expansion)
 
-4. **Consumables**
-   - Temporary boosters
-   - Medicine/healing items
-   - Stamina restorers
+### Resource Operations
+1. **Currency Management**
+   - Add/subtract gold
+   - Transaction validation
+   - Insufficient funds handling
+   - Transaction logging
 
-### Tracking Features
-1. **Inventory Management**
-   - Item quantities
-   - Stack limits
-   - Item categories
-   - Expiration (if applicable)
+2. **Inventory Management**
+   - Add/remove items
+   - Stack management
+   - Item validation
+   - Quantity tracking
 
-2. **Transaction History**
-   - Purchase records
-   - Quest rewards
-   - Competition winnings
-   - Spending tracking
-
-3. **Resource Validation**
-   - Prevent negative values
-   - Check affordability
-   - Validate transactions
-   - Handle edge cases
+3. **Consumption System**
+   - Item usage validation
+   - Effect application
+   - Quantity reduction
+   - Consumption history
 
 ## Implementation Steps
 
-1. **Create Resource Definitions**
-   - Item database
-   - Food definitions
-   - Currency types
+1. **Create ResourceSystem Class**
+   - Extends Node, managed by GameCore
+   - Connects to SignalBus for all signals
+   - Lazy-loaded subsystem
 
-2. **Implement ResourceManager**
-   - Resource tracking
-   - Transaction methods
-   - Validation logic
-   - Event signals
+2. **Implement Currency System**
+   - Gold balance tracking
+   - Transaction processing
+   - Validation and error handling
 
-3. **Create Inventory System**
-   - Item storage
-   - Quantity management
-   - Category organization
-   - Usage tracking
+3. **Add Inventory Management**
+   - Item storage system
+   - CRUD operations
+   - Stack management
 
-4. **Add Transaction System**
-   - Purchase validation
-   - Resource spending
-   - Reward distribution
-   - History tracking
+4. **Create Item Database**
+   - Food item definitions
+   - Effect specifications
+   - Cost and value data
 
 ## Test Criteria
 
 ### Unit Tests
-- [ ] Add and subtract gold correctly
-- [ ] Food inventory tracks quantities
-- [ ] Cannot spend more than available
-- [ ] Negative resources prevented
-- [ ] Item stacking works correctly
+- [ ] Add/subtract gold correctly
+- [ ] Prevent negative balances
+- [ ] Add/remove inventory items
+- [ ] Stack items properly
+- [ ] Save/load preserves resources
 
 ### Transaction Tests
-- [ ] Purchases deduct correct amounts
-- [ ] Rewards add to inventory
-- [ ] Batch transactions work
-- [ ] Transaction history records accurately
-- [ ] Rollback on failed transactions
+- [ ] Large transactions work
+- [ ] Insufficient funds prevented
+- [ ] Item consumption reduces quantity
+- [ ] Zero quantity items removed
+- [ ] Transaction history maintained
 
 ### Integration Tests
-- [ ] Resources persist through save/load
-- [ ] Shop purchases update inventory
-- [ ] Quest rewards distribute correctly
-- [ ] Competition prizes add to resources
-- [ ] UI reflects resource changes
+- [ ] ResourceSystem integrates with SaveSystem
+- [ ] SignalBus properly routes resource events
+- [ ] GameCore manages ResourceSystem correctly
+- [ ] Performance with large inventories
+- [ ] Memory management efficient
 
 ## Code Implementation
 
-### Item Definitions (`scripts/data/item_definitions.gd`)
+### ResourceSystem - GameCore Subsystem
 ```gdscript
-class_name ItemDefinitions
-extends Resource
+# scripts/systems/resource_system.gd
+class_name ResourceSystem
+extends Node
 
-# NOTE: These enums are temporary for Stage 1
-# TODO: Migrate to global Enums.FoodType and Enums.FoodCategory when food system is fully implemented
-# TODO: Update all string-based item IDs to use enum values for type safety
+var signal_bus: SignalBus
 
-enum ItemType {
-    FOOD,
-    TRAINING_FOOD,
-    COMPETITION_FOOD,
-    MEDICINE,
-    SPECIAL,
-    UPGRADE
-}
+# Currency
+var gold: int = 500
 
-enum FoodEffect {
-    NONE,
-    STAMINA_RESTORE,
-    STAT_BOOST,
-    TRAINING_BOOST,
-    COMPETITION_BOOST,
-    BREEDING_BOOST
-}
+# Inventory - item_id -> quantity
+var inventory: Dictionary = {}
 
-# NOTE: Using string keys for items in Stage 1
-# TODO: Convert to Enums.FoodType keys when enum system is implemented
-const ITEMS = {
+# Transaction history for debugging/statistics
+var transaction_history: Array[Dictionary] = []
+const MAX_HISTORY_SIZE = 100
+
+# Item database - will be expanded in future stages
+const ITEM_DATABASE = {
     # Basic Foods
     "grain_rations": {
         "name": "Grain Rations",
-        "type": ItemType.FOOD,
-        "price": 5,
-        "stack_size": 99,
-        "description": "Standard creature food",
-        "effects": {
-            "type": FoodEffect.NONE
-        }
+        "category": "basic_food",
+        "description": "Standard food rations for creatures",
+        "cost": 5,
+        "effects": {"stamina": 10},
+        "max_stack": 999
     },
     "fresh_hay": {
         "name": "Fresh Hay",
-        "type": ItemType.FOOD,
-        "price": 8,
-        "stack_size": 99,
-        "description": "+5 stamina recovery",
-        "effects": {
-            "type": FoodEffect.STAMINA_RESTORE,
-            "value": 5
-        }
+        "category": "basic_food",
+        "description": "Nutritious hay for herbivorous creatures",
+        "cost": 3,
+        "effects": {"stamina": 8},
+        "max_stack": 999
     },
     "wild_berries": {
         "name": "Wild Berries",
-        "type": ItemType.FOOD,
-        "price": 10,
-        "stack_size": 99,
-        "description": "+2 to all training gains",
-        "effects": {
-            "type": FoodEffect.TRAINING_BOOST,
-            "value": 2
-        }
+        "category": "basic_food",
+        "description": "Sweet berries that creatures love",
+        "cost": 4,
+        "effects": {"stamina": 12},
+        "max_stack": 999
     },
     "spring_water": {
         "name": "Spring Water",
-        "type": ItemType.FOOD,
-        "price": 3,
-        "stack_size": 99,
-        "description": "Removes negative effects",
-        "effects": {
-            "type": FoodEffect.NONE,
-            "special": "cleanse"
-        }
+        "category": "basic_food",
+        "description": "Pure water from mountain springs",
+        "cost": 2,
+        "effects": {"stamina": 5},
+        "max_stack": 999
     },
 
     # Training Foods
     "protein_mix": {
         "name": "Protein Mix",
-        "type": ItemType.TRAINING_FOOD,
-        "price": 25,
-        "stack_size": 20,
-        "description": "+50% Strength training",
-        "effects": {
-            "type": FoodEffect.TRAINING_BOOST,
-            "stat": "strength",
-            "multiplier": 1.5
-        }
+        "category": "training_food",
+        "description": "High-protein blend for strength training",
+        "cost": 15,
+        "effects": {"stamina": 20, "training_bonus": {"strength": 0.1}},
+        "max_stack": 99
     },
     "endurance_blend": {
         "name": "Endurance Blend",
-        "type": ItemType.TRAINING_FOOD,
-        "price": 25,
-        "stack_size": 20,
-        "description": "+50% Constitution training",
-        "effects": {
-            "type": FoodEffect.TRAINING_BOOST,
-            "stat": "constitution",
-            "multiplier": 1.5
-        }
+        "category": "training_food",
+        "description": "Special mix to improve constitution",
+        "cost": 15,
+        "effects": {"stamina": 20, "training_bonus": {"constitution": 0.1}},
+        "max_stack": 99
     },
     "agility_feed": {
         "name": "Agility Feed",
-        "type": ItemType.TRAINING_FOOD,
-        "price": 25,
-        "stack_size": 20,
-        "description": "+50% Dexterity training",
-        "effects": {
-            "type": FoodEffect.TRAINING_BOOST,
-            "stat": "dexterity",
-            "multiplier": 1.5
-        }
+        "category": "training_food",
+        "description": "Lightweight food for dexterity training",
+        "cost": 15,
+        "effects": {"stamina": 20, "training_bonus": {"dexterity": 0.1}},
+        "max_stack": 99
     },
     "brain_food": {
         "name": "Brain Food",
-        "type": ItemType.TRAINING_FOOD,
-        "price": 25,
-        "stack_size": 20,
-        "description": "+50% Intelligence training",
-        "effects": {
-            "type": FoodEffect.TRAINING_BOOST,
-            "stat": "intelligence",
-            "multiplier": 1.5
-        }
+        "category": "training_food",
+        "description": "Nutrients to enhance intelligence",
+        "cost": 15,
+        "effects": {"stamina": 20, "training_bonus": {"intelligence": 0.1}},
+        "max_stack": 99
     },
     "focus_formula": {
         "name": "Focus Formula",
-        "type": ItemType.TRAINING_FOOD,
-        "price": 25,
-        "stack_size": 20,
-        "description": "+50% Wisdom training",
-        "effects": {
-            "type": FoodEffect.TRAINING_BOOST,
-            "stat": "wisdom",
-            "multiplier": 1.5
-        }
+        "category": "training_food",
+        "description": "Helps creatures concentrate and gain wisdom",
+        "cost": 15,
+        "effects": {"stamina": 20, "training_bonus": {"wisdom": 0.1}},
+        "max_stack": 99
     },
     "discipline_diet": {
         "name": "Discipline Diet",
-        "type": ItemType.TRAINING_FOOD,
-        "price": 25,
-        "stack_size": 20,
-        "description": "+50% Discipline training",
-        "effects": {
-            "type": FoodEffect.TRAINING_BOOST,
-            "stat": "discipline",
-            "multiplier": 1.5
-        }
-    },
-
-    # Competition Foods
-    "combat_rations": {
-        "name": "Combat Rations",
-        "type": ItemType.COMPETITION_FOOD,
-        "price": 40,
-        "stack_size": 10,
-        "description": "+25% competition performance",
-        "effects": {
-            "type": FoodEffect.COMPETITION_BOOST,
-            "multiplier": 1.25
-        }
-    },
-    "task_fuel": {
-        "name": "Task Fuel",
-        "type": ItemType.COMPETITION_FOOD,
-        "price": 35,
-        "stack_size": 10,
-        "description": "+30% on mental competitions",
-        "effects": {
-            "type": FoodEffect.COMPETITION_BOOST,
-            "multiplier": 1.3,
-            "competition_types": ["logic", "strategy", "tracking"]
-        }
+        "category": "training_food",
+        "description": "Structured nutrition for better discipline",
+        "cost": 15,
+        "effects": {"stamina": 20, "training_bonus": {"discipline": 0.1}},
+        "max_stack": 99
     },
 
     # Premium Foods
     "golden_nectar": {
         "name": "Golden Nectar",
-        "type": ItemType.FOOD,
-        "price": 100,
-        "stack_size": 5,
-        "description": "+100% training effectiveness",
-        "effects": {
-            "type": FoodEffect.TRAINING_BOOST,
-            "multiplier": 2.0
-        }
+        "category": "premium_food",
+        "description": "Rare nectar with powerful restorative properties",
+        "cost": 100,
+        "effects": {"stamina": 50, "age_slow": 0.1},
+        "max_stack": 10
+    },
+    "vitality_elixir": {
+        "name": "Vitality Elixir",
+        "category": "premium_food",
+        "description": "Magical elixir that boosts vitality",
+        "cost": 80,
+        "effects": {"stamina": 100, "health_boost": 50},
+        "max_stack": 20
+    },
+
+    # Specialty Items
+    "combat_rations": {
+        "name": "Combat Rations",
+        "category": "specialty",
+        "description": "Emergency food for dangerous quests",
+        "cost": 25,
+        "effects": {"stamina": 30, "quest_bonus": 0.2},
+        "max_stack": 50
     }
 }
 
-static func get_item_data(item_id: String) -> Dictionary:
-    return ITEMS.get(item_id, {})
-
-static func item_exists(item_id: String) -> bool:
-    return ITEMS.has(item_id)
-
-static func get_items_by_type(type: ItemType) -> Array[String]:
-    var result: Array[String] = []
-    for item_id in ITEMS:
-        if ITEMS[item_id].type == type:
-            result.append(item_id)
-    return result
-
-static func get_item_price(item_id: String) -> int:
-    var data = get_item_data(item_id)
-    return data.get("price", 0)
-
-static func get_stack_size(item_id: String) -> int:
-    var data = get_item_data(item_id)
-    return data.get("stack_size", 99)
-```
-
-### ResourceManager Singleton (`scripts/systems/resource_manager.gd`)
-```gdscript
-extends Node
-
-signal gold_changed(new_amount: int)
-signal item_added(item_id: String, quantity: int)
-signal item_removed(item_id: String, quantity: int)
-signal transaction_completed(type: String, amount: int)
-signal transaction_failed(reason: String)
-
-var gold: int = 500
-var inventory: Dictionary = {}  # item_id: quantity
-var transaction_history: Array[Dictionary] = []
+func _ready() -> void:
+    signal_bus = GameCore.get_signal_bus()
+    print("ResourceSystem initialized with %d gold" % gold)
 
 # Currency Management
-func add_gold(amount: int, source: String = "unknown") -> bool:
-    if amount < 0:
-        push_error("Cannot add negative gold")
-        return false
+func add_gold(amount: int, source: String = "unknown") -> void:
+    if amount <= 0:
+        push_warning("Cannot add negative or zero gold")
+        return
 
     var old_gold = gold
     gold += amount
-    emit_signal("gold_changed", gold)
-    emit_signal("transaction_completed", "gold_earned", amount)
 
     _record_transaction({
-        "type": "earn",
-        "resource": "gold",
+        "type": "gold_add",
         "amount": amount,
         "source": source,
+        "old_balance": old_gold,
+        "new_balance": gold,
         "timestamp": Time.get_unix_time_from_system()
     })
 
-    print("Gold increased from %d to %d (%s)" % [old_gold, gold, source])
-    return true
+    if signal_bus:
+        signal_bus.gold_changed.emit(gold, old_gold)
+        signal_bus.gold_added.emit(amount, source)
 
-func spend_gold(amount: int, reason: String = "purchase") -> bool:
-    if amount < 0:
-        push_error("Cannot spend negative gold")
+func subtract_gold(amount: int, reason: String = "unknown") -> bool:
+    if amount <= 0:
+        push_warning("Cannot subtract negative or zero gold")
         return false
 
-    if amount > gold:
-        emit_signal("transaction_failed", "Insufficient gold")
+    if gold < amount:
+        if signal_bus:
+            signal_bus.insufficient_gold.emit(amount, gold)
         return false
 
     var old_gold = gold
     gold -= amount
-    emit_signal("gold_changed", gold)
-    emit_signal("transaction_completed", "gold_spent", amount)
 
     _record_transaction({
-        "type": "spend",
-        "resource": "gold",
+        "type": "gold_subtract",
         "amount": amount,
         "reason": reason,
+        "old_balance": old_gold,
+        "new_balance": gold,
         "timestamp": Time.get_unix_time_from_system()
     })
 
-    print("Gold decreased from %d to %d (%s)" % [old_gold, gold, reason])
+    if signal_bus:
+        signal_bus.gold_changed.emit(gold, old_gold)
+        signal_bus.gold_spent.emit(amount, reason)
+
     return true
 
 func can_afford(amount: int) -> bool:
@@ -386,333 +303,399 @@ func can_afford(amount: int) -> bool:
 func get_gold() -> int:
     return gold
 
-func set_gold(amount: int):
+func set_gold(amount: int) -> void:
+    # Used by SaveSystem
+    var old_gold = gold
     gold = maxi(0, amount)
-    emit_signal("gold_changed", gold)
+
+    if signal_bus and gold != old_gold:
+        signal_bus.gold_changed.emit(gold, old_gold)
 
 # Inventory Management
-func add_item(item_id: String, quantity: int = 1) -> bool:
-    if not ItemDefinitions.item_exists(item_id):
-        push_error("Unknown item: " + item_id)
+func add_item(item_id: String, quantity: int = 1, source: String = "unknown") -> bool:
+    if not is_valid_item(item_id):
+        push_error("Invalid item ID: " + item_id)
         return false
 
     if quantity <= 0:
-        push_error("Invalid quantity: %d" % quantity)
+        push_warning("Cannot add negative or zero quantity")
         return false
 
-    var max_stack = ItemDefinitions.get_stack_size(item_id)
-    var current = inventory.get(item_id, 0)
+    var item_data = ITEM_DATABASE[item_id]
+    var current_quantity = inventory.get(item_id, 0)
+    var max_stack = item_data.get("max_stack", 999)
 
-    if current + quantity > max_stack:
-        emit_signal("transaction_failed", "Would exceed stack limit")
+    # Check if we can add without exceeding max stack
+    if current_quantity + quantity > max_stack:
+        push_warning("Would exceed max stack size for " + item_id)
         return false
 
-    inventory[item_id] = current + quantity
-    emit_signal("item_added", item_id, quantity)
-    emit_signal("transaction_completed", "item_added", quantity)
+    inventory[item_id] = current_quantity + quantity
 
     _record_transaction({
-        "type": "add_item",
-        "resource": item_id,
-        "amount": quantity,
+        "type": "item_add",
+        "item_id": item_id,
+        "quantity": quantity,
+        "source": source,
+        "new_quantity": inventory[item_id],
         "timestamp": Time.get_unix_time_from_system()
     })
 
+    if signal_bus:
+        signal_bus.item_added.emit(item_id, quantity, source)
+        signal_bus.inventory_changed.emit()
+
     return true
 
-func remove_item(item_id: String, quantity: int = 1) -> bool:
-    if not has_item(item_id, quantity):
-        emit_signal("transaction_failed", "Insufficient items")
+func remove_item(item_id: String, quantity: int = 1, reason: String = "unknown") -> bool:
+    if not is_valid_item(item_id):
+        push_error("Invalid item ID: " + item_id)
         return false
 
-    inventory[item_id] -= quantity
+    if quantity <= 0:
+        push_warning("Cannot remove negative or zero quantity")
+        return false
 
-    if inventory[item_id] <= 0:
+    var current_quantity = inventory.get(item_id, 0)
+    if current_quantity < quantity:
+        if signal_bus:
+            signal_bus.insufficient_items.emit(item_id, quantity, current_quantity)
+        return false
+
+    var new_quantity = current_quantity - quantity
+
+    if new_quantity == 0:
         inventory.erase(item_id)
-
-    emit_signal("item_removed", item_id, quantity)
-    emit_signal("transaction_completed", "item_removed", quantity)
+    else:
+        inventory[item_id] = new_quantity
 
     _record_transaction({
-        "type": "remove_item",
-        "resource": item_id,
-        "amount": quantity,
+        "type": "item_remove",
+        "item_id": item_id,
+        "quantity": quantity,
+        "reason": reason,
+        "new_quantity": new_quantity,
         "timestamp": Time.get_unix_time_from_system()
     })
 
+    if signal_bus:
+        signal_bus.item_removed.emit(item_id, quantity, reason)
+        signal_bus.inventory_changed.emit()
+
     return true
+
+func consume_item(item_id: String, creature_entity: CreatureEntity = null) -> Dictionary:
+    if not remove_item(item_id, 1, "consumption"):
+        return {"success": false, "reason": "Could not remove item"}
+
+    var item_data = get_item_data(item_id)
+    var effects = item_data.get("effects", {})
+
+    if creature_entity and creature_entity.data:
+        # Apply effects to creature
+        if effects.has("stamina"):
+            var old_stamina = creature_entity.data.stamina_current
+            creature_entity.data.stamina_current = mini(
+                creature_entity.data.stamina_max,
+                creature_entity.data.stamina_current + effects.stamina
+            )
+
+            if signal_bus:
+                signal_bus.creature_stamina_restored.emit(
+                    creature_entity.data,
+                    effects.stamina,
+                    old_stamina,
+                    creature_entity.data.stamina_current
+                )
+
+    if signal_bus:
+        signal_bus.item_consumed.emit(item_id, creature_entity.data if creature_entity else null)
+
+    return {"success": true, "effects": effects}
 
 func has_item(item_id: String, quantity: int = 1) -> bool:
     return inventory.get(item_id, 0) >= quantity
 
-func get_item_count(item_id: String) -> int:
+func get_item_quantity(item_id: String) -> int:
     return inventory.get(item_id, 0)
 
 func get_inventory() -> Dictionary:
     return inventory.duplicate()
 
+func set_inventory(new_inventory: Dictionary) -> void:
+    # Used by SaveSystem
+    inventory = new_inventory.duplicate()
+
+    if signal_bus:
+        signal_bus.inventory_changed.emit()
+
+# Item Database Access
+func is_valid_item(item_id: String) -> bool:
+    return ITEM_DATABASE.has(item_id)
+
+func get_item_data(item_id: String) -> Dictionary:
+    return ITEM_DATABASE.get(item_id, {})
+
+func get_item_name(item_id: String) -> String:
+    var item_data = get_item_data(item_id)
+    return item_data.get("name", item_id)
+
+func get_item_description(item_id: String) -> String:
+    var item_data = get_item_data(item_id)
+    return item_data.get("description", "No description available")
+
+func get_item_cost(item_id: String) -> int:
+    var item_data = get_item_data(item_id)
+    return item_data.get("cost", 0)
+
+func get_items_by_category(category: String) -> Array[String]:
+    var items: Array[String] = []
+
+    for item_id in ITEM_DATABASE:
+        if ITEM_DATABASE[item_id].get("category", "") == category:
+            items.append(item_id)
+
+    return items
+
+func get_all_item_ids() -> Array[String]:
+    var items: Array[String] = []
+    for item_id in ITEM_DATABASE:
+        items.append(item_id)
+    return items
+
+# Inventory Analysis
 func get_inventory_value() -> int:
     var total_value = 0
 
     for item_id in inventory:
         var quantity = inventory[item_id]
-        var price = ItemDefinitions.get_item_price(item_id)
-        total_value += price * quantity
+        var cost = get_item_cost(item_id)
+        total_value += quantity * cost
 
     return total_value
 
-# Purchase Helpers
-func purchase_item(item_id: String, quantity: int = 1) -> bool:
-    var item_data = ItemDefinitions.get_item_data(item_id)
-    if item_data.is_empty():
-        emit_signal("transaction_failed", "Invalid item")
-        return false
+func get_inventory_stats() -> Dictionary:
+    var stats = {
+        "total_items": 0,
+        "unique_items": inventory.keys().size(),
+        "categories": {},
+        "most_common_item": "",
+        "total_value": get_inventory_value()
+    }
 
-    var total_cost = item_data.price * quantity
+    var max_quantity = 0
 
-    if not can_afford(total_cost):
-        emit_signal("transaction_failed", "Cannot afford item")
-        return false
+    for item_id in inventory:
+        var quantity = inventory[item_id]
+        stats.total_items += quantity
 
-    # Try to add item first
-    if not add_item(item_id, quantity):
-        return false
+        if quantity > max_quantity:
+            max_quantity = quantity
+            stats.most_common_item = item_id
 
-    # Then deduct gold
-    if not spend_gold(total_cost, "purchase_" + item_id):
-        # Rollback item addition if gold spending fails
-        remove_item(item_id, quantity)
-        return false
+        var item_data = get_item_data(item_id)
+        var category = item_data.get("category", "unknown")
 
-    return true
+        if not stats.categories.has(category):
+            stats.categories[category] = 0
+        stats.categories[category] += quantity
 
-func purchase_creature_egg(species: String, price: int) -> bool:
-    if not can_afford(price):
-        emit_signal("transaction_failed", "Cannot afford creature")
-        return false
+    return stats
 
-    if not spend_gold(price, "creature_" + species):
-        return false
+# Weekly food consumption
+func calculate_weekly_food_cost(active_creature_count: int) -> int:
+    # Basic calculation - will be enhanced in future stages
+    return active_creature_count * 25  # 25 gold per creature per week
 
-    # Egg creation would happen in shop system
-    return true
+func has_sufficient_food_for_week(active_creature_count: int) -> bool:
+    var required_cost = calculate_weekly_food_cost(active_creature_count)
+    return can_afford(required_cost)
 
-# Batch Operations
-func add_items_batch(items: Dictionary) -> bool:
-    # items = {item_id: quantity}
-    for item_id in items:
-        if not add_item(item_id, items[item_id]):
-            return false
-    return true
-
-func remove_items_batch(items: Dictionary) -> bool:
-    # First check if all items are available
-    for item_id in items:
-        if not has_item(item_id, items[item_id]):
-            emit_signal("transaction_failed", "Missing required items")
-            return false
-
-    # Then remove them
-    for item_id in items:
-        remove_item(item_id, items[item_id])
-
-    return true
-
-# Transaction History
-func _record_transaction(transaction: Dictionary):
+# Transaction history management
+func _record_transaction(transaction: Dictionary) -> void:
     transaction_history.append(transaction)
 
-    # Keep only last 1000 transactions
-    if transaction_history.size() > 1000:
+    # Keep history size manageable
+    if transaction_history.size() > MAX_HISTORY_SIZE:
         transaction_history.pop_front()
 
-func get_transaction_history(limit: int = 100) -> Array[Dictionary]:
-    var start = maxi(0, transaction_history.size() - limit)
+func get_transaction_history(count: int = 10) -> Array[Dictionary]:
+    var start = maxi(0, transaction_history.size() - count)
     return transaction_history.slice(start)
 
-func get_spending_summary() -> Dictionary:
-    var summary = {
-        "total_earned": 0,
-        "total_spent": 0,
-        "purchases": 0,
-        "quest_rewards": 0,
-        "competition_winnings": 0
-    }
+func get_recent_gold_transactions(count: int = 5) -> Array[Dictionary]:
+    var gold_transactions: Array[Dictionary] = []
 
-    for transaction in transaction_history:
-        if transaction.type == "earn":
-            summary.total_earned += transaction.amount
+    for i in range(transaction_history.size() - 1, -1, -1):
+        var transaction = transaction_history[i]
+        if transaction.type.begins_with("gold_"):
+            gold_transactions.append(transaction)
+            if gold_transactions.size() >= count:
+                break
 
-            match transaction.get("source", ""):
-                "quest":
-                    summary.quest_rewards += transaction.amount
-                "competition":
-                    summary.competition_winnings += transaction.amount
+    return gold_transactions
 
-        elif transaction.type == "spend":
-            summary.total_spent += transaction.amount
+# Shop integration helpers (for future use)
+func can_purchase(item_id: String, quantity: int = 1) -> Dictionary:
+    if not is_valid_item(item_id):
+        return {"can_purchase": false, "reason": "Invalid item"}
 
-            if transaction.get("reason", "").begins_with("purchase"):
-                summary.purchases += transaction.amount
+    var cost = get_item_cost(item_id) * quantity
+    if not can_afford(cost):
+        return {"can_purchase": false, "reason": "Insufficient gold", "required": cost, "available": gold}
 
-    return summary
+    var item_data = get_item_data(item_id)
+    var current_quantity = get_item_quantity(item_id)
+    var max_stack = item_data.get("max_stack", 999)
 
-# Food Usage
-func use_food_on_creature(creature: Creature, food_id: String) -> bool:
-    if not has_item(food_id):
+    if current_quantity + quantity > max_stack:
+        return {"can_purchase": false, "reason": "Would exceed max stack"}
+
+    return {"can_purchase": true, "cost": cost}
+
+func purchase_item(item_id: String, quantity: int = 1) -> bool:
+    var check = can_purchase(item_id, quantity)
+    if not check.can_purchase:
         return false
 
-    var food_data = ItemDefinitions.get_item_data(food_id)
-    if food_data.is_empty():
-        return false
+    if subtract_gold(check.cost, "item_purchase"):
+        return add_item(item_id, quantity, "shop_purchase")
 
-    # Apply food effects (handled by training/competition systems)
-    # This is just removing from inventory
-    return remove_item(food_id)
+    return false
 
-# Statistics
-func get_resource_statistics() -> Dictionary:
-    return {
-        "current_gold": gold,
-        "inventory_value": get_inventory_value(),
-        "total_value": gold + get_inventory_value(),
-        "unique_items": inventory.size(),
-        "total_items": _count_all_items(),
-        "spending_summary": get_spending_summary()
-    }
+# Inventory maintenance
+func clean_empty_stacks() -> void:
+    var empty_items: Array[String] = []
 
-func _count_all_items() -> int:
-    var total = 0
     for item_id in inventory:
-        total += inventory[item_id]
-    return total
+        if inventory[item_id] <= 0:
+            empty_items.append(item_id)
 
-# Save/Load Integration
-func save_resources() -> Dictionary:
-    return {
-        "gold": gold,
-        "inventory": inventory.duplicate(),
-        "transaction_history": transaction_history.duplicate()
-    }
+    for item_id in empty_items:
+        inventory.erase(item_id)
 
-func load_resources(data: Dictionary):
-    gold = data.get("gold", 500)
-    inventory = data.get("inventory", {})
-    transaction_history = data.get("transaction_history", [])
+    if not empty_items.is_empty() and signal_bus:
+        signal_bus.inventory_cleaned.emit(empty_items)
 
-    emit_signal("gold_changed", gold)
+# Debug/cheat functions (remove in production)
+func add_starting_resources() -> void:
+    add_item("grain_rations", 10, "starting_kit")
+    add_item("spring_water", 5, "starting_kit")
+    add_item("wild_berries", 3, "starting_kit")
 
-# Debug/Cheat Functions
-func debug_add_all_foods():
-    for item_id in ItemDefinitions.ITEMS:
-        var item_data = ItemDefinitions.ITEMS[item_id]
-        if item_data.type in [ItemDefinitions.ItemType.FOOD, ItemDefinitions.ItemType.TRAINING_FOOD]:
-            add_item(item_id, 10)
+func debug_add_gold(amount: int) -> void:
+    if OS.is_debug_build():
+        add_gold(amount, "debug_cheat")
 
-func debug_set_gold(amount: int):
-    set_gold(amount)
-    print("Debug: Gold set to %d" % amount)
+func debug_add_item(item_id: String, quantity: int) -> void:
+    if OS.is_debug_build():
+        add_item(item_id, quantity, "debug_cheat")
 ```
 
-### Resource Display Helper (`scripts/ui/resource_display_helper.gd`)
+### Resource Display Helper - Utility Class
 ```gdscript
+# scripts/utils/resource_display_helper.gd
 class_name ResourceDisplayHelper
 extends RefCounted
 
-# Format gold display with commas
+# Format gold amount for display
 static func format_gold(amount: int) -> String:
-    var formatted = "%d" % amount
-    var result = ""
-    var count = 0
-
-    for i in range(formatted.length() - 1, -1, -1):
-        result = formatted[i] + result
-        count += 1
-        if count == 3 and i > 0:
-            result = "," + result
-            count = 0
-
-    return result + " gold"
-
-# Get icon path for item
-static func get_item_icon_path(item_id: String) -> String:
-    var item_data = ItemDefinitions.get_item_data(item_id)
-
-    match item_data.get("type", -1):
-        ItemDefinitions.ItemType.FOOD:
-            return "res://assets/icons/food.png"
-        ItemDefinitions.ItemType.TRAINING_FOOD:
-            return "res://assets/icons/training_food.png"
-        ItemDefinitions.ItemType.COMPETITION_FOOD:
-            return "res://assets/icons/competition_food.png"
-        _:
-            return "res://assets/icons/item.png"
-
-# Create rich text for item display
-static func get_item_rich_text(item_id: String, quantity: int = -1) -> String:
-    var item_data = ItemDefinitions.get_item_data(item_id)
-    var name = item_data.get("name", "Unknown Item")
-
-    if quantity > 0:
-        return "[b]%s[/b] x%d" % [name, quantity]
+    if amount >= 10000:
+        return "%.1fK gold" % (amount / 1000.0)
+    elif amount >= 1000:
+        return "%.2fK gold" % (amount / 1000.0)
     else:
-        return "[b]%s[/b]" % name
+        return "%d gold" % amount
 
-# Get affordability color
-static func get_affordability_color(cost: int, available: int) -> Color:
-    if available >= cost:
-        return Color.GREEN
-    elif available >= cost * 0.5:
-        return Color.YELLOW
-    else:
-        return Color.RED
+# Format item quantity for display
+static func format_item_quantity(item_id: String, quantity: int) -> String:
+    var resource_system = GameCore.get_system("resource") as ResourceSystem
+    if not resource_system:
+        return "%d x %s" % [quantity, item_id]
 
-# Format transaction for display
-static func format_transaction(transaction: Dictionary) -> String:
-    var timestamp = Time.get_datetime_dict_from_unix_time(transaction.timestamp)
-    var time_str = "%02d:%02d" % [timestamp.hour, timestamp.minute]
+    var name = resource_system.get_item_name(item_id)
+    return "%d x %s" % [quantity, name]
 
-    match transaction.type:
-        "earn":
-            return "[color=green]+%d gold[/color] from %s at %s" % [
-                transaction.amount,
-                transaction.get("source", "unknown"),
-                time_str
-            ]
-        "spend":
-            return "[color=red]-%d gold[/color] on %s at %s" % [
-                transaction.amount,
-                transaction.get("reason", "purchase"),
-                time_str
-            ]
-        "add_item":
-            return "[color=green]+%d %s[/color] at %s" % [
-                transaction.amount,
-                transaction.resource,
-                time_str
-            ]
-        "remove_item":
-            return "[color=yellow]-%d %s[/color] at %s" % [
-                transaction.amount,
-                transaction.resource,
-                time_str
-            ]
+# Get color for resource display
+static func get_resource_color(resource_type: String, amount: int = 0) -> Color:
+    match resource_type:
+        "gold":
+            if amount >= 1000:
+                return Color.GOLD
+            elif amount >= 100:
+                return Color.YELLOW
+            else:
+                return Color.ORANGE
+        "food":
+            return Color.GREEN
+        "item":
+            return Color.CYAN
         _:
-            return "Unknown transaction at %s" % time_str
+            return Color.WHITE
+
+# Create rich text for resource display
+static func format_resource_rich_text(resource_type: String, amount: int, label: String = "") -> String:
+    var color = get_resource_color(resource_type, amount)
+    var text = label if label else format_gold(amount)
+
+    return "[color=#%s]%s[/color]" % [color.to_html(false), text]
+
+# Get inventory summary for UI
+static func get_inventory_summary() -> Dictionary:
+    var resource_system = GameCore.get_system("resource") as ResourceSystem
+    if not resource_system:
+        return {}
+
+    var inventory = resource_system.get_inventory()
+    var summary = {
+        "total_items": 0,
+        "categories": {},
+        "valuable_items": []
+    }
+
+    for item_id in inventory:
+        var quantity = inventory[item_id]
+        summary.total_items += quantity
+
+        var item_data = resource_system.get_item_data(item_id)
+        var category = item_data.get("category", "unknown")
+
+        if not summary.categories.has(category):
+            summary.categories[category] = 0
+        summary.categories[category] += quantity
+
+        # Track valuable items (cost > 50)
+        var cost = resource_system.get_item_cost(item_id)
+        if cost > 50:
+            summary.valuable_items.append({
+                "id": item_id,
+                "name": resource_system.get_item_name(item_id),
+                "quantity": quantity,
+                "total_value": cost * quantity
+            })
+
+    # Sort valuable items by total value
+    summary.valuable_items.sort_custom(func(a, b): return a.total_value > b.total_value)
+
+    return summary
 ```
 
 ## Success Metrics
-- Resource operations complete instantly
-- Transaction validation prevents exploits
-- Inventory handles 100+ unique items
-- Save/load preserves all resources
-- No floating point errors with currency
+- ResourceSystem loads as GameCore subsystem in < 5ms
+- Gold transactions complete in < 1ms
+- Inventory operations handle 1000+ items efficiently
+- Save/load preserves all resources correctly
+- Transaction history maintained accurately
+- All signals properly routed through SignalBus
+- Memory usage stays reasonable with large inventories
 
 ## Notes
-- Consider adding resource caps/limits
-- Plan for multiple currency types
-- Add trading system hooks
-- Consider item durability/expiration
+- ResourceSystem is a GameCore subsystem, not an autoload
+- Item database will be expanded in future stages
+- Consider item effects system for complex interactions
+- Transaction history useful for debugging and analytics
+- Future shop system will integrate with purchase helpers
+- Add item tooltips and detailed descriptions later
 
 ## Estimated Time
 3-4 hours for implementation and testing

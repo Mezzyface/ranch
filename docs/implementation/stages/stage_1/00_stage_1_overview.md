@@ -109,21 +109,27 @@ For each completed task:
 
 ## Global Systems to Initialize
 
-### Enums (Autoload as "Enums")
-Location: `scripts/utils/Enums.gd`
-- Load from `enum.md` specifications
-- Contains all global enumerations
-- Available to all scripts
+### Single Autoload: GameCore
+Location: `scripts/core/game_core.gd`
+- ONLY autoload in the entire project
+- Manages all subsystems via lazy loading
+- Creates and manages SignalBus
 
-### Core Managers (Autoload)
-1. **GameManager** - Overall game state
-2. **DataManager** - Static data loading
-3. **SaveManager** - Persistence
-4. **StatManager** - Stat calculations
-5. **TagManager** - Tag validation
-6. **SpeciesManager** - Species resources
-7. **CollectionManager** - Player creatures
-8. **ResourceManager** - Gold/items
+### Subsystems (Lazy-loaded by GameCore, NOT autoloaded)
+1. **CreatureSystem** - Manages all creatures
+2. **SaveSystem** - ConfigFile-based persistence
+3. **StatSystem** - Stat calculations utility
+4. **TagSystem** - Tag validation utility
+5. **SpeciesSystem** - Species resource caching
+6. **CollectionSystem** - Player creature roster
+7. **ResourceSystem** - Gold/item economy
+8. **QuestSystem** - Quest management
+
+### SignalBus (Created by GameCore)
+Location: `scripts/core/signal_bus.gd`
+- Centralized signal routing
+- Prevents Resources from having signals
+- Decouples system communication
 
 ## Success Criteria
 

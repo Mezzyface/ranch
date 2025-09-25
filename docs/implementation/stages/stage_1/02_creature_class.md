@@ -251,8 +251,8 @@ func to_dict() -> Dictionary:
         "generation": generation
     }
 
-static func from_dict(data: Dictionary) -> Creature:
-    var creature := Creature.new()
+static func from_dict(data: Dictionary) -> CreatureData:
+    var creature := CreatureData.new()
     creature.id = data.get("id", "")
     creature.creature_name = data.get("creature_name", "")  # Updated property name
     creature.species_id = data.get("species_id", "")  # Updated property name

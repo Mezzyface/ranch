@@ -1,52 +1,72 @@
 # Task 06: Age System Implementation
 
 ## Overview
-Implement the age system that tracks creature aging, manages age categories, applies performance modifiers, and handles lifespan mechanics.
+Implement the age system that tracks creature aging, manages age categories, applies performance modifiers, and handles lifespan mechanics as a GameCore subsystem that works with the CreatureData/CreatureEntity separation.
 
 ## Dependencies
-- Task 02: Creature Class (complete)
+- Task 01: GameCore Setup (complete)
+- Task 02: CreatureData/CreatureEntity separation (complete)
 - Task 03: Stat System (complete)
 - Design documents: `creature.md`, `time.md`
 
 ## Context
+**CRITICAL ARCHITECTURE CHANGES**:
+- AgeSystem as GameCore subsystem (NOT autoload)
+- Works with CreatureEntity for aging behavior
+- All signals go through SignalBus
+- Age data stored in CreatureData, behavior in CreatureEntity
+- Lazy-loaded by GameCore when needed
+
 From the design documents:
 - Creatures age weekly when active
 - Age affects performance (young +10%, adult 0%, elder -10%)
-- Three age categories: Young (0-20%), Adult (20-80%), Elder (80-100%)
+- Five age categories: Baby, Juvenile, Adult, Elder, Ancient
 - Creatures have species-specific lifespans
 - Aging only occurs for active creatures
 
 ## Requirements
 
-### Age Categories
-1. **Young** (0-20% of lifespan)
-   - Performance bonus: +10%
+### Age Categories (Updated from Design)
+1. **Baby** (0-10% of lifespan)
+   - Performance modifier: 0.6x (60%)
+   - Faster training gains (+50%)
+   - Cannot participate in quests
    - Higher stamina recovery
-   - Faster training gains
-   - Lower breeding success
 
-2. **Adult** (20-80% of lifespan)
-   - No performance modifiers
+2. **Juvenile** (10-25% of lifespan)
+   - Performance modifier: 0.8x (80%)
+   - Training gains (+20%)
+   - Can do basic quests
+   - Good stamina recovery
+
+3. **Adult** (25-75% of lifespan)
+   - Performance modifier: 1.0x (100%)
+   - Normal training gains
+   - Optimal for all activities
    - Standard stamina recovery
-   - Optimal breeding age
-   - Peak performance period
 
-3. **Elder** (80-100% of lifespan)
-   - Performance penalty: -10%
+4. **Elder** (75-90% of lifespan)
+   - Performance modifier: 0.8x (80%)
+   - Reduced training gains (-20%)
+   - Wisdom-based bonuses
    - Slower stamina recovery
-   - Reduced training effectiveness
-   - Lower breeding success
+
+5. **Ancient** (90-100% of lifespan)
+   - Performance modifier: 0.6x (60%)
+   - Minimal training gains (-50%)
+   - High experience bonuses
+   - Very slow stamina recovery
 
 ### Age Mechanics
 1. **Weekly Aging**
-   - Only active creatures age
+   - Only active creatures age (managed by AgeSystem)
    - Stable creatures don't age
    - Age increases by 1 week per time advance
 
 2. **Performance Modifiers**
    - Apply to competition scores
    - Apply to quest validation
-   - Don't affect base stats
+   - Don't affect base stats permanently
 
 3. **Death Mechanics**
    - Creatures can exceed lifespan
@@ -55,34 +75,34 @@ From the design documents:
 
 ## Implementation Steps
 
-1. **Enhance Age System in Creature**
-   - Age progression methods
-   - Category calculation
+1. **Create AgeSystem Class**
+   - Extends Node, managed by GameCore
+   - Connects to SignalBus for all signals
+   - Lazy-loaded subsystem
+
+2. **Implement Age Progression**
+   - Age management through CreatureEntity
+   - Category calculation from CreatureData
    - Modifier application
 
-2. **Create AgeManager**
-   - Age all active creatures
-   - Calculate modifiers
-   - Handle mortality
-
 3. **Integrate with Time System**
-   - Hook into weekly progression
-   - Update creature ages
+   - Hook into weekly progression via SignalBus
+   - Update creature ages through entities
    - Apply age effects
 
-4. **Add UI Indicators**
+4. **Add Age Utilities**
    - Age display formatting
    - Category indicators
-   - Lifespan progress
+   - Lifespan progress calculations
 
 ## Test Criteria
 
 ### Unit Tests
-- [ ] Age categories calculate correctly
-- [ ] Young creatures get +10% modifier
-- [ ] Adult creatures get 0% modifier
-- [ ] Elder creatures get -10% modifier
-- [ ] Age only increases when active
+- [ ] Age categories calculate correctly from CreatureData
+- [ ] Baby creatures get 0.6x modifier
+- [ ] Adult creatures get 1.0x modifier
+- [ ] Ancient creatures get 0.6x modifier
+- [ ] Age only increases when active through CreatureEntity
 - [ ] Stable creatures don't age
 
 ### Age Progression Tests
@@ -93,81 +113,218 @@ From the design documents:
 
 ### Integration Tests
 - [ ] Age modifiers apply to performance scores
-- [ ] Training effectiveness reduced for elders
+- [ ] Training effectiveness varies by age through AgeSystem
 - [ ] Stamina recovery varies by age
 - [ ] Age persists through save/load
+- [ ] SignalBus properly routes aging events
 
 ## Code Implementation
 
-### Enhanced Creature Age Methods (`scripts/creatures/creature_age_extensions.gd`)
+### AgeSystem - GameCore Subsystem
 ```gdscript
-# Extension methods for Creature class age functionality
-extends RefCounted
+# scripts/systems/age_system.gd
+class_name AgeSystem
+extends Node
 
-static func get_age_percentage(creature: Creature) -> float:
-    if creature.lifespan <= 0:
+var signal_bus: SignalBus
+
+func _ready() -> void:
+    signal_bus = GameCore.get_signal_bus()
+
+    # Connect to time system events
+    signal_bus.week_advanced.connect(_on_week_advanced)
+
+    print("AgeSystem initialized")
+
+# Called when time advances by one week
+func _on_week_advanced() -> void:
+    # Get all active creatures from collection system
+    var collection_system = GameCore.get_system("collection")
+    if collection_system:
+        var active_creatures = collection_system.get_active_creature_entities()
+        age_creatures_batch(active_creatures)
+
+# Age multiple creatures at once
+func age_creatures_batch(creature_entities: Array[CreatureEntity]) -> void:
+    for creature_entity in creature_entities:
+        if creature_entity.data.is_active:
+            age_creature_entity(creature_entity)
+
+# Age a single CreatureEntity
+func age_creature_entity(creature_entity: CreatureEntity) -> void:
+    var old_category = get_age_category(creature_entity.data)
+    var old_age = creature_entity.data.age_weeks
+
+    # Increment age in the data
+    creature_entity.data.age_weeks += 1
+
+    # Check for category change
+    var new_category = get_age_category(creature_entity.data)
+
+    # Emit aging signal
+    if signal_bus:
+        signal_bus.creature_aged.emit(creature_entity.data, creature_entity.data.age_weeks)
+
+    # Handle category transitions
+    if old_category != new_category:
+        _handle_age_category_transition(creature_entity, old_category, new_category)
+
+    # Apply weekly aging effects
+    _apply_weekly_aging_effects(creature_entity)
+
+    # Check mortality if past lifespan
+    if should_check_mortality(creature_entity.data):
+        check_mortality(creature_entity)
+
+# Handle age category transitions
+func _handle_age_category_transition(
+    creature_entity: CreatureEntity,
+    old_category: int,
+    new_category: int
+) -> void:
+    # Adjust stamina max based on new age category
+    var base_stamina = 50 + (creature_entity.data.constitution / 10)
+    match new_category:
+        0, 1:  # Baby, Juvenile
+            creature_entity.data.stamina_max = int(base_stamina * 1.2)
+        2:     # Adult
+            creature_entity.data.stamina_max = base_stamina
+        3, 4:  # Elder, Ancient
+            creature_entity.data.stamina_max = int(base_stamina * 0.8)
+
+    # Ensure current stamina doesn't exceed new max
+    creature_entity.data.stamina_current = mini(
+        creature_entity.data.stamina_current,
+        creature_entity.data.stamina_max
+    )
+
+    # Emit category change signal
+    if signal_bus:
+        signal_bus.creature_age_category_changed.emit(
+            creature_entity.data,
+            old_category,
+            new_category
+        )
+
+    print("Creature %s transitioned from %s to %s" % [
+        creature_entity.data.creature_name,
+        _category_to_string(old_category),
+        _category_to_string(new_category)
+    ])
+
+# Apply weekly effects of aging
+func _apply_weekly_aging_effects(creature_entity: CreatureEntity) -> void:
+    # Gradual stamina loss for older creatures
+    var age_category = get_age_category(creature_entity.data)
+    var stamina_loss = 0
+
+    match age_category:
+        0, 1:  # Baby, Juvenile - no loss
+            stamina_loss = 0
+        2:     # Adult - minimal loss
+            stamina_loss = 2
+        3:     # Elder - moderate loss
+            stamina_loss = 5
+        4:     # Ancient - significant loss
+            stamina_loss = 10
+
+    if stamina_loss > 0:
+        creature_entity.data.stamina_current = maxi(
+            0,
+            creature_entity.data.stamina_current - stamina_loss
+        )
+
+# Age calculation methods
+func get_age_category(creature_data: CreatureData) -> int:
+    var life_percentage = get_age_percentage(creature_data)
+
+    if life_percentage < 10:
+        return 0  # BABY
+    elif life_percentage < 25:
+        return 1  # JUVENILE
+    elif life_percentage < 75:
+        return 2  # ADULT
+    elif life_percentage < 90:
+        return 3  # ELDER
+    else:
+        return 4  # ANCIENT
+
+func get_age_percentage(creature_data: CreatureData) -> float:
+    if creature_data.lifespan <= 0:
         return 0.0
-    return (float(creature.age_weeks) / float(creature.lifespan)) * 100.0
+    return (float(creature_data.age_weeks) / float(creature_data.lifespan)) * 100.0
 
-static func get_age_category_detailed(creature: Creature) -> Dictionary:
-    var percentage = get_age_percentage(creature)
-    var category = creature.get_age_category()
+func get_age_modifier(creature_data: CreatureData) -> float:
+    match get_age_category(creature_data):
+        0: return 0.6  # BABY
+        1: return 0.8  # JUVENILE
+        2: return 1.0  # ADULT
+        3: return 0.8  # ELDER
+        4: return 0.6  # ANCIENT
+        _: return 1.0
 
-    return {
-        "category": category,
-        "percentage": percentage,
-        "weeks_in_category": _get_weeks_in_current_category(creature),
-        "weeks_until_next": _get_weeks_until_next_category(creature),
-        "description": _get_age_description(category, percentage)
-    }
+# Performance and training modifiers
+func get_training_effectiveness_modifier(creature_data: CreatureData) -> float:
+    match get_age_category(creature_data):
+        0: return 1.5  # BABY - learns fast
+        1: return 1.2  # JUVENILE - good learning
+        2: return 1.0  # ADULT - normal
+        3: return 0.8  # ELDER - slower learning
+        4: return 0.5  # ANCIENT - very slow learning
+        _: return 1.0
 
-static func _get_weeks_in_current_category(creature: Creature) -> int:
-    var percentage = get_age_percentage(creature)
+func get_stamina_recovery_modifier(creature_data: CreatureData) -> float:
+    match get_age_category(creature_data):
+        0: return 1.8  # BABY - fast recovery
+        1: return 1.4  # JUVENILE - good recovery
+        2: return 1.0  # ADULT - normal
+        3: return 0.7  # ELDER - slow recovery
+        4: return 0.4  # ANCIENT - very slow recovery
+        _: return 1.0
 
-    if percentage < 20:  # Young
-        return creature.age_weeks
-    elif percentage < 80:  # Adult
-        return creature.age_weeks - int(creature.lifespan * 0.2)
-    else:  # Elder
-        return creature.age_weeks - int(creature.lifespan * 0.8)
+func get_quest_eligibility_modifier(creature_data: CreatureData) -> float:
+    var age_category = get_age_category(creature_data)
+    match age_category:
+        0: return 0.0  # BABY - cannot do quests
+        1: return 0.7  # JUVENILE - limited quests
+        2: return 1.0  # ADULT - all quests
+        3: return 1.1  # ELDER - wisdom bonus
+        4: return 1.2  # ANCIENT - experience bonus
+        _: return 1.0
 
-static func _get_weeks_until_next_category(creature: Creature) -> int:
-    var percentage = get_age_percentage(creature)
+# Mortality system
+func should_check_mortality(creature_data: CreatureData) -> bool:
+    return get_age_percentage(creature_data) >= 100.0
 
-    if percentage < 20:  # Young -> Adult
-        return int(creature.lifespan * 0.2) - creature.age_weeks
-    elif percentage < 80:  # Adult -> Elder
-        return int(creature.lifespan * 0.8) - creature.age_weeks
-    else:  # Elder -> End
-        return creature.lifespan - creature.age_weeks
+func check_mortality(creature_entity: CreatureEntity) -> void:
+    var age_percentage = get_age_percentage(creature_entity.data)
 
-static func _get_age_description(category: Creature.AgeCategory, percentage: float) -> String:
-    match category:
-        Creature.AgeCategory.YOUNG:
-            if percentage < 10:
-                return "Newborn"
-            else:
-                return "Young"
-        Creature.AgeCategory.ADULT:
-            if percentage < 40:
-                return "Young Adult"
-            elif percentage < 60:
-                return "Prime Adult"
-            else:
-                return "Mature Adult"
-        Creature.AgeCategory.ELDER:
-            if percentage < 90:
-                return "Elder"
-            elif percentage < 100:
-                return "Ancient"
-            else:
-                return "Venerable"
-        _:
-            return "Unknown"
+    if age_percentage < 100:
+        return  # No mortality risk yet
 
-static func get_formatted_age(creature: Creature) -> String:
-    var years = creature.age_weeks / 52
-    var weeks = creature.age_weeks % 52
+    # Calculate mortality chance
+    var over_percentage = age_percentage - 100
+    var mortality_chance = calculate_mortality_chance(over_percentage)
+
+    if randf() < mortality_chance:
+        if signal_bus:
+            signal_bus.creature_died_of_age.emit(creature_entity.data)
+
+func calculate_mortality_chance(percentage_over: float) -> float:
+    # Progressive mortality risk
+    if percentage_over <= 10:
+        return 0.05      # 5% per week for first 10%
+    elif percentage_over <= 25:
+        return 0.15      # 15% per week for next 15%
+    elif percentage_over <= 50:
+        return 0.30      # 30% per week for next 25%
+    else:
+        return 0.50      # 50% per week beyond 50% over
+
+# Age formatting and display utilities
+func get_formatted_age(creature_data: CreatureData) -> String:
+    var years = creature_data.age_weeks / 52
+    var weeks = creature_data.age_weeks % 52
 
     if years == 0:
         return "%d weeks" % weeks
@@ -182,285 +339,201 @@ static func get_formatted_age(creature: Creature) -> String:
         else:
             return "%d years, %d weeks" % [years, weeks]
 
-static func get_lifespan_status(creature: Creature) -> String:
-    var percentage = get_age_percentage(creature)
+func get_age_description(creature_data: CreatureData) -> String:
+    var age_category = get_age_category(creature_data)
+    var age_percentage = get_age_percentage(creature_data)
 
-    if percentage < 50:
+    match age_category:
+        0:  # BABY
+            return "Newborn"
+        1:  # JUVENILE
+            if age_percentage < 20:
+                return "Young"
+            else:
+                return "Juvenile"
+        2:  # ADULT
+            if age_percentage < 40:
+                return "Young Adult"
+            elif age_percentage < 60:
+                return "Prime Adult"
+            else:
+                return "Mature Adult"
+        3:  # ELDER
+            return "Elder"
+        4:  # ANCIENT
+            if age_percentage < 100:
+                return "Ancient"
+            else:
+                return "Venerable"
+        _:
+            return "Unknown"
+
+func get_lifespan_status(creature_data: CreatureData) -> String:
+    var percentage = get_age_percentage(creature_data)
+
+    if percentage < 25:
+        return "Young"
+    elif percentage < 50:
         return "Healthy"
     elif percentage < 75:
-        return "Aging"
+        return "Mature"
     elif percentage < 90:
-        return "Old"
+        return "Aging"
     elif percentage < 100:
-        return "Very Old"
+        return "Old"
     elif percentage < 110:
-        return "Past Prime"
+        return "Very Old"
     else:
-        return "Living on Borrowed Time"
-```
+        return "Ancient"
 
-### AgeManager Singleton (`scripts/systems/age_manager.gd`)
-```gdscript
-extends Node
-
-signal creature_aged(creature: Creature)
-signal creature_category_changed(creature: Creature, old_category: Creature.AgeCategory)
-signal creature_died_of_age(creature: Creature)
-
-# Age all active creatures by one week
-func age_active_creatures(creatures: Array[Creature]):
-    for creature in creatures:
-        if creature.is_active:
-            age_creature(creature)
-
-# Age a single creature
-func age_creature(creature: Creature):
-    var old_category = creature.get_age_category()
-    creature.age_one_week()
-
-    emit_signal("creature_aged", creature)
-
-    # Check for category change
-    var new_category = creature.get_age_category()
-    if old_category != new_category:
-        emit_signal("creature_category_changed", creature, old_category)
-        _apply_category_change_effects(creature, old_category, new_category)
-
-    # Check mortality
-    if should_check_mortality(creature):
-        check_mortality(creature)
-
-# Apply effects when creature changes age category
-func _apply_category_change_effects(
-    creature: Creature,
-    old_category: Creature.AgeCategory,
-    new_category: Creature.AgeCategory
-):
-    # Adjust stamina max based on age
-    match new_category:
-        Creature.AgeCategory.YOUNG:
-            creature.stamina_max = 50 + (creature.constitution / 8)
-        Creature.AgeCategory.ADULT:
-            creature.stamina_max = 50 + (creature.constitution / 10)
-        Creature.AgeCategory.ELDER:
-            creature.stamina_max = 40 + (creature.constitution / 12)
-
-    # Ensure current stamina doesn't exceed new max
-    creature.stamina_current = mini(creature.stamina_current, creature.stamina_max)
-
-    print("Creature %s aged from %s to %s" % [
-        creature.name,
-        _category_to_string(old_category),
-        _category_to_string(new_category)
-    ])
-
-func _category_to_string(category: Creature.AgeCategory) -> String:
-    match category:
-        Creature.AgeCategory.YOUNG: return "Young"
-        Creature.AgeCategory.ADULT: return "Adult"
-        Creature.AgeCategory.ELDER: return "Elder"
-        _: return "Unknown"
-
-# Check if creature should have mortality check
-func should_check_mortality(creature: Creature) -> bool:
-    var age_percentage = CreatureAgeExtensions.get_age_percentage(creature)
-    return age_percentage >= 100
-
-# Check if creature dies of old age
-func check_mortality(creature: Creature):
-    var age_percentage = CreatureAgeExtensions.get_age_percentage(creature)
-
-    if age_percentage < 100:
-        return  # No mortality risk yet
-
-    # Calculate mortality chance
-    var over_percentage = age_percentage - 100
-    var mortality_chance = calculate_mortality_chance(over_percentage)
-
-    if randf() < mortality_chance:
-        emit_signal("creature_died_of_age", creature)
-
-# Calculate chance of death based on how far past lifespan
-func calculate_mortality_chance(percentage_over: float) -> float:
-    # 0-10% over: 5% chance per week
-    # 10-20% over: 10% chance per week
-    # 20-30% over: 20% chance per week
-    # 30%+ over: 35% chance per week
-
-    if percentage_over <= 10:
-        return 0.05
-    elif percentage_over <= 20:
-        return 0.10
-    elif percentage_over <= 30:
-        return 0.20
-    else:
-        return 0.35
-
-# Get performance modifier based on age
-func get_age_performance_modifier(creature: Creature) -> float:
-    return creature.get_age_modifier()
-
-# Get training effectiveness based on age
-func get_training_effectiveness_modifier(creature: Creature) -> float:
-    match creature.get_age_category():
-        Creature.AgeCategory.YOUNG:
-            return 1.2  # +20% training gains
-        Creature.AgeCategory.ADULT:
-            return 1.0  # Normal training
-        Creature.AgeCategory.ELDER:
-            return 0.7  # -30% training gains
-        _:
-            return 1.0
-
-# Get stamina recovery rate based on age
-func get_stamina_recovery_modifier(creature: Creature) -> float:
-    match creature.get_age_category():
-        Creature.AgeCategory.YOUNG:
-            return 1.5  # +50% recovery
-        Creature.AgeCategory.ADULT:
-            return 1.0  # Normal recovery
-        Creature.AgeCategory.ELDER:
-            return 0.6  # -40% recovery
-        _:
-            return 1.0
-
-# Get breeding success modifier based on age
-func get_breeding_success_modifier(creature: Creature) -> float:
-    var age_percentage = CreatureAgeExtensions.get_age_percentage(creature)
-
-    if age_percentage < 15:
-        return 0.3  # Very young, poor breeding
-    elif age_percentage < 20:
-        return 0.7  # Young, reduced success
-    elif age_percentage < 70:
-        return 1.0  # Prime breeding age
-    elif age_percentage < 80:
-        return 0.8  # Older, slightly reduced
-    elif age_percentage < 90:
-        return 0.5  # Elder, significantly reduced
-    else:
-        return 0.2  # Very old, poor breeding
-
-# Calculate retirement recommendation
-func should_retire(creature: Creature) -> bool:
-    var age_percentage = CreatureAgeExtensions.get_age_percentage(creature)
-
-    # Recommend retirement at 85% lifespan
-    return age_percentage >= 85
-
-# Get age-based stat preview (for UI)
-func get_modified_stats_preview(creature: Creature) -> Dictionary:
-    var modifier = get_age_performance_modifier(creature)
+# Age-based stat calculations (for UI display)
+func get_effective_stats(creature_data: CreatureData) -> Dictionary:
+    var modifier = get_age_modifier(creature_data)
 
     return {
-        "strength": int(creature.strength * (1.0 + modifier)),
-        "constitution": int(creature.constitution * (1.0 + modifier)),
-        "dexterity": int(creature.dexterity * (1.0 + modifier)),
-        "intelligence": int(creature.intelligence * (1.0 + modifier)),
-        "wisdom": int(creature.wisdom * (1.0 + modifier)),
-        "discipline": int(creature.discipline * (1.0 + modifier))
+        "strength": int(creature_data.strength * modifier),
+        "constitution": int(creature_data.constitution * modifier),
+        "dexterity": int(creature_data.dexterity * modifier),
+        "intelligence": int(creature_data.intelligence * modifier),
+        "wisdom": int(creature_data.wisdom * modifier),
+        "discipline": int(creature_data.discipline * modifier)
     }
 
-# Batch age analysis for population
-func analyze_age_distribution(creatures: Array[Creature]) -> Dictionary:
+# Population age analysis
+func analyze_age_distribution(creature_data_array: Array[CreatureData]) -> Dictionary:
     var distribution = {
-        "young": 0,
+        "baby": 0,
+        "juvenile": 0,
         "adult": 0,
         "elder": 0,
-        "average_age": 0,
+        "ancient": 0,
+        "average_age_weeks": 0,
         "oldest": null,
         "youngest": null
     }
+
+    if creature_data_array.is_empty():
+        return distribution
 
     var total_age = 0
     var oldest_age = -1
     var youngest_age = 999999
 
-    for creature in creatures:
+    for creature_data in creature_data_array:
         # Count categories
-        match creature.get_age_category():
-            Creature.AgeCategory.YOUNG:
-                distribution.young += 1
-            Creature.AgeCategory.ADULT:
-                distribution.adult += 1
-            Creature.AgeCategory.ELDER:
-                distribution.elder += 1
+        match get_age_category(creature_data):
+            0: distribution.baby += 1
+            1: distribution.juvenile += 1
+            2: distribution.adult += 1
+            3: distribution.elder += 1
+            4: distribution.ancient += 1
 
         # Track ages
-        total_age += creature.age_weeks
+        total_age += creature_data.age_weeks
 
-        if creature.age_weeks > oldest_age:
-            oldest_age = creature.age_weeks
-            distribution.oldest = creature
+        if creature_data.age_weeks > oldest_age:
+            oldest_age = creature_data.age_weeks
+            distribution.oldest = creature_data
 
-        if creature.age_weeks < youngest_age:
-            youngest_age = creature.age_weeks
-            distribution.youngest = creature
+        if creature_data.age_weeks < youngest_age:
+            youngest_age = creature_data.age_weeks
+            distribution.youngest = creature_data
 
-    if creatures.size() > 0:
-        distribution.average_age = total_age / creatures.size()
-
+    distribution.average_age_weeks = total_age / creature_data_array.size()
     return distribution
 
+# Retirement recommendations
+func should_retire(creature_data: CreatureData) -> bool:
+    var age_percentage = get_age_percentage(creature_data)
+    return age_percentage >= 85  # Recommend retirement at 85% lifespan
+
+# Utility methods
+func _category_to_string(category: int) -> String:
+    match category:
+        0: return "Baby"
+        1: return "Juvenile"
+        2: return "Adult"
+        3: return "Elder"
+        4: return "Ancient"
+        _: return "Unknown"
+
 # Special handling for story-important creatures
-func apply_plot_armor(creature: Creature) -> bool:
+func has_plot_armor(creature_data: CreatureData) -> bool:
     # Certain creatures might be protected from age death
     # This is for future story implementation
     return false
 ```
 
-### Age Display Helper (`scripts/ui/age_display_helper.gd`)
+### Age Display Helper - Utility Class
 ```gdscript
+# scripts/utils/age_display_helper.gd
 class_name AgeDisplayHelper
 extends RefCounted
 
 # Get color for age display based on category
-static func get_age_color(creature: Creature) -> Color:
-    match creature.get_age_category():
-        Creature.AgeCategory.YOUNG:
-            return Color.GREEN
-        Creature.AgeCategory.ADULT:
-            return Color.WHITE
-        Creature.AgeCategory.ELDER:
-            return Color.YELLOW
-        _:
-            return Color.GRAY
+static func get_age_color(creature_data: CreatureData) -> Color:
+    var age_system = GameCore.get_system("age") as AgeSystem
+    if not age_system:
+        return Color.WHITE
 
-# Get icon for age category
-static func get_age_icon_path(creature: Creature) -> String:
-    match creature.get_age_category():
-        Creature.AgeCategory.YOUNG:
-            return "res://assets/icons/age_young.png"
-        Creature.AgeCategory.ADULT:
-            return "res://assets/icons/age_adult.png"
-        Creature.AgeCategory.ELDER:
-            return "res://assets/icons/age_elder.png"
-        _:
-            return ""
+    match age_system.get_age_category(creature_data):
+        0: return Color.LIGHT_BLUE    # BABY
+        1: return Color.GREEN         # JUVENILE
+        2: return Color.WHITE         # ADULT
+        3: return Color.YELLOW        # ELDER
+        4: return Color.ORANGE        # ANCIENT
+        _: return Color.GRAY
+
+# Get icon path for age category
+static func get_age_icon_path(creature_data: CreatureData) -> String:
+    var age_system = GameCore.get_system("age") as AgeSystem
+    if not age_system:
+        return ""
+
+    match age_system.get_age_category(creature_data):
+        0: return "res://assets/icons/age_baby.png"
+        1: return "res://assets/icons/age_juvenile.png"
+        2: return "res://assets/icons/age_adult.png"
+        3: return "res://assets/icons/age_elder.png"
+        4: return "res://assets/icons/age_ancient.png"
+        _: return ""
 
 # Create rich text for age display
-static func get_age_rich_text(creature: Creature) -> String:
-    var color = get_age_color(creature)
-    var age_text = CreatureAgeExtensions.get_formatted_age(creature)
-    var category = creature.get_age_category()
-    var category_text = AgeManager._category_to_string(category)
+static func get_age_rich_text(creature_data: CreatureData) -> String:
+    var age_system = GameCore.get_system("age") as AgeSystem
+    if not age_system:
+        return "Age: Unknown"
+
+    var color = get_age_color(creature_data)
+    var age_text = age_system.get_formatted_age(creature_data)
+    var description = age_system.get_age_description(creature_data)
 
     return "[color=#%s]%s (%s)[/color]" % [
         color.to_html(false),
         age_text,
-        category_text
+        description
     ]
 
-# Get lifespan bar progress (0.0 to 1.0)
-static func get_lifespan_progress(creature: Creature) -> float:
-    return clamp(CreatureAgeExtensions.get_age_percentage(creature) / 100.0, 0.0, 1.0)
+# Get lifespan progress bar value (0.0 to 1.0)
+static func get_lifespan_progress(creature_data: CreatureData) -> float:
+    var age_system = GameCore.get_system("age") as AgeSystem
+    if not age_system:
+        return 0.0
+
+    return clamp(age_system.get_age_percentage(creature_data) / 100.0, 0.0, 1.0)
 
 # Get lifespan bar color
-static func get_lifespan_bar_color(creature: Creature) -> Color:
-    var percentage = CreatureAgeExtensions.get_age_percentage(creature)
+static func get_lifespan_bar_color(creature_data: CreatureData) -> Color:
+    var age_system = GameCore.get_system("age") as AgeSystem
+    if not age_system:
+        return Color.GRAY
 
-    if percentage < 50:
+    var percentage = age_system.get_age_percentage(creature_data)
+
+    if percentage < 25:
         return Color.GREEN
+    elif percentage < 50:
+        return Color.YELLOW_GREEN
     elif percentage < 75:
         return Color.YELLOW
     elif percentage < 90:
@@ -469,20 +542,42 @@ static func get_lifespan_bar_color(creature: Creature) -> Color:
         return Color.RED
     else:
         return Color.DARK_RED
+
+# Get age-based performance indicator
+static func get_performance_indicator(creature_data: CreatureData) -> String:
+    var age_system = GameCore.get_system("age") as AgeSystem
+    if not age_system:
+        return "Normal"
+
+    var modifier = age_system.get_age_modifier(creature_data)
+
+    if modifier > 1.0:
+        return "Enhanced"
+    elif modifier >= 0.9:
+        return "Normal"
+    elif modifier >= 0.7:
+        return "Reduced"
+    else:
+        return "Limited"
 ```
 
 ## Success Metrics
-- Age calculations complete in < 1ms
+- AgeSystem loads as GameCore subsystem in < 1ms
+- Age calculations complete in < 1ms per creature
 - Category transitions trigger correctly
-- Modifiers apply accurately
+- Modifiers apply accurately to all systems
 - Mortality system works as designed
 - UI displays age information clearly
+- All signals properly routed through SignalBus
+- CreatureData/CreatureEntity separation maintained
 
 ## Notes
-- Consider caching age calculations
-- Ensure age effects are clearly communicated
-- Balance age modifiers for gameplay
-- Consider special cases for unique creatures
+- AgeSystem is a GameCore subsystem, not an autoload
+- Age data stored in CreatureData, behavior managed by AgeSystem
+- Consider caching age calculations for large populations
+- Ensure age effects are clearly communicated to player
+- Balance age modifiers for engaging gameplay
+- Special cases for unique/story creatures planned
 
 ## Estimated Time
 3-4 hours for implementation and testing
