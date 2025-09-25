@@ -9,9 +9,13 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_save_game"):
 		print("Save game input detected!")
+		# Ensure SaveSystem is loaded before emitting signal
+		GameCore.get_system("save")
 		GameCore.get_signal_bus().save_requested.emit()
 	elif event.is_action_pressed("ui_load_game"):
 		print("Load game input detected!")
+		# Ensure SaveSystem is loaded before emitting signal
+		GameCore.get_system("save")
 		GameCore.get_signal_bus().load_requested.emit()
 	elif event.is_action_pressed("ui_open_shop"):
 		print("Shop input detected (S key)!")
