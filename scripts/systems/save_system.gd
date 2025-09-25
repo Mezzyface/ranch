@@ -47,7 +47,7 @@ func load_game(slot: int = 0) -> bool:
 		return false
 
 	# Check version
-	var version := config.get_value("meta", "version", 0)
+	var version: int = config.get_value("meta", "version", 0)
 	if version != SAVE_VERSION:
 		print("Migrating save from version %d to %d" % [version, SAVE_VERSION])
 		_migrate_save(config, version)
