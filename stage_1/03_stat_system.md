@@ -115,31 +115,25 @@ StatManager (Node)
 class_name StatConstants
 extends Resource
 
-enum StatType {
-    STRENGTH,
-    CONSTITUTION,
-    DEXTERITY,
-    INTELLIGENCE,
-    WISDOM,
-    DISCIPLINE
-}
+# Use global enums from Enums.gd instead of defining locally
+# StatType enum is defined in global Enums.gd
 
 const STAT_NAMES = {
-    StatType.STRENGTH: "STR",
-    StatType.CONSTITUTION: "CON",
-    StatType.DEXTERITY: "DEX",
-    StatType.INTELLIGENCE: "INT",
-    StatType.WISDOM: "WIS",
-    StatType.DISCIPLINE: "DIS"
+    Enums.StatType.STRENGTH: "STR",
+    Enums.StatType.CONSTITUTION: "CON",
+    Enums.StatType.DEXTERITY: "DEX",
+    Enums.StatType.INTELLIGENCE: "INT",
+    Enums.StatType.WISDOM: "WIS",
+    Enums.StatType.DISCIPLINE: "DIS"
 }
 
 const STAT_DESCRIPTIONS = {
-    StatType.STRENGTH: "Physical power and combat ability",
-    StatType.CONSTITUTION: "Health, endurance, and stamina",
-    StatType.DEXTERITY: "Speed, agility, and precision",
-    StatType.INTELLIGENCE: "Mental capacity and learning",
-    StatType.WISDOM: "Awareness, intuition, and perception",
-    StatType.DISCIPLINE: "Obedience, reliability, and focus"
+    Enums.StatType.STRENGTH: "Physical power and combat ability",
+    Enums.StatType.CONSTITUTION: "Health, endurance, and stamina",
+    Enums.StatType.DEXTERITY: "Speed, agility, and precision",
+    Enums.StatType.INTELLIGENCE: "Mental capacity and learning",
+    Enums.StatType.WISDOM: "Awareness, intuition, and perception",
+    Enums.StatType.DISCIPLINE: "Obedience, reliability, and focus"
 }
 
 # Growth Constants
@@ -149,7 +143,7 @@ const DIMINISHING_THRESHOLD = 500
 const SOFT_CAP = 800
 const HARD_CAP = 1000
 
-# Modifier Types
+# Modifier Types could be global enum but kept local if only used in stat system
 enum ModifierType {
     AGE,
     FOOD,
@@ -165,7 +159,7 @@ class_name StatModifier
 extends Resource
 
 @export var modifier_type: StatConstants.ModifierType
-@export var stat_type: StatConstants.StatType
+@export var stat_type: Enums.StatType  # Using global enum
 @export var value: float = 0.0  # Percentage or flat value
 @export var is_percentage: bool = true
 @export var duration_weeks: int = -1  # -1 for permanent
@@ -173,7 +167,7 @@ extends Resource
 
 func _init(
     type: StatConstants.ModifierType = StatConstants.ModifierType.TEMPORARY,
-    stat: StatConstants.StatType = StatConstants.StatType.STRENGTH,
+    stat: Enums.StatType = Enums.StatType.STRENGTH,  # Using global enum
     mod_value: float = 0.0,
     percentage: bool = true,
     duration: int = -1
@@ -334,14 +328,14 @@ func validate_stat_value(value: int) -> int:
     return clampi(value, 0, StatConstants.HARD_CAP)
 
 # Get age modifier for creature
-func get_age_modifier(age_category: Creature.AgeCategory) -> float:
+func get_age_modifier(age_category: Enums.AgeCategory) -> float:  # Using global enum
     match age_category:
-        Creature.AgeCategory.YOUNG:
-            return 0.1  # +10%
-        Creature.AgeCategory.ADULT:
+        Enums.AgeCategory.YOUNG:
+            return 0.2  # +20% (updated to match design specs)
+        Enums.AgeCategory.ADULT:
             return 0.0  # No modifier
-        Creature.AgeCategory.ELDER:
-            return -0.1  # -10%
+        Enums.AgeCategory.ELDER:
+            return -0.2  # -20% (updated to match design specs)
         _:
             return 0.0
 

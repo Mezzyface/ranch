@@ -114,6 +114,10 @@ From the design documents:
 class_name ItemDefinitions
 extends Resource
 
+# NOTE: These enums are temporary for Stage 1
+# TODO: Migrate to global Enums.FoodType and Enums.FoodCategory when food system is fully implemented
+# TODO: Update all string-based item IDs to use enum values for type safety
+
 enum ItemType {
     FOOD,
     TRAINING_FOOD,
@@ -132,6 +136,8 @@ enum FoodEffect {
     BREEDING_BOOST
 }
 
+# NOTE: Using string keys for items in Stage 1
+# TODO: Convert to Enums.FoodType keys when enum system is implemented
 const ITEMS = {
     # Basic Foods
     "grain_rations": {

@@ -111,6 +111,15 @@ Define creature species with their characteristics:
 
 ### Species Database (`scripts/data/species_database.gd`)
 ```gdscript
+# NOTE: This is a simplified version for Stage 1
+# TODO: Migrate to using SpeciesResource system (see species.md)
+# The SpeciesResource system provides better organization with:
+# - Visual assets (sprite frames, icons)
+# - Stat ranges and generation rules
+# - Tags and breeding information
+# - Economic data (prices, rarity)
+# For now, using dictionary-based data for quick prototyping
+
 class_name SpeciesDatabase
 extends Resource
 
@@ -126,9 +135,13 @@ const SPECIES_DATA = {
             "wisdom": {"min": 110, "max": 170},
             "discipline": {"min": 90, "max": 150}
         },
+        # NOTE: Using strings for tags in Stage 1
+        # TODO: Convert to Enums.CreatureTag values when enum system is implemented
         "guaranteed_tags": ["Small", "Territorial", "Dark Vision"],
         "optional_tags": ["Nocturnal"],
         "lifespan_weeks": 520,
+        # NOTE: Using string for egg_group in Stage 1
+        # TODO: Convert to Enums.EggGroup when breeding system is implemented
         "egg_group": "Field",
         "rarity": "common",
         "base_price": 200

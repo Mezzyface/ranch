@@ -135,6 +135,8 @@ func add_creature(creature: Creature, add_to_active: bool = false) -> bool:
 
     if add_to_active:
         active_creatures.append(creature)
+        # NOTE: Using CreatureState enum would be cleaner here
+        # TODO: Update to creature.state = Enums.CreatureState.ACTIVE when enum is implemented
         creature.is_active = true
         emit_signal("creature_added", creature)
         emit_signal("creature_moved_to_active", creature)

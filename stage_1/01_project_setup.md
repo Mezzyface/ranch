@@ -98,6 +98,31 @@ export_presets.cfg
 
 3. Initial commit structure with meaningful commit message
 
+## Implementation Steps
+
+1. **Create New Project**
+   - Open Godot 4.5
+   - Create new project named "CreatureCollection"
+   - Set up project settings as specified above
+
+2. **Create Directory Structure**
+   - Create all folders as outlined
+   - Add .gitkeep files to empty directories
+
+3. **Create Core Singleton Scripts**
+   - Implement basic singleton structure
+   - Register in Project Settings → Autoload
+
+4. **Set Up Main Scene**
+   - Create main.tscn in scenes/main/
+   - Add basic UI container structure
+   - Set as main scene in project settings
+
+5. **Configure Project Settings**
+   - Set display resolution
+   - Configure input mappings
+   - Set rendering options
+
 ### Main Scene Structure
 Create `main.tscn` with basic node hierarchy:
 ```

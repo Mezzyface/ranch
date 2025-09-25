@@ -120,6 +120,11 @@ From `tags.md` and quest documentation:
 class_name TagDefinitions
 extends Resource
 
+# NOTE: Stage 1 uses string-based tags for simplicity
+# TODO: In later stages, update to use Enums.CreatureTag from global enums
+# TODO: Update Creature class tags from Array[String] to Array[Enums.CreatureTag]
+# This will provide type safety and prevent typos in tag names
+
 enum TagCategory {
     SIZE,
     BEHAVIORAL,
@@ -128,6 +133,7 @@ enum TagCategory {
     UTILITY
 }
 
+# NOTE: Using string keys for Stage 1 - will migrate to enum-based system later
 const TAGS = {
     # Size Tags (Mutually Exclusive)
     "Small": {

@@ -11,6 +11,7 @@ This is a planning directory containing comprehensive game design documentation 
 ### Core System Documents
 - `game.md` - Core gameplay loop, acquisition systems, and Godot 4.5 architecture overview
 - `creature.md` - Creature system design including stats, tags, and behaviors
+- `species.md` - Species resource system for creature types, stat ranges, and visual assets
 - `stats.md` - Stat system design with 6 core stats (STR, CON, INT, WIS, DEX, DIS)
 - `tags.md` - Tag system for creature traits and environmental requirements
 - `time.md` - Time management system for creature activities and stamina
@@ -26,7 +27,7 @@ This is a planning directory containing comprehensive game design documentation 
 
 ### Project Overview Documents
 - `mvp_summary.md` - Complete MVP design summary with economic analysis and implementation priorities
-- No implementation documents (`*_implementation.md` files) exist yet
+- `implementation_plan.md` - Multi-stage implementation roadmap with 10 development stages over 19-24 weeks
 
 ## Game Design Architecture
 
@@ -57,7 +58,7 @@ Tutorial progression from simple to complex:
 
 ## Repository Structure
 
-This is a **pure design documentation repository** - no actual code exists yet. All files are comprehensive design specifications for a creature collection game intended for implementation in Godot 4.5.
+This repository contains comprehensive game design documentation with staged implementation plans. The project is in early development with Stage 1 tasks defined in the `stage_1/` directory.
 
 ### Key Document Relationships
 - **Quest System**: `quest.md` defines mechanics, `quest_design_doc.md` provides specific tutorial quest line
@@ -67,16 +68,43 @@ This is a **pure design documentation repository** - no actual code exists yet. 
 - **Time Management**: `time.md` integrates with `training.md`, `food.md`, and `competitions.md` for weekly creature care
 - **MVP Overview**: `mvp_summary.md` synthesizes all systems into implementation roadmap with economic flow analysis
 
+## Implementation Status
+
+### Current Stage: Stage 1 - Core Data Models & Foundation
+The project is in early implementation following a 10-stage development plan:
+
+1. **Stage 1**: Core Data Models & Foundation (2-3 weeks)
+2. **Stage 2**: Time Management & Basic UI (2 weeks)
+3. **Stage 3**: Shop System & Economy (2 weeks)
+4. **Stage 4**: Training System (2 weeks)
+5. **Stage 5**: Quest System - Tutorial Phase (2-3 weeks)
+6. **Stage 6**: Competition System (2 weeks)
+7. **Stage 7**: Advanced Quests (2-3 weeks)
+8. **Stage 8**: Breeding System (2 weeks)
+9. **Stage 9**: Polish & Additional Vendors (2 weeks)
+10. **Stage 10**: Balancing & MVP Completion (1-2 weeks)
+
+### Stage 1 Implementation Tasks
+Implementation files in `stage_1/` directory:
+- `01_project_setup.md` - Godot 4.5 project initialization and architecture
+- `02_creature_class.md` - Core creature data model implementation
+- `03_stat_system.md` - Six stat system (STR, CON, DEX, INT, WIS, DIS)
+- `04_tag_system.md` - Tag system for creature traits
+- `05_creature_generation.md` - Procedural creature instance creation
+- `06_age_system.md` - Age categories with performance modifiers
+- `07_save_load_system.md` - Game state persistence
+- `08_player_collection.md` - Active/stable creature management
+- `09_resource_tracking.md` - Gold and food inventory systems
+
 ## Development Notes
 
-When working with this documentation:
-- All design documents define game mechanics and intended player experience
-- No implementation code exists - these are specifications for future development
-- Systems are designed to integrate through component-based Godot 4.5 architecture
-- Quest progression (TIM-01 through TIM-06) demonstrates escalating complexity patterns
-- Complete economic flow analysis available in `mvp_summary.md` with implementation priorities
-- Shop system provides strategic creature acquisition with 6+ specialized vendors
-- Competition system solves mid-game economic gaps while adding gameplay variety
+When working with this project:
+- Follow the staged implementation plan in `implementation_plan.md`
+- Each stage builds upon previous stages with clear dependencies
+- Stage 1 tasks are defined in detail in the `stage_1/` directory
+- No Godot project files exist yet - begin with `01_project_setup.md`
+- Systems are designed for component-based Godot 4.5 architecture
+- Complete economic flow analysis available in `mvp_summary.md`
 
 ## Key Design Principles
 

@@ -125,7 +125,9 @@ extends Resource
 # Identity
 @export var id: String = ""
 @export var name: String = ""
-@export var species: String = ""
+# NOTE: species is a string ID that references a SpeciesResource
+# The SpeciesResource contains all species-specific data (stats, sprites, etc.)
+@export var species: String = ""  # References species_id in SpeciesResource
 
 # Core Stats (0-1000)
 @export var strength: int = 50:
@@ -148,6 +150,8 @@ extends Resource
         discipline = clampi(value, 0, 1000)
 
 # Tags
+# NOTE: Using Array[String] for Stage 1 implementation
+# TODO: Convert to Array[Enums.CreatureTag] when tag system is fully implemented
 @export var tags: Array[String] = []
 
 # Age System
@@ -160,6 +164,8 @@ extends Resource
 @export var stamina_max: int = 100
 
 # Breeding
+# NOTE: Using String for Stage 1 implementation
+# TODO: Convert to Enums.EggGroup when breeding system is implemented
 @export var egg_group: String = ""
 @export var parent_ids: Array[String] = []
 @export var generation: int = 1
@@ -169,30 +175,24 @@ func _init():
     if id.is_empty():
         id = generate_unique_id()
 
-# Age Categories
-enum AgeCategory {
-    YOUNG,  # 0-20% of lifespan
-    ADULT,  # 20-80% of lifespan
-    ELDER   # 80-100% of lifespan
-}
-
-func get_age_category() -> AgeCategory:
+# Use global enum from Enums.gd
+func get_age_category() -> Enums.AgeCategory:
     var life_percentage = (age_weeks / float(lifespan)) * 100
-    if life_percentage < 20:
-        return AgeCategory.YOUNG
-    elif life_percentage < 80:
-        return AgeCategory.ADULT
+    if life_percentage < 25:  # Updated to match enum.md specification
+        return Enums.AgeCategory.YOUNG
+    elif life_percentage < 75:  # Updated to match enum.md specification
+        return Enums.AgeCategory.ADULT
     else:
-        return AgeCategory.ELDER
+        return Enums.AgeCategory.ELDER
 
 func get_age_modifier() -> float:
     match get_age_category():
-        AgeCategory.YOUNG:
-            return 1.1  # +10% performance
-        AgeCategory.ADULT:
+        Enums.AgeCategory.YOUNG:
+            return 1.2  # +20% performance (updated to match design)
+        Enums.AgeCategory.ADULT:
             return 1.0  # No modifier
-        AgeCategory.ELDER:
-            return 0.9  # -10% performance
+        Enums.AgeCategory.ELDER:
+            return 0.8  # -20% performance (updated to match design)
         _:
             return 1.0
 
