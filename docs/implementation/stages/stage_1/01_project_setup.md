@@ -1,12 +1,12 @@
-# Task 01: Project Setup and Architecture
+# Task 01: Project Setup with GameCore Architecture
 
 ## Overview
-Initialize the Godot 4.5 project with proper structure, version control, and foundational architecture for the creature collection game.
+Initialize the Godot 4.5 project with improved architecture featuring a single GameCore autoload, SignalBus for communication, and proper MVC separation. This establishes the foundation for all future development.
 
 ## Dependencies
 - Godot 4.5 installed
 - Git for version control
-- No other task dependencies (this is the first task)
+- Review IMPROVED_ARCHITECTURE.md for architecture patterns
 
 ## Context
 From the game design documentation, we're building a creature collection/breeding game with the following key systems:
@@ -20,24 +20,25 @@ This task establishes the foundational project structure that all other systems 
 
 ## Requirements
 
-### Directory Structure
+### Directory Structure (Improved)
 ```
 res://
 ├── scenes/
 │   ├── main/
-│   ├── creatures/
 │   ├── ui/
-│   └── systems/
+│   └── entities/
 ├── scripts/
-│   ├── creatures/
-│   ├── systems/
-│   ├── data/
-│   ├── ui/
-│   └── utils/
+│   ├── core/          # GameCore and SignalBus
+│   ├── systems/       # Subsystems (lazy-loaded)
+│   ├── data/          # Resources (pure data)
+│   ├── entities/      # Nodes (behavior)
+│   ├── controllers/   # Game logic
+│   └── utils/         # Helpers
 ├── resources/
-│   ├── creatures/
-│   ├── items/
-│   └── data/
+│   ├── creatures/     # CreatureData resources
+│   ├── species/       # SpeciesData resources
+│   ├── quests/        # QuestData resources
+│   └── items/         # ItemData resources
 ├── assets/
 │   ├── sprites/
 │   ├── fonts/
@@ -66,23 +67,24 @@ res://
    - `ui_save_game` - Ctrl+S
    - `ui_load_game` - Ctrl+L
 
-### Core Singletons (Autoload)
-Create and register these singleton scripts:
+### Core Architecture (ONLY ONE Autoload!)
+Create the single GameCore autoload and SignalBus:
 
-1. **GameManager** (`scripts/systems/game_manager.gd`)
-   - Manages overall game state
-   - Coordinates between systems
-   - Handles scene transitions
+1. **GameCore** (`scripts/core/game_core.gd`)
+   - ONLY autoload in the project
+   - Manages all subsystems via lazy loading
+   - Provides centralized access point
 
-2. **DataManager** (`scripts/systems/data_manager.gd`)
-   - Loads creature definitions
-   - Manages item databases
-   - Handles configuration data
+2. **SignalBus** (`scripts/core/signal_bus.gd`)
+   - Created by GameCore (not autoloaded)
+   - Routes all signals between systems
+   - Prevents direct coupling
 
-3. **SaveManager** (`scripts/systems/save_manager.gd`)
-   - Save/load game functionality
-   - Profile management
-   - Settings persistence
+3. **Subsystems** (NOT autoloaded, managed by GameCore)
+   - CreatureSystem
+   - SaveSystem (ConfigFile-based)
+   - QuestSystem
+   - All lazy-loaded on demand
 
 ### Version Control Setup
 1. Initialize git repository
@@ -196,102 +198,169 @@ Main (Node2D)
 - Version control is tracking appropriate files
 - Base architecture supports future system additions
 
-## Code Examples
+## Code Examples (Improved Architecture)
 
-### GameManager Singleton Base
+### GameCore - The ONLY Autoload
 ```gdscript
-class_name GameManager
+# scripts/core/game_core.gd
+class_name GameCore
 extends Node
 
-signal game_started()
-signal game_loaded()
-signal game_saved()
+static var instance: GameCore
+var signal_bus: SignalBus
+var _systems: Dictionary = {}
+
+func _enter_tree() -> void:
+    instance = self
+
+func _ready() -> void:
+    # Create SignalBus first
+    signal_bus = SignalBus.new()
+    signal_bus.name = "SignalBus"
+    add_child(signal_bus)
+
+    print("GameCore initialized")
+    # Systems will be lazy-loaded as needed
+
+static func get_signal_bus() -> SignalBus:
+    return instance.signal_bus
+
+static func get_system(system_name: String) -> Node:
+    if not instance._systems.has(system_name):
+        instance._load_system(system_name)
+    return instance._systems.get(system_name)
+
+func _load_system(system_name: String) -> void:
+    var system: Node
+
+    match system_name:
+        "creature":
+            system = preload("res://scripts/systems/creature_system.gd").new()
+        "save":
+            system = preload("res://scripts/systems/save_system.gd").new()
+        "quest":
+            system = preload("res://scripts/systems/quest_system.gd").new()
+        _:
+            push_error("Unknown system: " + system_name)
+            return
+
+    system.name = system_name.capitalize() + "System"
+    add_child(system)
+    _systems[system_name] = system
+    print("Loaded system: " + system_name)
+```
+
+### SignalBus - Centralized Communication
+```gdscript
+# scripts/core/signal_bus.gd
+class_name SignalBus
+extends Node
+
+# Creature signals
+signal creature_created(data: CreatureData)
+signal creature_stats_changed(data: CreatureData, stat: String, old_value: int, new_value: int)
+signal creature_aged(data: CreatureData, new_age: int)
+signal creature_activated(data: CreatureData)
+signal creature_deactivated(data: CreatureData)
+
+# Quest signals
+signal quest_started(quest: QuestData)
+signal quest_completed(quest: QuestData)
+signal quest_requirements_met(quest: QuestData, creatures: Array[CreatureData])
+signal quest_failed(quest: QuestData)
+
+# Economy signals
+signal gold_changed(old_amount: int, new_amount: int)
+signal item_purchased(item_id: String, quantity: int)
+signal item_consumed(item_id: String, quantity: int)
+
+# Time signals
 signal week_advanced(new_week: int)
+signal day_passed(current_week: int, current_day: int)
 
-var current_week: int = 1
-var game_state: Dictionary = {}
-
-func _ready() -> void:
-    print("GameManager initialized")
-    set_process_mode(Node.PROCESS_MODE_ALWAYS)
-
-func start_new_game() -> void:
-    current_week = 1
-    game_state.clear()
-    game_started.emit()
-
-func advance_week() -> void:
-    current_week += 1
-    week_advanced.emit(current_week)
-    # Will trigger other system updates in future tasks
-```
-
-### DataManager Singleton Base
-```gdscript
-class_name DataManager
-extends Node
-
-var creature_definitions: Dictionary = {}
-var item_definitions: Dictionary = {}
-var quest_definitions: Dictionary = {}
-var species_resources: Dictionary = {}
+# System signals
+signal save_requested()
+signal load_requested()
+signal save_completed(success: bool)
+signal load_completed(success: bool)
 
 func _ready() -> void:
-    print("DataManager initialized")
-    set_process_mode(Node.PROCESS_MODE_ALWAYS)
-    # Will load data files in future tasks
-
-func get_creature_definition(id: String) -> Dictionary:
-    return creature_definitions.get(id, {})
-
-func get_species_resource(species_id: String) -> Resource:
-    return species_resources.get(species_id, null)
+    print("SignalBus initialized")
 ```
 
-### SaveManager Singleton Base
+### SaveSystem - Using ConfigFile (NOT store_var!)
 ```gdscript
-class_name SaveManager
+# scripts/systems/save_system.gd
+class_name SaveSystem
 extends Node
 
-const SAVE_PATH: String = "user://savegame.dat"
 const SAVE_VERSION: int = 1
-
-signal game_saved(success: bool)
-signal game_loaded(success: bool)
+const SAVE_PATH: String = "user://save_slot_%d.cfg"
 
 func _ready() -> void:
-    print("SaveManager initialized")
-    set_process_mode(Node.PROCESS_MODE_ALWAYS)
+    var signal_bus := GameCore.get_signal_bus()
+    signal_bus.save_requested.connect(_on_save_requested)
+    signal_bus.load_requested.connect(_on_load_requested)
+    print("SaveSystem initialized")
 
-func save_game(data: Dictionary) -> bool:
-    data["version"] = SAVE_VERSION
-    data["timestamp"] = Time.get_unix_time_from_system()
+func save_game(slot: int = 0) -> bool:
+    var config := ConfigFile.new()
 
-    var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-    if file:
-        file.store_var(data)
-        file.close()
-        game_saved.emit(true)
-        return true
-    game_saved.emit(false)
-    return false
+    # Metadata
+    config.set_value("meta", "version", SAVE_VERSION)
+    config.set_value("meta", "timestamp", Time.get_unix_time_from_system())
+    config.set_value("meta", "play_time", 0) # Will track later
 
-func load_game() -> Dictionary:
-    if FileAccess.file_exists(SAVE_PATH):
-        var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-        if file:
-            var data: Dictionary = file.get_var()
-            file.close()
+    # Game state
+    var creature_system := GameCore.get_system("creature") as CreatureSystem
+    if creature_system:
+        for creature in creature_system.get_all_creatures():
+            config.set_value("creatures", creature.id, creature.to_dict())
 
-            # Version check for future compatibility
-            if data.get("version", 0) == SAVE_VERSION:
-                game_loaded.emit(true)
-                return data
-            else:
-                push_warning("Save file version mismatch")
-                game_loaded.emit(false)
-    game_loaded.emit(false)
-    return {}
+    # Save to file
+    var error := config.save(SAVE_PATH % slot)
+    var success := error == OK
+
+    GameCore.get_signal_bus().save_completed.emit(success)
+    return success
+
+func load_game(slot: int = 0) -> bool:
+    var config := ConfigFile.new()
+    var path := SAVE_PATH % slot
+
+    if not FileAccess.file_exists(path):
+        push_warning("Save file doesn't exist: " + path)
+        GameCore.get_signal_bus().load_completed.emit(false)
+        return false
+
+    var error := config.load(path)
+    if error != OK:
+        push_error("Failed to load save file: " + path)
+        GameCore.get_signal_bus().load_completed.emit(false)
+        return false
+
+    # Check version
+    var version := config.get_value("meta", "version", 0)
+    if version != SAVE_VERSION:
+        print("Migrating save from version %d to %d" % [version, SAVE_VERSION])
+        _migrate_save(config, version)
+
+    # Load creatures
+    var creature_system := GameCore.get_system("creature") as CreatureSystem
+    if creature_system:
+        creature_system.clear_all_creatures()
+
+        if config.has_section("creatures"):
+            for creature_id in config.get_section_keys("creatures"):
+                var creature_dict := config.get_value("creatures", creature_id, {})
+                creature_system.add_creature_from_dict(creature_dict)
+
+    GameCore.get_signal_bus().load_completed.emit(true)
+    return true
+
+func _migrate_save(config: ConfigFile, from_version: int) -> void:
+    # Handle save migration between versions
+    pass
 ```
 
 ## Notes

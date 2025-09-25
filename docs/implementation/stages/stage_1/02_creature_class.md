@@ -1,95 +1,80 @@
-# Task 02: Creature Class Implementation
+# Task 02: CreatureData and CreatureEntity Implementation
 
 ## Overview
-Create the core Creature class that represents individual creatures with their properties, stats, tags, and behaviors. This is the fundamental data structure for the entire game.
+Create the separated CreatureData (Resource for pure data) and CreatureEntity (Node for behavior) classes following the improved architecture pattern. This separation ensures proper save/load functionality and clean architecture.
 
 ## Dependencies
-- Task 01: Project Setup (must be complete)
+- Task 01: Project Setup with GameCore (must be complete)
+- SignalBus must be available via GameCore
 - Access to design documents: `creature.md`, `stats.md`, `tags.md`
 
 ## Context
-From `creature.md` and related documentation:
-- Creatures have 6 core stats (STR, CON, DEX, INT, WIS, DIS)
-- Stats range from 0-1000 with different growth patterns
-- Creatures have tags that define behaviors and capabilities
-- Each creature has an age that affects performance
-- Creatures can be in active or stable states
+**CRITICAL ARCHITECTURE CHANGE**:
+- CreatureData (Resource) - Pure data storage, NO signals, serializable
+- CreatureEntity (Node) - Behavior and signals, references CreatureData
+- All signals go through SignalBus, not the Resource
 
 ## Requirements
 
-### Creature Class Structure
-The Creature class must include:
+### Two-Class Architecture
 
-1. **Identity Properties**
-   - `id`: Unique identifier (UUID)
-   - `name`: Display name
-   - `species`: Species identifier
-   - `owner`: Reference to owning player
+#### 1. CreatureData (Resource) - Pure Data Storage
+Location: `scripts/data/creature_data.gd`
+- **NO SIGNALS** - Resources with signals break on save/load
+- All creature properties as exported vars
+- Serialization via to_dict()/from_dict()
+- Pure data, no behavior logic
 
-2. **Stats System**
-   - `strength` (STR): Physical power
-   - `constitution` (CON): Health and endurance
-   - `dexterity` (DEX): Speed and agility
-   - `intelligence` (INT): Mental capacity
-   - `wisdom` (WIS): Awareness and intuition
-   - `discipline` (DIS): Obedience and reliability
+Properties to include:
+- Identity (id, name, species_id)
+- Stats (STR, CON, DEX, INT, WIS, DIS)
+- Tags array
+- Age data (weeks, lifespan)
+- State data (active, stamina)
+- Breeding data (egg_group, parents, generation)
 
-3. **Tag System**
-   - `tags`: Array of string tags
-   - Support for 12 essential tags from design
+#### 2. CreatureEntity (Node) - Behavior & Signals
+Location: `scripts/entities/creature_entity.gd`
+- References a CreatureData resource
+- Handles all behavior and state changes
+- Emits signals via SignalBus
+- Manages stat modifications, aging, etc.
 
-4. **Age System**
-   - `age_weeks`: Age in weeks
-   - `age_category`: Calculated (young/adult/elder)
-   - `lifespan`: Expected lifespan in weeks
-
-5. **State Management**
-   - `is_active`: Active vs stable state
-   - `stamina_current`: Current stamina points
-   - `stamina_max`: Maximum stamina points
-   - `status_effects`: Array of active effects
-
-6. **Breeding Properties**
-   - `egg_group`: Breeding compatibility group
-   - `parent_ids`: Array of parent creature IDs
-   - `generation`: Breeding generation number
-
-### Resource Definition
-Create a custom resource for creature data persistence:
-```
-CreatureResource (Resource)
-├── All creature properties
-├── Serialization methods
-└── Validation methods
-```
+Methods to include:
+- modify_stat(stat_name, value)
+- add_tag(tag)
+- age_one_week()
+- consume_stamina(amount)
+- All methods that change state
 
 ## Implementation Steps
 
-1. **Create Base Creature Script**
-   - Location: `scripts/creatures/creature.gd`
-   - Extends: Resource (for easy serialization)
-   - Include all required properties
+1. **Create CreatureData Resource**
+   - Location: `scripts/data/creature_data.gd`
+   - Extends: Resource
+   - Add all data properties (NO signals!)
+   - Implement to_dict()/from_dict() for serialization
 
-2. **Implement Stat Management**
-   - Stat getters/setters with validation
-   - Ensure stats stay within 0-1000 range
-   - Calculate modified stats based on age
+2. **Create CreatureEntity Node**
+   - Location: `scripts/entities/creature_entity.gd`
+   - Extends: Node
+   - Add reference to CreatureData
+   - Implement all behavior methods
 
-3. **Implement Tag System**
-   - Tag addition/removal methods
-   - Tag query methods
-   - Validation against allowed tags
+3. **Connect to SignalBus**
+   - Get SignalBus via GameCore
+   - Emit signals for all state changes
+   - Never emit signals from CreatureData
 
-4. **Implement Age System**
-   - Age progression method
-   - Age category calculation
-   - Performance modifier calculation
+4. **Implement Stat Management**
+   - In CreatureEntity, not CreatureData
+   - Validate 0-1000 range
+   - Emit signals via SignalBus
 
-5. **Add Utility Methods**
-   - `matches_requirements()` - Check against quest requirements
-   - `get_performance_score()` - Calculate competition performance
-   - `can_breed_with()` - Check breeding compatibility
-   - `to_dict()` / `from_dict()` - Serialization
+5. **Test Separation**
+   - Verify CreatureData has NO signals
+   - Verify save/load preserves all data
+   - Verify CreatureEntity properly manages behavior
 
 ## Test Criteria
 
@@ -116,78 +101,49 @@ CreatureResource (Resource)
 - [ ] Multiple creatures can exist simultaneously
 - [ ] Creature references remain stable
 
-## Code Template
+## Code Templates
 
+### CreatureData - Pure Data Resource (NO SIGNALS!)
 ```gdscript
-class_name Creature
+# scripts/data/creature_data.gd
+class_name CreatureData
 extends Resource
-
-# Signals for state changes (Godot 4.x style)
-signal stats_changed(stat_name: String, old_value: int, new_value: int)
-signal age_changed(new_age_weeks: int)
-signal tag_added(tag_name: String)
-signal tag_removed(tag_name: String)
 
 # Identity
 @export var id: String = ""
-@export var creature_name: String = ""  # Renamed to avoid conflict with Resource.name
-# NOTE: species_id references a SpeciesResource
-@export var species_id: String = ""  # References species_id in SpeciesResource
+@export var creature_name: String = ""
+@export var species_id: String = ""
 
-# Core Stats (0-1000) with Godot 4.x typed setters
+# Core Stats (0-1000) - Simple validation, NO signals!
 @export_range(0, 1000) var strength: int = 50:
     set(value):
-        var old_value := strength
         strength = clampi(value, 0, 1000)
-        if old_value != strength:
-            stats_changed.emit("strength", old_value, strength)
 
 @export_range(0, 1000) var constitution: int = 50:
     set(value):
-        var old_value := constitution
         constitution = clampi(value, 0, 1000)
-        if old_value != constitution:
-            stats_changed.emit("constitution", old_value, constitution)
 
 @export_range(0, 1000) var dexterity: int = 50:
     set(value):
-        var old_value := dexterity
         dexterity = clampi(value, 0, 1000)
-        if old_value != dexterity:
-            stats_changed.emit("dexterity", old_value, dexterity)
 
 @export_range(0, 1000) var intelligence: int = 50:
     set(value):
-        var old_value := intelligence
         intelligence = clampi(value, 0, 1000)
-        if old_value != intelligence:
-            stats_changed.emit("intelligence", old_value, intelligence)
 
 @export_range(0, 1000) var wisdom: int = 50:
     set(value):
-        var old_value := wisdom
         wisdom = clampi(value, 0, 1000)
-        if old_value != wisdom:
-            stats_changed.emit("wisdom", old_value, wisdom)
 
 @export_range(0, 1000) var discipline: int = 50:
     set(value):
-        var old_value := discipline
         discipline = clampi(value, 0, 1000)
-        if old_value != discipline:
-            stats_changed.emit("discipline", old_value, discipline)
 
-# Tags (Godot 4.x typed arrays)
+# Tags
 @export var tags: Array[String] = []
 
-# Age System with ranges
-@export_range(0, 1000) var age_weeks: int = 0:
-    set(value):
-        var old_age := age_weeks
-        age_weeks = maxi(0, value)
-        if old_age != age_weeks:
-            age_changed.emit(age_weeks)
-
+# Age System
+@export_range(0, 1000) var age_weeks: int = 0
 @export_range(100, 1000) var lifespan: int = 520  # 10 years default
 
 # State Management
@@ -202,39 +158,33 @@ signal tag_removed(tag_name: String)
 @export var parent_ids: Array[String] = []
 @export_range(1, 10) var generation: int = 1
 
-# Constructor with proper initialization
+# Constructor
 func _init() -> void:
     if id.is_empty():
-        id = generate_unique_id()
+        id = "creature_%d_%06d" % [Time.get_unix_time_from_system(), randi() % 999999]
 
-# Age category calculation with proper enum typing
-func get_age_category() -> int:  # Returns int since Enums.AgeCategory will be int-based
+# Utility functions (pure calculations, no state changes)
+func get_age_category() -> int:
     var life_percentage := (age_weeks / float(lifespan)) * 100
     if life_percentage < 10:
-        return Enums.AgeCategory.BABY
+        return 0  # BABY
     elif life_percentage < 25:
-        return Enums.AgeCategory.JUVENILE
+        return 1  # JUVENILE
     elif life_percentage < 75:
-        return Enums.AgeCategory.ADULT
+        return 2  # ADULT
     elif life_percentage < 90:
-        return Enums.AgeCategory.ELDER
+        return 3  # ELDER
     else:
-        return Enums.AgeCategory.ANCIENT
+        return 4  # ANCIENT
 
 func get_age_modifier() -> float:
     match get_age_category():
-        Enums.AgeCategory.BABY:
-            return 0.6  # -40% performance
-        Enums.AgeCategory.JUVENILE:
-            return 0.8  # -20% performance
-        Enums.AgeCategory.ADULT:
-            return 1.0  # No modifier
-        Enums.AgeCategory.ELDER:
-            return 0.8  # -20% performance
-        Enums.AgeCategory.ANCIENT:
-            return 0.6  # -40% performance
-        _:
-            return 1.0
+        0: return 0.6  # BABY
+        1: return 0.8  # JUVENILE
+        2: return 1.0  # ADULT
+        3: return 0.8  # ELDER
+        4: return 0.6  # ANCIENT
+        _: return 1.0
 
 # Stat Accessors with typed return values
 func get_stat(stat_name: String) -> int:
@@ -260,20 +210,7 @@ func set_stat(stat_name: String, value: int) -> void:
         _:
             push_warning("Invalid stat name: " + stat_name)
 
-# Tag Management with signals
-func add_tag(tag: String) -> bool:
-    if not tag in tags and is_valid_tag(tag):
-        tags.append(tag)
-        tag_added.emit(tag)
-        return true
-    return false
-
-func remove_tag(tag: String) -> bool:
-    var removed := tags.erase(tag)
-    if removed:
-        tag_removed.emit(tag)
-    return removed
-
+# Simple tag queries (no state changes)
 func has_tag(tag: String) -> bool:
     return tag in tags
 
@@ -288,44 +225,6 @@ func has_any_tag(required_tags: Array[String]) -> bool:
         if has_tag(tag):
             return true
     return false
-
-# Validation
-func is_valid_tag(tag: String) -> bool:
-    # Will be expanded with actual tag list
-    const VALID_TAGS = [
-        "Small", "Medium", "Large",
-        "Territorial", "Social", "Solitary",
-        "Winged", "Aquatic", "Terrestrial",
-        "Nocturnal", "Diurnal", "Crepuscular"
-    ]
-    return tag in VALID_TAGS
-
-# Age Progression with stamina effects
-func age_one_week() -> void:
-    age_weeks += 1
-    # Reduce stamina for active creatures
-    if is_active:
-        stamina_current = maxi(0, stamina_current - 10)
-
-# Stamina Management with typed returns
-func consume_stamina(amount: int) -> bool:
-    if stamina_current >= amount:
-        stamina_current -= amount
-        return true
-    return false
-
-func restore_stamina(amount: int) -> void:
-    stamina_current = mini(stamina_current + amount, stamina_max)
-
-func rest_fully() -> void:
-    stamina_current = stamina_max
-
-# Utility with Godot 4.x Time API
-func generate_unique_id() -> String:
-    # Use Godot 4.x Time API for unique ID
-    var timestamp := Time.get_unix_time_from_system()
-    var random_suffix := randi() % 999999
-    return "creature_%d_%06d" % [timestamp, random_suffix]
 
 # Serialization with proper property names
 func to_dict() -> Dictionary:
@@ -377,6 +276,130 @@ static func from_dict(data: Dictionary) -> Creature:
     creature.generation = data.get("generation", 1)
 
     return creature
+```
+
+### CreatureEntity - Behavior Controller (Handles Signals)
+```gdscript
+# scripts/entities/creature_entity.gd
+class_name CreatureEntity
+extends Node
+
+var data: CreatureData
+var signal_bus: SignalBus
+
+func _init(creature_data: CreatureData = null) -> void:
+    if creature_data:
+        data = creature_data
+    else:
+        data = CreatureData.new()
+
+func _ready() -> void:
+    signal_bus = GameCore.get_signal_bus()
+
+# Stat modification with signals
+func modify_stat(stat_name: String, value: int) -> void:
+    var old_value := data.get_stat(stat_name)
+    data.set_stat(stat_name, value)
+    var new_value := data.get_stat(stat_name)
+
+    if old_value != new_value and signal_bus:
+        signal_bus.creature_stats_changed.emit(data, stat_name, old_value, new_value)
+
+func increase_stat(stat_name: String, amount: int) -> void:
+    var current := data.get_stat(stat_name)
+    modify_stat(stat_name, current + amount)
+
+# Tag management with signals
+func add_tag(tag: String) -> bool:
+    if not data.has_tag(tag) and _is_valid_tag(tag):
+        data.tags.append(tag)
+        if signal_bus:
+            signal_bus.creature_tag_added.emit(data, tag)
+        return true
+    return false
+
+func remove_tag(tag: String) -> bool:
+    if data.tags.erase(tag):
+        if signal_bus:
+            signal_bus.creature_tag_removed.emit(data, tag)
+        return true
+    return false
+
+# Age management with signals
+func age_one_week() -> void:
+    var old_age := data.age_weeks
+    data.age_weeks += 1
+
+    # Apply aging effects
+    if data.is_active:
+        data.stamina_current = maxi(0, data.stamina_current - 10)
+
+    if signal_bus:
+        signal_bus.creature_aged.emit(data, data.age_weeks)
+
+# Stamina management
+func consume_stamina(amount: int) -> bool:
+    if data.stamina_current >= amount:
+        data.stamina_current -= amount
+        if signal_bus:
+            signal_bus.creature_stamina_changed.emit(data, data.stamina_current)
+        return true
+    return false
+
+func restore_stamina(amount: int) -> void:
+    var old_stamina := data.stamina_current
+    data.stamina_current = mini(data.stamina_current + amount, data.stamina_max)
+
+    if old_stamina != data.stamina_current and signal_bus:
+        signal_bus.creature_stamina_changed.emit(data, data.stamina_current)
+
+func rest_fully() -> void:
+    data.stamina_current = data.stamina_max
+    if signal_bus:
+        signal_bus.creature_stamina_changed.emit(data, data.stamina_current)
+
+# State management
+func set_active(active: bool) -> void:
+    if data.is_active != active:
+        data.is_active = active
+        if signal_bus:
+            if active:
+                signal_bus.creature_activated.emit(data)
+            else:
+                signal_bus.creature_deactivated.emit(data)
+
+# Validation
+func _is_valid_tag(tag: String) -> bool:
+    const VALID_TAGS = [
+        "Small", "Medium", "Large",
+        "Territorial", "Social", "Solitary",
+        "Winged", "Aquatic", "Terrestrial",
+        "Nocturnal", "Diurnal", "Crepuscular"
+    ]
+    return tag in VALID_TAGS
+
+# Quest requirement matching
+func matches_requirements(req_stats: Dictionary, req_tags: Array[String]) -> bool:
+    # Check stats
+    for stat_name in req_stats:
+        if data.get_stat(stat_name) < req_stats[stat_name]:
+            return false
+
+    # Check tags
+    return data.has_all_tags(req_tags)
+
+# Performance calculations
+func get_performance_score() -> float:
+    var base_score := 0.0
+    base_score += data.strength * 0.15
+    base_score += data.constitution * 0.15
+    base_score += data.dexterity * 0.15
+    base_score += data.intelligence * 0.15
+    base_score += data.wisdom * 0.15
+    base_score += data.discipline * 0.25
+
+    # Apply age modifier
+    return base_score * data.get_age_modifier()
 ```
 
 ## Success Metrics

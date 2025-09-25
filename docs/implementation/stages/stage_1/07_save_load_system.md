@@ -1,20 +1,19 @@
-# Task 07: Save/Load System Implementation
+# Task 07: ConfigFile Save/Load System
 
 ## Overview
-Implement a robust save/load system that persists game state, creature collections, player progress, and all game data between sessions.
+Implement a robust save/load system using ConfigFile (NOT store_var) that provides versioning, human-readable saves, and won't break between Godot versions. This replaces the fragile binary serialization approach.
 
 ## Dependencies
-- Task 01: Project Setup (complete)
-- Task 02: Creature Class (complete)
-- All data structures that need persistence
+- Task 01: GameCore and SignalBus (complete)
+- Task 02: CreatureData/CreatureEntity separation (complete)
+- All data structures properly separated (Resources for data, Nodes for behavior)
 
 ## Context
-The save system must handle:
-- Complete creature collections with all properties
-- Player resources (gold, items, food)
-- Game progression (completed quests, unlocks)
-- Current week and time state
-- Settings and preferences
+**CRITICAL ARCHITECTURE CHANGES**:
+- Use ConfigFile for saves (human-readable, version-safe)
+- Never use store_var (breaks between Godot versions)
+- Support save migration between versions
+- All saves go through SaveSystem managed by GameCore
 
 ## Requirements
 
@@ -48,52 +47,55 @@ The save system must handle:
 
 ### Technical Requirements
 1. **File Format**
-   - JSON for readability and debugging
-   - Compression optional for size
-   - Version tracking for compatibility
+   - ConfigFile format (.cfg) for reliability
+   - Human-readable for debugging
+   - Built-in sectioning for organization
+   - Version tracking for migration
 
-2. **Save Locations**
-   - User data directory
-   - Multiple save slots
-   - Autosave support
-   - Cloud save preparation
+2. **Save Architecture**
+   - SaveSystem as GameCore subsystem (not autoload)
+   - Signal-based save triggers via SignalBus
+   - Multiple save slots (save_slot_0.cfg, save_slot_1.cfg)
+   - Automatic backup before overwriting
 
 3. **Data Integrity**
-   - Validation on load
-   - Corruption detection
-   - Backup system
-   - Recovery options
+   - Version checking on load
+   - Migration system for old saves
+   - Validation of required sections
+   - Graceful handling of missing data
 
 ## Implementation Steps
 
-1. **Create Save Data Classes**
-   - SaveGame resource
-   - Data serialization methods
-   - Version management
+1. **Create SaveSystem Class**
+   - Extends Node, managed by GameCore
+   - Connects to SignalBus for save/load signals
+   - Uses ConfigFile for all operations
 
-2. **Implement Save System**
-   - Save to file
-   - Multiple slots
-   - Autosave functionality
-   - Quick save/load
+2. **Implement Save Function**
+   - Gather data from all systems
+   - Write to ConfigFile sections
+   - Create backup before overwriting
 
-3. **Implement Load System**
-   - Load from file
-   - Data validation
-   - Version migration
-   - Error handling
+3. **Implement Load Function**
+   - Read ConfigFile sections
+   - Validate version
+   - Distribute data to systems
 
-4. **Add UI Integration**
-   - Save/load menu
-   - Slot selection
-   - Confirmation dialogs
-   - Progress indicators
+4. **Add Migration System**
+   - Version checking
+   - Migration functions for each version
+   - Data conversion utilities
+
+5. **Test Save/Load Cycle**
+   - Verify all data persists
+   - Test migration from old versions
+   - Ensure human-readable output
 
 ## Test Criteria
 
 ### Unit Tests
-- [ ] Save game creates file successfully
-- [ ] Load game reads file correctly
+- [ ] Save creates ConfigFile successfully
+- [ ] Load reads ConfigFile correctly
 - [ ] All creature data persists
 - [ ] Player resources save/load correctly
 - [ ] Progression data maintains integrity
@@ -101,474 +103,324 @@ The save system must handle:
 
 ### Data Integrity Tests
 - [ ] Save and load 100 creatures without data loss
-- [ ] Corrupted saves are detected
 - [ ] Version migration works
 - [ ] Backup system functions
+- [ ] ConfigFile remains human-readable
 - [ ] Large saves handle efficiently
 
 ### Integration Tests
-- [ ] Autosave triggers correctly
+- [ ] SignalBus triggers save/load correctly
 - [ ] Multiple save slots work independently
-- [ ] Quick save/load maintains game state
-- [ ] UI updates after load
+- [ ] GameCore properly manages SaveSystem
 - [ ] No memory leaks during save/load
 
 ## Code Implementation
 
-### SaveGame Resource (`scripts/data/save_game.gd`)
+### SaveSystem - Complete ConfigFile Implementation
 ```gdscript
-class_name SaveGame
-extends Resource
-
-const SAVE_VERSION = 1
-const SAVE_MAGIC = "CREATURE_SAVE"
-
-@export var version: int = SAVE_VERSION
-@export var magic: String = SAVE_MAGIC
-@export var timestamp: int = 0
-@export var playtime: float = 0.0
-
-# Player Data
-@export var player_name: String = "Player"
-@export var gold: int = 500
-@export var current_week: int = 1
-
-# Creatures (stored as dictionaries)
-@export var creatures: Array[Dictionary] = []
-@export var active_creature_ids: Array[String] = []
-
-# Progression
-@export var completed_quests: Array[String] = []
-@export var unlocked_vendors: Array[String] = []
-@export var unlocked_features: Array[String] = []
-
-# Inventory
-@export var food_inventory: Dictionary = {}  # item_id: quantity
-@export var special_items: Array[String] = []
-@export var egg_inventory: Array[Dictionary] = []
-
-# Settings
-@export var settings: Dictionary = {}
-
-# Statistics
-@export var statistics: Dictionary = {
-    "creatures_bred": 0,
-    "quests_completed": 0,
-    "competitions_won": 0,
-    "gold_earned": 0,
-    "gold_spent": 0
-}
-
-func _init():
-    timestamp = Time.get_unix_time_from_system()
-
-# Convert creatures to saveable format
-func set_creatures_from_array(creature_array: Array[Creature]):
-    creatures.clear()
-    for creature in creature_array:
-        creatures.append(creature.to_dict())
-
-# Restore creatures from save data
-func get_creatures_array() -> Array[Creature]:
-    var result: Array[Creature] = []
-    for creature_data in creatures:
-        result.append(Creature.from_dict(creature_data))
-    return result
-
-# Validate save data
-func is_valid() -> bool:
-    if magic != SAVE_MAGIC:
-        return false
-    if version < 0 or version > SAVE_VERSION:
-        return false
-    if timestamp <= 0:
-        return false
-    return true
-
-# Create from current game state
-static func create_from_game_state() -> SaveGame:
-    var save = SaveGame.new()
-
-    # Get data from singletons
-    if GameManager:
-        save.current_week = GameManager.current_week
-        save.player_name = GameManager.get("player_name", "Player")
-
-    # Additional data gathering would happen here
-    # This is a placeholder for the actual implementation
-
-    return save
-
-# Apply to current game state
-func apply_to_game_state():
-    if GameManager:
-        GameManager.current_week = current_week
-        if GameManager.has_method("set_player_name"):
-            GameManager.set_player_name(player_name)
-
-    # Additional state restoration would happen here
-```
-
-### SaveManager Enhanced (`scripts/systems/save_manager_enhanced.gd`)
-```gdscript
+# scripts/systems/save_system.gd
+class_name SaveSystem
 extends Node
 
-const SAVE_DIR = "user://saves/"
-const AUTOSAVE_SLOT = 0
-const MAX_SAVE_SLOTS = 10
-const BACKUP_COUNT = 3
+const SAVE_VERSION: int = 1
+const SAVE_PATH: String = "user://save_slot_%d.cfg"
+const BACKUP_PATH: String = "user://save_slot_%d.backup.cfg"
+const AUTOSAVE_SLOT: int = 99
 
-signal save_completed(slot: int)
-signal load_completed(slot: int)
-signal save_failed(error: String)
-signal load_failed(error: String)
+var signal_bus: SignalBus
+var current_slot: int = 0
 
-var current_save_slot: int = 1
-var autosave_timer: Timer
-var is_saving: bool = false
+func _ready() -> void:
+    signal_bus = GameCore.get_signal_bus()
 
-func _ready():
-    # Ensure save directory exists
-    var dir = DirAccess.open("user://")
-    if not dir.dir_exists("saves"):
-        dir.make_dir("saves")
+    # Connect to save/load signals
+    signal_bus.save_requested.connect(_on_save_requested)
+    signal_bus.load_requested.connect(_on_load_requested)
+    signal_bus.autosave_requested.connect(_on_autosave_requested)
 
-    # Setup autosave timer
-    autosave_timer = Timer.new()
-    autosave_timer.wait_time = 300.0  # 5 minutes
-    autosave_timer.timeout.connect(_on_autosave)
-    add_child(autosave_timer)
+    print("SaveSystem initialized")
 
-# Save game to specific slot
-func save_game(slot: int = -1) -> bool:
-    if is_saving:
-        push_warning("Save already in progress")
-        return false
+# Main save function
+func save_game(slot: int = 0) -> bool:
+    # Create backup of existing save
+    _create_backup(slot)
 
-    is_saving = true
+    var config := ConfigFile.new()
 
-    if slot == -1:
-        slot = current_save_slot
+    # === METADATA SECTION ===
+    config.set_value("meta", "version", SAVE_VERSION)
+    config.set_value("meta", "timestamp", Time.get_unix_time_from_system())
+    config.set_value("meta", "slot", slot)
 
-    var save_game = SaveGame.create_from_game_state()
+    # === PLAYER SECTION ===
+    var economy_system = GameCore.get_system("economy")
+    if economy_system:
+        config.set_value("player", "gold", economy_system.get_gold())
+        config.set_value("player", "week", economy_system.get_current_week())
 
-    # Add creature data
-    if GameManager.has("creature_collection"):
-        save_game.set_creatures_from_array(GameManager.creature_collection)
+    # === CREATURES SECTION ===
+    var creature_system = GameCore.get_system("creature") as CreatureSystem
+    if creature_system:
+        var creatures := creature_system.get_all_creatures()
+        for creature_data in creatures:
+            config.set_value("creatures", creature_data.id, creature_data.to_dict())
 
-    # Add resource data
-    if GameManager.has("player_gold"):
-        save_game.gold = GameManager.player_gold
+        # Save active creature IDs
+        var active_ids := creature_system.get_active_creature_ids()
+        config.set_value("creatures_meta", "active_ids", active_ids)
 
-    # Add progression data
-    if GameManager.has("completed_quests"):
-        save_game.completed_quests = GameManager.completed_quests
+    # === PROGRESSION SECTION ===
+    var quest_system = GameCore.get_system("quest")
+    if quest_system:
+        config.set_value("progression", "completed_quests",
+                        quest_system.get_completed_quest_ids())
+        config.set_value("progression", "active_quests",
+                        quest_system.get_active_quest_ids())
+
+    # === INVENTORY SECTION ===
+    var inventory_system = GameCore.get_system("inventory")
+    if inventory_system:
+        config.set_value("inventory", "food", inventory_system.get_food_dict())
+        config.set_value("inventory", "items", inventory_system.get_items_dict())
+
+    # === SETTINGS SECTION ===
+    config.set_value("settings", "master_volume", AudioServer.get_bus_volume_db(0))
+    config.set_value("settings", "sfx_volume", AudioServer.get_bus_volume_db(1))
+    config.set_value("settings", "music_volume", AudioServer.get_bus_volume_db(2))
 
     # Save to file
-    var success = _write_save_file(save_game, slot)
+    var error := config.save(SAVE_PATH % slot)
+    var success := error == OK
 
-    is_saving = false
+    # Emit completion signal
+    signal_bus.save_completed.emit(success)
 
     if success:
-        emit_signal("save_completed", slot)
         print("Game saved to slot %d" % slot)
+        current_slot = slot
     else:
-        emit_signal("save_failed", "Failed to write save file")
+        push_error("Failed to save game: " + error_string(error))
 
     return success
 
-# Load game from specific slot
-func load_game(slot: int = -1) -> bool:
-    if slot == -1:
-        slot = current_save_slot
+# Main load function
+func load_game(slot: int = 0) -> bool:
+    var path := SAVE_PATH % slot
 
-    var save_game = _read_save_file(slot)
-    if not save_game:
-        emit_signal("load_failed", "Failed to read save file")
+    if not FileAccess.file_exists(path):
+        push_warning("Save file doesn't exist: " + path)
+        signal_bus.load_completed.emit(false)
         return false
 
-    if not save_game.is_valid():
-        emit_signal("load_failed", "Save file is corrupted")
+    var config := ConfigFile.new()
+    var error := config.load(path)
+
+    if error != OK:
+        push_error("Failed to load save: " + error_string(error))
+        signal_bus.load_completed.emit(false)
         return false
 
-    # Check version compatibility
-    if save_game.version > SaveGame.SAVE_VERSION:
-        emit_signal("load_failed", "Save file is from a newer version")
-        return false
+    # Check version and migrate if needed
+    var version := config.get_value("meta", "version", 0)
+    if version != SAVE_VERSION:
+        print("Migrating save from version %d to %d" % [version, SAVE_VERSION])
+        _migrate_save(config, version)
 
-    # Migrate old saves if needed
-    if save_game.version < SaveGame.SAVE_VERSION:
-        save_game = _migrate_save(save_game)
+    # === LOAD PLAYER DATA ===
+    var economy_system = GameCore.get_system("economy")
+    if economy_system:
+        economy_system.set_gold(config.get_value("player", "gold", 500))
+        economy_system.set_current_week(config.get_value("player", "week", 1))
 
-    # Apply to game state
-    save_game.apply_to_game_state()
+    # === LOAD CREATURES ===
+    var creature_system = GameCore.get_system("creature") as CreatureSystem
+    if creature_system:
+        creature_system.clear_all_creatures()
 
-    # Restore creatures
-    if GameManager.has_method("set_creature_collection"):
-        GameManager.set_creature_collection(save_game.get_creatures_array())
+        # Load all creatures
+        if config.has_section("creatures"):
+            for creature_id in config.get_section_keys("creatures"):
+                var creature_dict := config.get_value("creatures", creature_id, {})
+                var creature_data := CreatureData.from_dict(creature_dict)
+                creature_system.add_creature(creature_data)
 
-    # Restore resources
-    if GameManager.has_method("set_player_gold"):
-        GameManager.set_player_gold(save_game.gold)
+        # Set active creatures
+        var active_ids = config.get_value("creatures_meta", "active_ids", [])
+        creature_system.set_active_creatures(active_ids)
 
-    # Restore progression
-    if GameManager.has_method("set_completed_quests"):
-        GameManager.set_completed_quests(save_game.completed_quests)
+    # === LOAD PROGRESSION ===
+    var quest_system = GameCore.get_system("quest")
+    if quest_system:
+        var completed = config.get_value("progression", "completed_quests", [])
+        quest_system.set_completed_quests(completed)
 
-    current_save_slot = slot
-    emit_signal("load_completed", slot)
+        var active = config.get_value("progression", "active_quests", [])
+        quest_system.set_active_quests(active)
+
+    # === LOAD INVENTORY ===
+    var inventory_system = GameCore.get_system("inventory")
+    if inventory_system:
+        var food = config.get_value("inventory", "food", {})
+        inventory_system.set_food_inventory(food)
+
+        var items = config.get_value("inventory", "items", {})
+        inventory_system.set_items_inventory(items)
+
+    # === LOAD SETTINGS ===
+    AudioServer.set_bus_volume_db(0, config.get_value("settings", "master_volume", 0))
+    AudioServer.set_bus_volume_db(1, config.get_value("settings", "sfx_volume", 0))
+    AudioServer.set_bus_volume_db(2, config.get_value("settings", "music_volume", 0))
+
+    # Emit completion signal
+    signal_bus.load_completed.emit(true)
     print("Game loaded from slot %d" % slot)
+    current_slot = slot
 
     return true
 
-# Write save file to disk
-func _write_save_file(save_game: SaveGame, slot: int) -> bool:
-    var file_path = _get_save_path(slot)
+# Create backup before saving
+func _create_backup(slot: int) -> void:
+    var save_path := SAVE_PATH % slot
+    var backup_path := BACKUP_PATH % slot
 
-    # Backup existing save
-    if FileAccess.file_exists(file_path):
-        _create_backup(file_path, slot)
+    if FileAccess.file_exists(save_path):
+        DirAccess.copy_absolute(save_path, backup_path)
+        print("Backup created for slot %d" % slot)
 
-    # Convert to JSON
-    var json_data = {
-        "version": save_game.version,
-        "magic": save_game.magic,
-        "timestamp": save_game.timestamp,
-        "playtime": save_game.playtime,
-        "player_data": {
-            "name": save_game.player_name,
-            "gold": save_game.gold,
-            "current_week": save_game.current_week
-        },
-        "creatures": save_game.creatures,
-        "active_creature_ids": save_game.active_creature_ids,
-        "progression": {
-            "completed_quests": save_game.completed_quests,
-            "unlocked_vendors": save_game.unlocked_vendors,
-            "unlocked_features": save_game.unlocked_features
-        },
-        "inventory": {
-            "food": save_game.food_inventory,
-            "special_items": save_game.special_items,
-            "eggs": save_game.egg_inventory
-        },
-        "settings": save_game.settings,
-        "statistics": save_game.statistics
-    }
+# Restore from backup
+func restore_backup(slot: int) -> bool:
+    var save_path := SAVE_PATH % slot
+    var backup_path := BACKUP_PATH % slot
 
-    var json = JSON.new()
-    var json_string = JSON.stringify(json_data, "\t")
-
-    var file = FileAccess.open(file_path, FileAccess.WRITE)
-    if not file:
-        push_error("Cannot create save file: " + file_path)
+    if not FileAccess.file_exists(backup_path):
+        push_warning("No backup exists for slot %d" % slot)
         return false
 
-    file.store_string(json_string)
-    file.close()
-
+    DirAccess.copy_absolute(backup_path, save_path)
+    print("Backup restored for slot %d" % slot)
     return true
 
-# Read save file from disk
-func _read_save_file(slot: int) -> SaveGame:
-    var file_path = _get_save_path(slot)
-
-    if not FileAccess.file_exists(file_path):
-        push_error("Save file does not exist: " + file_path)
-        return null
-
-    var file = FileAccess.open(file_path, FileAccess.READ)
-    if not file:
-        push_error("Cannot open save file: " + file_path)
-        return null
-
-    var json_string = file.get_as_text()
-    file.close()
-
-    var json = JSON.new()
-    var parse_result = json.parse(json_string)
-
-    if parse_result != OK:
-        push_error("Failed to parse save file: " + json.get_error_message())
-        return null
-
-    var json_data = json.data
-
-    # Create SaveGame from JSON
-    var save_game = SaveGame.new()
-    save_game.version = json_data.get("version", 0)
-    save_game.magic = json_data.get("magic", "")
-    save_game.timestamp = json_data.get("timestamp", 0)
-    save_game.playtime = json_data.get("playtime", 0.0)
-
-    # Player data
-    var player_data = json_data.get("player_data", {})
-    save_game.player_name = player_data.get("name", "Player")
-    save_game.gold = player_data.get("gold", 500)
-    save_game.current_week = player_data.get("current_week", 1)
-
-    # Creatures
-    save_game.creatures = json_data.get("creatures", [])
-    save_game.active_creature_ids = json_data.get("active_creature_ids", [])
-
-    # Progression
-    var progression = json_data.get("progression", {})
-    save_game.completed_quests = progression.get("completed_quests", [])
-    save_game.unlocked_vendors = progression.get("unlocked_vendors", [])
-    save_game.unlocked_features = progression.get("unlocked_features", [])
-
-    # Inventory
-    var inventory = json_data.get("inventory", {})
-    save_game.food_inventory = inventory.get("food", {})
-    save_game.special_items = inventory.get("special_items", [])
-    save_game.egg_inventory = inventory.get("eggs", [])
-
-    # Settings and statistics
-    save_game.settings = json_data.get("settings", {})
-    save_game.statistics = json_data.get("statistics", {})
-
-    return save_game
-
-# Get save file path
-func _get_save_path(slot: int) -> String:
-    if slot == AUTOSAVE_SLOT:
-        return SAVE_DIR + "autosave.sav"
-    else:
-        return SAVE_DIR + "save_%02d.sav" % slot
-
-# Create backup of save file
-func _create_backup(file_path: String, slot: int):
-    for i in range(BACKUP_COUNT - 1, 0, -1):
-        var old_backup = file_path + ".bak%d" % i
-        var new_backup = file_path + ".bak%d" % (i + 1)
-        if FileAccess.file_exists(old_backup):
-            DirAccess.rename_absolute(old_backup, new_backup)
-
-    DirAccess.copy_absolute(file_path, file_path + ".bak1")
-
-# Migrate old save format
-func _migrate_save(save_game: SaveGame) -> SaveGame:
-    print("Migrating save from version %d to %d" % [save_game.version, SaveGame.SAVE_VERSION])
-
-    # Handle version-specific migrations here
-    match save_game.version:
+# Save migration between versions
+func _migrate_save(config: ConfigFile, from_version: int) -> void:
+    match from_version:
         0:
             # Version 0 -> 1 migration
-            pass
+            # Add any missing fields with defaults
+            if not config.has_section_key("meta", "slot"):
+                config.set_value("meta", "slot", 0)
 
-    save_game.version = SaveGame.SAVE_VERSION
-    return save_game
+            # Convert old creature format to new
+            if config.has_section("creatures"):
+                for creature_id in config.get_section_keys("creatures"):
+                    var old_data = config.get_value("creatures", creature_id)
+                    # Perform any necessary conversions
+                    # ...
+        _:
+            push_warning("Unknown save version: %d" % from_version)
 
-# Get save slot information
+# Quick save to current slot
+func quick_save() -> bool:
+    return save_game(current_slot)
+
+# Quick load from current slot
+func quick_load() -> bool:
+    return load_game(current_slot)
+
+# Autosave to special slot
+func autosave() -> bool:
+    return save_game(AUTOSAVE_SLOT)
+
+# Signal handlers
+func _on_save_requested(slot: int) -> void:
+    save_game(slot)
+
+func _on_load_requested(slot: int) -> void:
+    load_game(slot)
+
+func _on_autosave_requested() -> void:
+    autosave()
+
+# Get save information for UI
 func get_save_info(slot: int) -> Dictionary:
-    var file_path = _get_save_path(slot)
+    var path := SAVE_PATH % slot
 
-    if not FileAccess.file_exists(file_path):
+    if not FileAccess.file_exists(path):
         return {"exists": false}
 
-    var save_game = _read_save_file(slot)
-    if not save_game:
+    var config := ConfigFile.new()
+    if config.load(path) != OK:
         return {"exists": true, "corrupted": true}
 
     return {
         "exists": true,
         "corrupted": false,
-        "player_name": save_game.player_name,
-        "week": save_game.current_week,
-        "gold": save_game.gold,
-        "creature_count": save_game.creatures.size(),
-        "playtime": save_game.playtime,
-        "timestamp": save_game.timestamp
+        "timestamp": config.get_value("meta", "timestamp", 0),
+        "week": config.get_value("player", "week", 1),
+        "gold": config.get_value("player", "gold", 0),
+        "creature_count": config.get_section_keys("creatures").size() if config.has_section("creatures") else 0
     }
-
-# Get all save slots info
-func get_all_save_info() -> Array[Dictionary]:
-    var info_list: Array[Dictionary] = []
-
-    for slot in range(MAX_SAVE_SLOTS):
-        info_list.append(get_save_info(slot))
-
-    return info_list
 
 # Delete save slot
 func delete_save(slot: int) -> bool:
-    var file_path = _get_save_path(slot)
+    var save_path := SAVE_PATH % slot
+    var backup_path := BACKUP_PATH % slot
 
-    if not FileAccess.file_exists(file_path):
-        return false
+    if FileAccess.file_exists(save_path):
+        DirAccess.remove_absolute(save_path)
 
-    DirAccess.remove_absolute(file_path)
+    if FileAccess.file_exists(backup_path):
+        DirAccess.remove_absolute(backup_path)
 
-    # Also remove backups
-    for i in range(1, BACKUP_COUNT + 1):
-        var backup_path = file_path + ".bak%d" % i
-        if FileAccess.file_exists(backup_path):
-            DirAccess.remove_absolute(backup_path)
-
+    print("Deleted save slot %d" % slot)
     return true
+```
 
-# Quick save (to current slot)
-func quick_save() -> bool:
-    return save_game(current_save_slot)
+### Example Save File Output
+```ini
+; This is what a save file looks like with ConfigFile
+[meta]
+version=1
+timestamp=1699123456
+slot=0
 
-# Quick load (from current slot)
-func quick_load() -> bool:
-    return load_game(current_save_slot)
+[player]
+gold=1250
+week=15
 
-# Autosave
-func _on_autosave():
-    if not is_saving and GameManager.get("allow_autosave", true):
-        save_game(AUTOSAVE_SLOT)
+[creatures]
+creature_1699123456_123456={"id": "creature_1699123456_123456", "creature_name": "Fluffy", "species_id": "scuttleguard", ...}
+creature_1699123457_234567={"id": "creature_1699123457_234567", "creature_name": "Spike", "species_id": "stone_sentinel", ...}
 
-# Enable/disable autosave
-func set_autosave_enabled(enabled: bool):
-    if enabled:
-        autosave_timer.start()
-    else:
-        autosave_timer.stop()
+[creatures_meta]
+active_ids=["creature_1699123456_123456"]
 
-# Export save for sharing
-func export_save(slot: int, export_path: String) -> bool:
-    var file_path = _get_save_path(slot)
-    if not FileAccess.file_exists(file_path):
-        return false
+[progression]
+completed_quests=["TIM-01", "TIM-02"]
+active_quests=["TIM-03"]
 
-    DirAccess.copy_absolute(file_path, export_path)
-    return true
+[inventory]
+food={"grain_ration": 10, "protein_bar": 5}
+items={"healing_potion": 3}
 
-# Import save from external file
-func import_save(import_path: String, slot: int) -> bool:
-    if not FileAccess.file_exists(import_path):
-        return false
-
-    # Validate the save before importing
-    var temp_save = _read_save_file_direct(import_path)
-    if not temp_save or not temp_save.is_valid():
-        return false
-
-    var file_path = _get_save_path(slot)
-    DirAccess.copy_absolute(import_path, file_path)
-    return true
-
-# Read save file directly from path
-func _read_save_file_direct(file_path: String) -> SaveGame:
-    # Similar to _read_save_file but with custom path
-    # Implementation would be similar
-    return null
+[settings]
+master_volume=0.0
+sfx_volume=-6.0
+music_volume=-12.0
 ```
 
 ## Success Metrics
-- Save/load completes in < 500ms for typical game
-- No data loss across save/load cycles
-- Corrupted saves detected 100% of time
+- Save/load completes in < 200ms for typical game
+- ConfigFile remains human-readable
+- No data corruption between Godot versions
+- Save migration handles version changes gracefully
 - Backup system prevents data loss
-- Migration handles version changes
 
 ## Notes
-- Consider compression for large saves
-- Implement cloud save hooks for future
-- Add save file encryption option
-- Monitor save file sizes
+- ConfigFile is more reliable than store_var
+- Human-readable format aids debugging
+- Supports comments in save files
+- Easy to edit for testing
+- Version migration ensures compatibility
 
 ## Estimated Time
-4-5 hours for implementation and testing
+3-4 hours for implementation and testing
