@@ -71,24 +71,37 @@ The quest system drives gameplay through NPC requests for creatures meeting spec
 - Simple requirements → Complex multi-part objectives
 - Individual specialists → Coordinated teams
 
-## Godot 4.5 Architecture
+## Godot 4.5 Architecture (v2.0 - Improved)
 
-### Core Systems
-- **CreatureManager**: Handle creature collection, stats, validation
-- **QuestSystem**: Manage quest progression, requirement checking
-- **TrainingSystem**: Process training activities, stamina management
-- **BreedingSystem**: Handle genetics, trait inheritance
-- **LocationSystem**: Manage different environments and taming opportunities
+### Core Architecture Pattern
+- **MVC Separation**: Resources (Model), Nodes (Controller), Scenes (View)
+- **Single GameCore**: One autoload managing all subsystems (NOT multiple singletons)
+- **SignalBus**: Centralized signal routing for decoupled communication
+- **Lazy Loading**: Subsystems loaded on demand for performance
 
-### Scene Structure
-- **Main Game Scene**: Central hub with creature management
-- **Quest Interface**: Display requirements, progress tracking
-- **Training Facilities**: Interactive training mini-games/activities
-- **Breeding Center**: Genetics interface and offspring preview
-- **Exploration Areas**: Taming locations with environmental challenges
+### System Architecture
+```
+GameCore (Only Autoload)
+├── CreatureSystem (lazy-loaded)
+├── QuestSystem (lazy-loaded)
+├── SaveSystem (ConfigFile-based)
+├── TrainingSystem (lazy-loaded)
+└── SignalBus (signal routing)
+```
 
-### Data Management
-- **Creature Database**: Store all creature definitions, stats, tags
-- **Quest Database**: All quest definitions and requirements
-- **Player Save Data**: Creature collection, progress, unlocks
-- **Game Balance Config**: Stat curves, training costs, reward tables
+### Data Layer (Resources - NO Signals)
+- **CreatureData**: Pure creature data storage
+- **SpeciesData**: Species templates and generation rules
+- **QuestData**: Quest requirements and rewards
+- **TrainingData**: Training activities and modifiers
+
+### Controller Layer (Nodes - Behavior & Signals)
+- **CreatureEntity**: Handles creature behavior, emits signals
+- **QuestController**: Manages quest state and validation
+- **TrainingController**: Processes training logic
+- **SystemControllers**: Coordinate between data and UI
+
+### Save System (ConfigFile - NOT store_var)
+- **Versioned Saves**: Support for save migration
+- **Human-Readable**: ConfigFile format for debugging
+- **Robust**: Won't break between Godot versions

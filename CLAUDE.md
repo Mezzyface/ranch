@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A creature collection/breeding game built with Godot 4.5. Currently in planning/documentation phase with no code implementation yet. The game features creature collection, training, breeding, and quest completion through strategic creature management.
 
-## Core Architecture
+## Core Architecture (v2.0 - Improved)
 
 ### Game Systems
 - **6 Core Stats**: STR, CON, DEX, INT, WIS, DIS (scale 1-1000)
@@ -15,11 +15,13 @@ A creature collection/breeding game built with Godot 4.5. Currently in planning/
 - **Time Management**: Weekly cycles for training, competitions, and aging
 - **Resource Economy**: Gold currency, food requirements, creature acquisition through shops
 
-### Data Architecture (Godot 4.5)
-- **Resources**: All creatures, species, and items use Godot Resource system for serialization
-- **Singleton Managers**: GameManager, DataManager, SaveManager, StatManager, TagManager, SpeciesManager, CollectionManager, ResourceManager
-- **Component-based Design**: Modular systems that communicate through signals
-- **Save System**: JSON-based persistence with versioning support
+### Data Architecture (Godot 4.5) - UPDATED
+- **MVC Pattern**: Resources for data, Nodes for behavior, clear separation
+- **Single GameCore**: One autoload managing subsystems (NOT multiple singletons)
+- **SignalBus**: Centralized signal routing (Resources don't emit signals)
+- **ConfigFile Saves**: Robust save system with versioning (NOT store_var)
+- **Lazy Loading**: Subsystems and resources loaded on demand
+- **Object Pooling**: UI elements reused for performance
 
 ## Godot 4.5 Implementation Guidelines
 
@@ -30,19 +32,24 @@ A creature collection/breeding game built with Godot 4.5. Currently in planning/
 - **Signal Bus Pattern**: Central signal manager for decoupled communication
 - **Node Groups**: For managing creature collections and batch operations
 
-### GDScript Best Practices
+### GDScript Best Practices - CRITICAL UPDATES
 ```gdscript
-# Use class_name for custom resources
-class_name Creature extends Resource
-
-# Use typed exports
-@export var species_id: String = ""
+# CORRECT: Separate data from behavior
+class_name CreatureData extends Resource  # Pure data, NO signals
+@export var creature_name: String = ""
 @export var stats: Dictionary = {}
-@export var tags: Array[String] = []
 
-# Use signals for state changes
-signal stats_changed(old_stats: Dictionary, new_stats: Dictionary)
-signal creature_aged(new_age_category: Enums.AgeCategory)
+class_name CreatureEntity extends Node  # Behavior and signals here
+signal stats_changed(creature: CreatureData)
+var data: CreatureData
+
+# CORRECT: Use SignalBus for communication
+SignalBus.creature_created.emit(creature_data)
+
+# CORRECT: ConfigFile for saves (NOT store_var)
+var config := ConfigFile.new()
+config.set_value("creatures", id, creature.to_dict())
+config.save("user://save.cfg")
 ```
 
 ### Performance Considerations
@@ -67,19 +74,20 @@ signal creature_aged(new_age_category: Enums.AgeCategory)
 9. **Stage 9**: Polish & Additional Vendors (2 weeks)
 10. **Stage 10**: Balancing & MVP Completion (1-2 weeks)
 
-### Stage 1 Task Order
-Located in `docs/implementation/stages/stage_1/`:
-1. `01_project_setup.md` - Godot project initialization
-2. `11_global_enums.md` - Global enumeration setup
-3. `02_creature_class.md` - Core creature resource
-4. `03_stat_system.md` - Stat calculations and modifiers
-5. `04_tag_system.md` - Tag validation and rules
-6. `05_creature_generation.md` - Procedural generation
-7. `06_age_system.md` - Age categories and progression
-8. `10_species_resources.md` - Species templates
-9. `07_save_load_system.md` - Game persistence
-10. `08_player_collection.md` - Active/stable management
-11. `09_resource_tracking.md` - Gold/food economy
+### Stage 1 Task Order (REVISED)
+New architecture-focused implementation order:
+1. **GameCore Setup** - Single autoload with subsystems
+2. **SignalBus** - Centralized signal management
+3. **CreatureData Resource** - Pure data (no signals!)
+4. **SpeciesData Resource** - Template system with caching
+5. **Stat/Tag Systems** - As utility classes
+6. **CreatureEntity** - Node for behavior/signals
+7. **System Controllers** - Lazy-loaded subsystems
+8. **ConfigFile Saves** - Robust persistence
+9. **Collection Management** - With object pooling
+10. **Resource Tracking** - Optimized economy
+
+⚠️ **CRITICAL**: See `docs/implementation/IMPROVED_ARCHITECTURE.md` for details
 
 ## Commands
 

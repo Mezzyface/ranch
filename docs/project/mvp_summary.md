@@ -1,8 +1,8 @@
-# MVP Game Design Summary
+# MVP Game Design Summary (v2.0 - Improved Architecture)
 
 ## Overview
 
-This document summarizes the complete Minimum Viable Product (MVP) design for a creature collection/breeding game. The MVP centers around the "A Gem of a Problem" quest line (TIM-01 through TIM-06) which serves as both tutorial and comprehensive test of all core game systems.
+This document summarizes the complete Minimum Viable Product (MVP) design for a creature collection/breeding game using improved Godot 4.5 architecture. The MVP centers around the "A Gem of a Problem" quest line (TIM-01 through TIM-06) while implementing proper MVC patterns, single GameCore management, and robust save systems.
 
 ## Core Game Loop
 
@@ -163,20 +163,50 @@ This document summarizes the complete Minimum Viable Product (MVP) design for a 
 - ✅ Late-game mastery with complex multi-creature coordination
 - ✅ Endgame unlocks providing continued progression potential
 
-## Technical Architecture Notes
+## Technical Architecture (v2.0 - Improved)
 
-### Data Management
-- **Creature Database**: All creature definitions, stats, tags, prices
-- **Quest Database**: Requirements, rewards, progression chains
-- **Shop Database**: Vendor inventories, prices, unlock conditions
-- **Player Save**: Creature collection, progress, resources, time state
+### Core Architecture Principles
+- **MVC Pattern**: Strict separation of data (Resources), logic (Nodes), and presentation (Scenes)
+- **Single Autoload**: GameCore manages all subsystems (NOT multiple singletons)
+- **SignalBus**: Centralized signal routing prevents coupling
+- **Lazy Loading**: Systems and resources loaded on demand
 
-### Core Components (Godot 4.5)
-- **CreatureManager**: Handle collection, validation, statistics
-- **QuestSystem**: Track progress, validate requirements
-- **ShopSystem**: Manage purchases, inventory, unlocks
-- **TimeManager**: Weekly progression, aging, activity resolution
-- **TrainingSystem**: Activity selection, stat gains, stamina management
-- **CompetitionSystem**: Entry, simulation, rewards, rankings
+### Data Layer (Resources - Pure Data)
+- **CreatureData**: Stats, tags, age (NO signals or behavior)
+- **SpeciesData**: Templates for generation with caching
+- **QuestData**: Requirements and rewards
+- **ShopData**: Inventories and pricing
+
+### Controller Layer (Nodes - Logic)
+- **CreatureEntity**: Behavior controller, emits signals
+- **QuestController**: State management and validation
+- **ShopController**: Transaction processing
+- **TimeController**: Weekly progression logic
+
+### System Architecture
+```gdscript
+# Single autoload entry point
+class_name GameCore extends Node
+var creature_system: CreatureSystem  # Lazy-loaded
+var quest_system: QuestSystem        # Lazy-loaded
+var save_system: SaveSystem          # ConfigFile-based
+
+# Centralized signals
+class_name SignalBus extends Node
+signal creature_created(data: CreatureData)
+signal quest_completed(quest: QuestData)
+```
+
+### Save System (ConfigFile)
+- **Version Support**: Migration between save versions
+- **Human Readable**: Easy debugging and recovery
+- **Robust**: Won't break between Godot updates
+- **NOT store_var**: Avoids serialization issues
+
+### Performance Optimizations
+- **Object Pooling**: UI elements reused
+- **Resource Caching**: Species/quest data cached
+- **Batch Operations**: Weekly updates processed together
+- **Lazy Instantiation**: Systems created when needed
 
 This MVP design provides a complete, testable game experience that demonstrates all core systems while remaining feasible for initial implementation.

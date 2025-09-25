@@ -1,48 +1,57 @@
-# Multi-Stage Implementation Plan
+# Multi-Stage Implementation Plan (v2.0 - Improved Architecture)
 
 ## Overview
 
-This document outlines a phased implementation approach for the creature collection/breeding game, breaking development into manageable stages with clear deliverables and testing criteria. Each stage builds upon the previous, ensuring a stable foundation while progressively adding complexity.
+This document outlines a phased implementation approach for the creature collection/breeding game using improved Godot 4.5 architecture patterns. The plan separates data (Resources) from behavior (Nodes), uses a single core manager instead of multiple singletons, and implements robust save systems using ConfigFile.
 
-## Stage 1: Core Data Models & Foundation (2-3 weeks)
+## Stage 1: Core Foundation & Architecture (2-3 weeks)
 
 ### Goals
-- Establish fundamental data structures and systems
-- Create basic creature management without UI
-- Implement core stat and tag systems
-- Set up project architecture in Godot 4.5
+- Establish proper MVC architecture with data/behavior separation
+- Implement single GameCore manager with subsystems
+- Create robust ConfigFile-based save system
+- Set up SignalBus for decoupled communication
 
 ### Implementation Tasks
-1. **Project Setup**
-   - Initialize Godot 4.5 project structure
-   - Configure version control and build pipeline
-   - Set up resource organization (scenes, scripts, assets)
+1. **Project Setup & Architecture**
+   - Initialize Godot 4.5 project with proper structure
+   - Create GameCore singleton (only autoload)
+   - Implement SignalBus for centralized signals
+   - Set up resource organization with clear separation
 
-2. **Creature System Foundation**
-   - Creature class with 6 core stats (STR, CON, DEX, INT, WIS, DIS)
-   - Tag system implementation (12 essential tags)
-   - Creature instance generation with stat ranges
-   - Age categories (young/adult/elder) with modifiers
+2. **Data Layer (Resources)**
+   - CreatureData resource (pure data, no signals)
+   - SpeciesData resource templates
+   - QuestData resource definitions
+   - Resource caching system for performance
 
-3. **Data Management**
-   - Save/load system for game state
-   - Creature database structure
-   - Player collection management (active/stable states)
-   - Resource tracking (gold, food items)
+3. **Core Systems**
+   - SaveSystem using ConfigFile (not store_var)
+   - DataSystem for resource management
+   - CreatureSystem for entity management
+   - Lazy-loading subsystem registration
+
+4. **Controller Layer**
+   - CreatureEntity nodes (behavior, signals)
+   - System controllers for game logic
+   - State management patterns
+   - Signal connections via SignalBus
 
 ### Testing Criteria
-- [ ] Create 10 different creature instances with varied stats
-- [ ] Verify stat ranges stay within 0-1000 bounds
-- [ ] Confirm tag assignments work correctly
-- [ ] Save and load creature collection successfully
-- [ ] Validate age category transitions function properly
-- [ ] Ensure active/stable state management works
+- [ ] GameCore initializes with lazy-loaded subsystems
+- [ ] CreatureData serializes/deserializes correctly
+- [ ] ConfigFile save/load maintains data integrity
+- [ ] SignalBus properly routes signals between systems
+- [ ] Resources and Nodes properly separated
+- [ ] No signals on Resource objects
+- [ ] Performance: 1000 creatures < 100ms creation
 
 ### Deliverables
-- Core creature data model
-- Functional save/load system
-- Basic creature collection manager
-- Unit tests for stat and tag systems
+- Proper MVC architecture established
+- GameCore singleton with subsystems
+- ConfigFile-based save system
+- SignalBus for communication
+- Separated data (Resources) and logic (Nodes)
 
 ---
 

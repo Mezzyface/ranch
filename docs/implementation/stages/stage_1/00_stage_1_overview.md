@@ -1,76 +1,66 @@
-# Stage 1: Core Data Models & Foundation - Implementation Guide
+# Stage 1: Core Foundation & Architecture - Implementation Guide (v2.0)
 
 ## Overview
-Stage 1 establishes the fundamental data structures and systems for the creature collection game. This stage focuses on core functionality without UI, creating a solid foundation for future development.
+Stage 1 establishes the proper Godot 4.5 architecture with separated data/behavior layers, a single core manager, robust save systems, and performance-optimized patterns. This foundation ensures scalability and maintainability.
 
 ## Goal
-Create basic creature management system with stats, tags, aging, and persistence. No gameplay or UI implementation yet - purely foundational data models and systems.
+Create a properly architected foundation with MVC pattern, separating Resources (data) from Nodes (behavior), implementing a single GameCore manager instead of multiple singletons, and using ConfigFile for robust saves.
 
-## Task Execution Order
+## Task Execution Order (Revised for Improved Architecture)
 
-### Phase 1: Project Foundation
-**Task 01: Project Setup and Architecture**
-- File: `01_project_setup.md`
-- Dependencies: None (first task)
-- Creates: Project structure, core singletons, basic configuration
-- Test: Verify project loads, directories exist, singletons initialize
+### Phase 1: Core Architecture
+**Task 01: Project Setup with GameCore**
+- Creates: Single GameCore autoload, SignalBus, proper project structure
+- Key Change: Only ONE autoload (GameCore), not multiple singletons
+- Test: GameCore initializes, subsystems register lazily
 
-### Phase 2: Core Data Models
-**Task 02: Creature Class Implementation**
-- File: `02_creature_class.md`
-- Dependencies: Task 01 complete
-- Creates: Creature resource class with properties
-- Test: Create/modify creatures, validate data integrity
+**Task 02: SignalBus Implementation**
+- Creates: Centralized signal management system
+- Key Change: All signals go through SignalBus, not individual Resources
+- Test: Signals properly routed between systems
 
-**Task 03: Stat System Implementation**
-- File: `03_stat_system.md`
-- Dependencies: Tasks 01, 02 complete
-- Creates: Stat system with 6 core stats, growth mechanics
-- Test: Stat calculations, modifiers, boundaries
+### Phase 2: Data Layer (Resources)
+**Task 03: CreatureData Resource**
+- Creates: Pure data resource (NO signals)
+- Key Change: Just data storage, no behavior
+- Test: Serialization/deserialization works
 
-**Task 04: Tag System Implementation**
-- File: `04_tag_system.md`
-- Dependencies: Tasks 01, 02 complete
-- Creates: Tag validation, management, and rules
-- Test: Tag assignment, validation, exclusions
+**Task 04: SpeciesData Resource**
+- Creates: Species templates as Resources
+- Implements: Resource caching system
+- Test: Lazy loading performance
 
-### Phase 3: Creature Management
-**Task 05: Creature Generation System**
-- File: `05_creature_generation.md`
-- Dependencies: Tasks 02, 03, 04 complete
-- Creates: Species-based creature generation
-- Test: Generate valid creatures with correct stats/tags
+**Task 05: Stat & Tag Systems**
+- Creates: Stat calculations, tag validation
+- Key Change: Implemented as utility classes, not on Resources
+- Test: Calculations accurate, validation works
 
-**Task 06: Age System Implementation**
-- File: `06_age_system.md`
-- Dependencies: Tasks 02, 03 complete
-- Creates: Age categories, modifiers, progression
-- Test: Age calculations, performance modifiers
+### Phase 3: Controller Layer
+**Task 06: CreatureEntity Implementation**
+- Creates: Node-based creature behavior controller
+- Key Change: Handles signals and behavior (separate from CreatureData)
+- Test: Signals emit properly, behavior works
 
-**Task 10: Species Resources**
-- File: `10_species_resources.md`
-- Dependencies: Tasks 02, 03, 04, 05 complete
-- Creates: Species resource system for data-driven creatures
-- Test: Load species, generate from templates
+**Task 07: System Controllers**
+- Creates: CreatureSystem, QuestSystem as GameCore subsystems
+- Key Change: Lazy-loaded, not autoloaded
+- Test: Systems register and communicate via SignalBus
 
-### Phase 4: Data Persistence
-**Task 07: Save/Load System**
-- File: `07_save_load_system.md`
-- Dependencies: Tasks 02, 05 complete
-- Creates: Game state persistence
-- Test: Save/load creatures and game state
+### Phase 4: Persistence & State
+**Task 08: ConfigFile Save System**
+- Creates: Robust save/load using ConfigFile
+- Key Change: NOT using store_var (breaks between versions)
+- Test: Save migration, version checking
 
-**Task 08: Player Collection Management**
-- File: `08_player_collection.md`
-- Dependencies: Tasks 02, 05, 07 complete
-- Creates: Active/stable roster management
-- Test: Collection operations, limits, queries
+**Task 09: Collection Management**
+- Creates: Active/stable roster with proper MVC
+- Implements: Object pooling for UI elements
+- Test: Performance with 1000+ creatures
 
-**Task 09: Resource Tracking System**
-- File: `09_resource_tracking.md`
-- Dependencies: Tasks 01, 07 complete
-- Creates: Gold, food, and item tracking
-- Test: Resource transactions, inventory management
+**Task 10: Resource Tracking**
+- Creates: Economy system for gold/items
+- Implements: Efficient resource caching
+- Test: Transaction performance
 
 ## Testing Strategy
 
