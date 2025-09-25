@@ -2,14 +2,14 @@
 
 ## Food Overview
 
-The food system provides temporary bonuses and effects to active creatures during their weekly activities. Food integrates with the **Time Management System** (see [time.md](time.md)) where food is consumed during weekly progression.
+The food system provides temporary bonuses and effects to active creatures during their weekly activities. Food integrates with the **Time Management System** (see [time.md](../systems/time.md)) where food is consumed during weekly progression.
 
 ## Food Mechanics
 
 ### Food Assignment and Time Integration
 - **Required**: Every active creature must be assigned food before time advancement
 - **Duration**: Food effects last only during the assigned week
-- **Consumption**: Food is consumed when time progresses (see [time.md](time.md))
+- **Consumption**: Food is consumed when time progresses (see [time.md](../systems/time.md))
 - **No Stacking**: Only one food type can be assigned per week
 - **Strategic Choice**: Different foods benefit different activities
 

@@ -8,32 +8,38 @@ This is a planning directory containing comprehensive game design documentation 
 
 ## Document Architecture
 
-### Core System Documents
+### Project Overview (`docs/project/`)
 - `game.md` - Core gameplay loop, acquisition systems, and Godot 4.5 architecture overview
+- `mvp_summary.md` - Complete MVP design summary with economic analysis and implementation priorities
+
+### Core System Documents (`docs/design/systems/`)
 - `creature.md` - Creature system design including stats, tags, and behaviors
 - `species.md` - Species resource system for creature types, stat ranges, and visual assets
 - `stats.md` - Stat system design with 6 core stats (STR, CON, INT, WIS, DEX, DIS)
 - `tags.md` - Tag system for creature traits and environmental requirements
 - `time.md` - Time management system for creature activities and stamina
 
-### Gameplay Feature Documents
+### Gameplay Feature Documents (`docs/design/features/`)
 - `quest.md` - Quest system mechanics, progression, and quest generation algorithms
-- `quest_design_doc.md` - Specific "A Gem of a Problem" quest line (TIM-01 through TIM-06)
 - `training.md` - Training system mechanics and weekly activity management
 - `food.md` - Food system for creature care and training enhancement
 - `breeding.md` - Breeding system with egg group compatibility and inheritance mechanics
 - `shop.md` - Multi-vendor shop system with specialized creature eggs and foods
 - `competitions.md` - Weekly competition system for alternative income and creature development
 
-### Project Overview Documents
-- `mvp_summary.md` - Complete MVP design summary with economic analysis and implementation priorities
-- `implementation_plan.md` - Multi-stage implementation roadmap with 10 development stages over 19-24 weeks
+### Content Design (`docs/design/content/`)
+- `quest_design_doc.md` - Specific "A Gem of a Problem" quest line (TIM-01 through TIM-06)
+
+### Implementation Documents (`docs/implementation/`)
+- `implementation_plan.md` - Multi-stage implementation roadmap with 10 development stages
+- `enum.md` - Global enumeration definitions for type safety
+- `stages/stage_1/` - Stage 1 implementation tasks (11 tasks total)
 
 ## Game Design Architecture
 
 ### Core Systems Integration
 - **Creature Management**: Stats, tags, and validation systems work together
-- **Quest System**: Dynamic requirement matching against creature collections (see quest.md for full mechanics)
+- **Quest System**: Dynamic requirement matching against creature collections (see docs/design/features/quest.md for full mechanics)
 - **Training System**: Weekly time management with food and stamina mechanics
 - **Breeding System**: Egg group compatibility and genetic inheritance of stats and tags
 - **Time Management**: Active vs. stable creature states with weekly planning

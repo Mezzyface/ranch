@@ -2,11 +2,11 @@
 
 ## Training Overview
 
-The training system allows players to improve their creatures' stats through weekly activities. Training integrates with the **Time Management System** (see [time.md](time.md)) to coordinate weekly progression and aging.
+The training system allows players to improve their creatures' stats through weekly activities. Training integrates with the **Time Management System** (see [time.md](../systems/time.md)) to coordinate weekly progression and aging.
 
 ## Creature States and Time
 
-For complete details on creature states, time progression, and weekly cycles, see **[time.md](time.md)**.
+For complete details on creature states, time progression, and weekly cycles, see **[time.md](../systems/time.md)**.
 
 ### Key Time Integration Points
 - **Active Creatures**: Participate in weekly time progression

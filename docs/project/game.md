@@ -5,7 +5,7 @@
 1. **Receive Request**: Player receives quest with specific stat and tag requirements
 2. **Analyze Collection**: Player examines their creature collection to find suitable matches
 3. **Acquire/Improve**: If no match exists, player must breed, tame, or train creatures
-4. **Time Management**: Plan weekly activities for active creatures (see [time.md](time.md))
+4. **Time Management**: Plan weekly activities for active creatures (see [time.md](../design/systems/time.md))
 5. **Deliver**: Submit qualifying creatures to quest giver
 6. **Receive Rewards**: Gain gold, XP, items, and unlock new content
 
@@ -23,13 +23,13 @@
 
 ### Training
 - Improve creature stats through weekly training activities
-- Training integrates with time management system (see [time.md](time.md))
+- Training integrates with time management system (see [time.md](../design/systems/time.md))
 - Training consumes creature stamina and requires food assignment
 - Only active creatures can train; stable creatures remain in stasis
 
 ## Quest System
 
-The quest system drives gameplay through NPC requests for creatures meeting specific criteria. For complete quest mechanics, progression systems, and quest generation, see **[quest.md](quest.md)**.
+The quest system drives gameplay through NPC requests for creatures meeting specific criteria. For complete quest mechanics, progression systems, and quest generation, see **[quest.md](../design/features/quest.md)**.
 
 ### Core Quest Mechanics
 - **Requirement Matching**: Stats and tags determine creature suitability

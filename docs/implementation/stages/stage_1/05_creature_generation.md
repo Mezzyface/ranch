@@ -112,7 +112,7 @@ Define creature species with their characteristics:
 ### Species Database (`scripts/data/species_database.gd`)
 ```gdscript
 # NOTE: This is a simplified version for Stage 1
-# TODO: Migrate to using SpeciesResource system (see species.md)
+# TODO: Migrate to using SpeciesResource system (see ../../../design/systems/species.md)
 # The SpeciesResource system provides better organization with:
 # - Visual assets (sprite frames, icons)
 # - Stat ranges and generation rules

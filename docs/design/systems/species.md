@@ -239,6 +239,6 @@ Each species has preferred environments:
 
 For implementation details including resource structure, database management, and technical specifications, see:
 - **[species_implementation.md](species_implementation.md)** - Technical implementation guide
-- **[stage_1/10_species_resources.md](stage_1/10_species_resources.md)** - Stage 1 implementation task
+- **[../../implementation/stages/stage_1/10_species_resources.md](../../implementation/stages/stage_1/10_species_resources.md)** - Stage 1 implementation task
 
 The species system should be data-driven using Godot's resource system, allowing easy addition and modification of species without code changes. Visual editing in the Godot inspector enables rapid balancing and iteration.
