@@ -70,7 +70,9 @@ func _migrate_save(config: ConfigFile, from_version: int) -> void:
 	pass
 
 func _on_save_requested() -> void:
+	print("SaveSystem: Save requested!")
 	save_game()
 
 func _on_load_requested() -> void:
+	print("SaveSystem: Load requested!")
 	load_game()
