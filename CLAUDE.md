@@ -104,6 +104,13 @@ Implementation files in `stage_1/` directory:
 
 ## Development Notes
 
+### Project Structure
+This is a pure documentation project with no code files yet. The implementation will use:
+- **Engine**: Godot 4.5
+- **Language**: GDScript
+- **Architecture**: Component-based, Resource-driven design
+
+### Implementation Approach
 When working with this project:
 - Follow the staged implementation plan in `implementation_plan.md`
 - Each stage builds upon previous stages with clear dependencies
@@ -111,6 +118,13 @@ When working with this project:
 - No Godot project files exist yet - begin with `01_project_setup.md`
 - Systems are designed for component-based Godot 4.5 architecture
 - Complete economic flow analysis available in `mvp_summary.md`
+
+### Commands and Setup
+Since no code exists yet, there are no build/lint/test commands. After Stage 1 setup:
+- Project will be created in Godot 4.5
+- Primary development will be in GDScript
+- Testing framework will be implemented as part of each stage
+- Version control through git (already initialized)
 
 ## Key Design Principles
 
