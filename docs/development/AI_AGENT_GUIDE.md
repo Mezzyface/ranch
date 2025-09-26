@@ -233,14 +233,19 @@ GameCore.get_system("species")     # SpeciesSystem
 After implementing, test with:
 
 ```bash
-# Run preflight check
+# Run preflight check (ALWAYS DO THIS FIRST)
 godot --headless --scene tests/preflight_check.tscn
 
 # Run individual system test
 godot --headless --scene tests/individual/test_collection.tscn
 
-# Run all tests
+# Run all individual tests (~12 seconds)
 godot --headless --scene tests/test_all.tscn
+
+# Run comprehensive integration test WITH QUIET MODE (for AI agents)
+export AI_MODE=1
+godot --headless --scene test_setup.tscn
+# This runs 2000+ line test in ~10 lines of output
 ```
 
 ---

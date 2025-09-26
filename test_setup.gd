@@ -6,53 +6,69 @@ var signal_test_load_received: bool = false
 var category_change_test_received: bool = false
 var test_quiet_mode_global: bool = false
 
+# Quiet mode for AI agents and CI/CD
+# SET TO TRUE FOR AI AGENTS TO AVOID OUTPUT OVERFLOW
+var quiet_mode: bool = true  # Default to quiet for AI safety
+var test_results: Dictionary = {
+	"passed": 0,
+	"failed": 0,
+	"warnings": 0
+}
+var current_test_name: String = ""
+
 func _ready() -> void:
-	print("=== Testing Stage 1 Tasks 1 & 2: GameCore, SignalBus, and Creature Classes ===")
+	# Check for quiet mode via environment variable or command line
+	_check_quiet_mode()
+
+	if not quiet_mode:
+		print("=== Testing Stage 1 Tasks 1-8: Complete Integration Test ===")
+	else:
+		print("[QUIET MODE] Running integration tests...")
 
 	# Wait a frame for autoloads to initialize
 	await get_tree().process_frame
 
 	# Test GameCore accessibility
 	if GameCore != null:
-		print("✅ GameCore autoload working")
+		_log_success("GameCore autoload working")
 	else:
-		print("❌ GameCore autoload failed")
+		_log_error("GameCore autoload failed")
 		return
 
 	# Test SignalBus creation and enhancement
 	var signal_bus: SignalBus = GameCore.get_signal_bus()
 	if signal_bus:
-		print("✅ SignalBus created successfully")
+		_log_success("SignalBus created successfully")
 		_test_signal_bus_enhancements(signal_bus)
 	else:
-		print("❌ SignalBus creation failed")
+		_log_error("SignalBus creation failed")
 		return
 
 	# Test system lazy loading
 	var save_system = GameCore.get_system("save")
 	if save_system and save_system is SaveSystem:
-		print("✅ SaveSystem lazy loading works")
+		_log_success("SaveSystem lazy loading works")
 	else:
-		print("❌ SaveSystem lazy loading failed")
+		_log_error("SaveSystem lazy loading failed")
 
 	var creature_system = GameCore.get_system("creature")
 	if creature_system and creature_system is CreatureSystem:
-		print("✅ CreatureSystem lazy loading works")
+		_log_success("CreatureSystem lazy loading works")
 	else:
-		print("❌ CreatureSystem lazy loading failed")
+		_log_error("CreatureSystem lazy loading failed")
 
 	var quest_system = GameCore.get_system("quest")
 	if quest_system and quest_system is QuestSystem:
-		print("✅ QuestSystem lazy loading works")
+		_log_success("QuestSystem lazy loading works")
 	else:
-		print("❌ QuestSystem lazy loading failed")
+		_log_error("QuestSystem lazy loading failed")
 
 	var stat_system = GameCore.get_system("stat")
 	if stat_system:
-		print("✅ StatSystem lazy loading works")
+		_log_success("StatSystem lazy loading works")
 		_test_stat_system(stat_system)
 	else:
-		print("❌ StatSystem lazy loading failed")
+		_log_error("StatSystem lazy loading failed")
 
 	# Test Creature Classes (Task 2)
 	_test_creature_classes(signal_bus)
@@ -60,10 +76,10 @@ func _ready() -> void:
 	# Test Tag System (Task 4)
 	var tag_system = GameCore.get_system("tag")
 	if tag_system:
-		print("✅ TagSystem lazy loading works")
+		_log_success("TagSystem lazy loading works")
 		_test_tag_system(tag_system, signal_bus)
 	else:
-		print("❌ TagSystem lazy loading failed")
+		_log_error("TagSystem lazy loading failed")
 
 	# Test Creature Generation (Task 5)
 	_test_creature_generation(tag_system, stat_system)
@@ -71,24 +87,23 @@ func _ready() -> void:
 	# Test Age System (Task 6)
 	var age_system = GameCore.get_system("age")
 	if age_system:
-		print("✅ AgeSystem lazy loading works")
+		_log_success("AgeSystem lazy loading works")
 		_test_age_system(age_system, signal_bus, stat_system)
 	else:
-		print("❌ AgeSystem lazy loading failed")
+		_log_error("AgeSystem lazy loading failed")
 
 	# Test Player Collection System (Task 8)
 	var collection_system = GameCore.get_system("collection")
 	if collection_system:
-		print("✅ PlayerCollection lazy loading works")
+		_log_success("PlayerCollection lazy loading works")
 		_test_player_collection_system(collection_system, signal_bus, save_system)
 	else:
-		print("❌ PlayerCollection lazy loading failed")
+		_log_error("PlayerCollection lazy loading failed")
 
-	print("=== All Tests Complete ===")
-	print("Project ready - Stage 1 Task 8 (Player Collection) COMPLETE!")
+	_print_final_summary()
 
 func _test_signal_bus_enhancements(signal_bus: SignalBus) -> void:
-	print("--- Testing SignalBus Enhancements ---")
+	_start_test("SignalBus Enhancements")
 
 	# Test signal existence
 	var creature_signals: Array[String] = [
@@ -2219,13 +2234,93 @@ func _test_player_collection_system(collection_system: Node, signal_bus: SignalB
 	signal_bus.stable_collection_updated.disconnect(stable_handler)
 	signal_bus.collection_milestone_reached.disconnect(milestone_handler)
 
-	print("\n✅ PlayerCollection testing complete!")
-	print("   - Active roster management with 6-creature limit verified")
-	print("   - Stable collection unlimited storage confirmed")
-	print("   - Collection movement operations working")
-	print("   - Creature acquisition/release lifecycle functional")
-	print("   - Statistics and analytics comprehensive")
-	print("   - Search and filtering capabilities validated")
-	print("   - Save/Load integration with persistence confirmed")
-	print("   - SignalBus integration with proper event emission")
-	print("   - Performance targets met for large collections")
+	if not quiet_mode:
+		print("\n✅ PlayerCollection testing complete!")
+		print("   - Active roster management with 6-creature limit verified")
+		print("   - Stable collection unlimited storage confirmed")
+		print("   - Collection movement operations working")
+		print("   - Creature acquisition/release lifecycle functional")
+		print("   - Statistics and analytics comprehensive")
+		print("   - Search and filtering capabilities validated")
+		print("   - Save/Load integration with persistence confirmed")
+		print("   - SignalBus integration with proper event emission")
+		print("   - Performance targets met for large collections")
+
+# Quiet Mode Helper Functions
+func _check_quiet_mode() -> void:
+	# Check environment variable (for CI/CD)
+	if OS.has_environment("AI_MODE") or OS.has_environment("QUIET_MODE"):
+		quiet_mode = true
+		return
+
+	# Check command line arguments
+	var args: PackedStringArray = OS.get_cmdline_args()
+	for arg in args:
+		if arg == "--quiet" or arg == "-q" or arg == "--ai-mode":
+			quiet_mode = true
+			return
+
+	# Auto-detect if running in headless mode with certain patterns
+	if OS.has_feature("headless") and (
+		OS.has_environment("CI") or
+		OS.has_environment("GITHUB_ACTIONS") or
+		OS.has_environment("CLAUDE_MODE")
+	):
+		quiet_mode = true
+
+func _log_success(message: String) -> void:
+	test_results.passed += 1
+	if not quiet_mode:
+		print("✅ %s" % message)
+
+func _log_error(message: String) -> void:
+	test_results.failed += 1
+	if quiet_mode:
+		print("❌ FAIL: %s" % message)  # Always show failures
+	else:
+		print("❌ %s" % message)
+
+func _log_warning(message: String) -> void:
+	test_results.warnings += 1
+	if not quiet_mode:
+		print("⚠️ %s" % message)
+
+func _log_info(message: String) -> void:
+	if not quiet_mode:
+		print("   %s" % message)
+
+func _start_test(test_name: String) -> void:
+	current_test_name = test_name
+	if not quiet_mode:
+		print("\n--- Testing %s ---" % test_name)
+
+func _print_final_summary() -> void:
+	if quiet_mode:
+		# Minimal output for AI agents
+		var total: int = test_results.passed + test_results.failed
+		var pass_rate: float = float(test_results.passed) / float(max(total, 1)) * 100.0
+
+		print("\n[TEST SUMMARY]")
+		print("Passed: %d/%d (%.1f%%)" % [test_results.passed, total, pass_rate])
+
+		if test_results.failed > 0:
+			print("Failed: %d tests" % test_results.failed)
+			print("Status: FAILURE")
+			get_tree().quit(1)
+		else:
+			print("Status: SUCCESS")
+			print("All Stage 1 systems (Tasks 1-8) validated.")
+			get_tree().quit(0)
+	else:
+		# Full output for developers
+		print("\n=== All Tests Complete ===")
+		print("✅ Passed: %d tests" % test_results.passed)
+		if test_results.failed > 0:
+			print("❌ Failed: %d tests" % test_results.failed)
+		if test_results.warnings > 0:
+			print("⚠️ Warnings: %d" % test_results.warnings)
+
+		print("\nProject ready - Stage 1 Tasks 1-8 COMPLETE!")
+
+		var exit_code: int = 0 if test_results.failed == 0 else 1
+		get_tree().quit(exit_code)
