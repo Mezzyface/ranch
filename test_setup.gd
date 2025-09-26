@@ -15,7 +15,7 @@ var signal_received_milestone: bool = false
 
 # Quiet mode for AI agents and CI/CD
 # SET TO TRUE FOR AI AGENTS TO AVOID OUTPUT OVERFLOW
-var quiet_mode: bool = true  # Default to quiet for AI safety
+var quiet_mode: bool = false  # Default to quiet for AI safety
 var test_results: Dictionary = {
 	"passed": 0,
 	"failed": 0,
@@ -28,7 +28,7 @@ func _ready() -> void:
 	_check_quiet_mode()
 
 	if not quiet_mode:
-		print("=== Testing Stage 1 Tasks 1-8: Complete Integration Test ===")
+		print("=== Testing Stage 1 Tasks 1-10: Complete Integration Test ===")
 	else:
 		print("[QUIET MODE] Running integration tests...")
 
@@ -106,6 +106,25 @@ func _ready() -> void:
 		_test_player_collection_system(collection_system, signal_bus, save_system)
 	else:
 		_log_error("PlayerCollection lazy loading failed")
+
+	# Test Resource Tracking System (Task 9)
+	var resource_system = GameCore.get_system("resource")
+	if resource_system:
+		_log_success("ResourceTracker lazy loading works")
+		_test_resource_system(resource_system, signal_bus)
+	else:
+		_log_error("ResourceTracker lazy loading failed")
+
+	# Test Species System (Task 10)
+	var species_system = GameCore.get_system("species")
+	if species_system:
+		_log_success("SpeciesSystem lazy loading works")
+		_test_species_system(species_system, signal_bus)
+	else:
+		_log_error("SpeciesSystem lazy loading failed")
+
+	# Test Global Enums System (Task 11)
+	_test_global_enums()
 
 	_print_final_summary()
 
@@ -2301,6 +2320,112 @@ func _start_test(test_name: String) -> void:
 	if not quiet_mode:
 		print("\n--- Testing %s ---" % test_name)
 
+func _test_resource_system(resource_system: Node, signal_bus: SignalBus) -> void:
+	_start_test("Resource Tracking System (Task 9)")
+
+	# Test 1: Gold operations
+	var initial_gold: int = resource_system.get_balance()
+	_log_info("Initial gold: %d" % initial_gold)
+
+	if resource_system.add_gold(100, "test"):
+		_log_success("Gold addition working")
+	else:
+		_log_error("Failed to add gold")
+
+	if resource_system.spend_gold(50, "test"):
+		_log_success("Gold spending working")
+	else:
+		_log_error("Failed to spend gold")
+
+	if not resource_system.spend_gold(99999, "test"):
+		_log_success("Insufficient gold check working")
+	else:
+		_log_error("Should fail with insufficient gold")
+
+	# Test 2: Inventory operations
+	if resource_system.add_item("grain", 5):
+		_log_success("Item addition working")
+	else:
+		_log_error("Failed to add item")
+
+	if resource_system.get_item_count("grain") == 5:
+		_log_success("Item count tracking correct")
+	else:
+		_log_error("Item count incorrect")
+
+	if resource_system.remove_item("grain", 2):
+		_log_success("Item removal working")
+	else:
+		_log_error("Failed to remove item")
+
+	# Test 3: ItemDatabase validation
+	if ItemDatabase.is_valid_item("grain"):
+		_log_success("ItemDatabase validation working")
+	else:
+		_log_error("ItemDatabase validation failed")
+
+	if not ItemDatabase.is_valid_item("fake_item"):
+		_log_success("ItemDatabase rejects invalid items")
+	else:
+		_log_error("ItemDatabase should reject invalid items")
+
+	# Test 4: Food operations
+	if resource_system.add_item("berries", 3):
+		var creature_id: String = "test_creature_123"
+		if resource_system.feed_creature(creature_id, "berries"):
+			_log_success("Creature feeding working")
+		else:
+			_log_error("Failed to feed creature")
+
+		if resource_system.get_item_count("berries") == 2:
+			_log_success("Food consumption working")
+		else:
+			_log_error("Food not consumed correctly")
+	else:
+		_log_error("Failed to add berries for feeding test")
+
+	# Test 5: Save/Load
+	var saved_state: Dictionary = resource_system.save_state()
+	if saved_state.has("gold") and saved_state.has("inventory"):
+		_log_success("Save state working")
+	else:
+		_log_error("Save state missing required fields")
+
+	var old_gold: int = resource_system.gold
+	resource_system.gold = 999
+	resource_system.load_state(saved_state)
+	if resource_system.gold == old_gold:
+		_log_success("Load state working")
+	else:
+		_log_error("Load state failed to restore gold")
+
+	# Test 6: Economic stats
+	var stats: Dictionary = resource_system.get_economic_stats()
+	if stats.has("current_gold") and stats.has("total_earned"):
+		_log_success("Economic stats working")
+	else:
+		_log_error("Economic stats missing required fields")
+
+	# Test 7: Signal integration
+	signal_bus.set_debug_mode(false)  # Reduce noise for this test
+	var signal_received: bool = false
+	var test_callback: Callable = func(old_amount: int, new_amount: int, change: int):
+		signal_received = true
+
+	signal_bus.gold_changed.connect(test_callback)
+	resource_system.add_gold(10, "signal_test")
+	await get_tree().process_frame  # Allow signal to propagate
+	signal_bus.gold_changed.disconnect(test_callback)
+
+	if signal_received:
+		_log_success("Resource signals working")
+	else:
+		_log_error("Resource signals not firing")
+
+	signal_bus.set_debug_mode(quiet_mode == false)  # Restore debug mode
+
+	_log_success("Resource Tracking System validation complete")
+
 func _print_final_summary() -> void:
 	if quiet_mode:
 		# Minimal output for AI agents
@@ -2327,7 +2452,153 @@ func _print_final_summary() -> void:
 		if test_results.warnings > 0:
 			print("⚠️ Warnings: %d" % test_results.warnings)
 
-		print("\nProject ready - Stage 1 Tasks 1-8 COMPLETE!")
+		print("\nProject ready - Stage 1 Tasks 1-10 COMPLETE!")
 
 		var exit_code: int = 0 if test_results.failed == 0 else 1
 		get_tree().quit(exit_code)
+
+func _test_species_system(species_system: Node, signal_bus: SignalBus) -> void:
+	"""Test SpeciesSystem functionality and integration."""
+	_start_test("Species System (Task 10)")
+
+	# Test 1: Basic species loading and default creation
+	var all_species: Array[String] = species_system.get_all_species()
+	if all_species.size() >= 4:
+		_log_success("SpeciesSystem loaded %d species (minimum 4)" % all_species.size())
+	else:
+		_log_error("SpeciesSystem should have at least 4 species, got %d" % all_species.size())
+
+	# Test 2: Species validation
+	var validation_passed: bool = true
+	for species_id in all_species:
+		if not species_system.is_valid_species(species_id):
+			_log_error("Species validation failed for: %s" % species_id)
+			validation_passed = false
+	if validation_passed:
+		_log_success("All species pass validation")
+
+	# Test 3: Species data retrieval
+	var scuttleguard_info: Dictionary = species_system.get_species_info("scuttleguard")
+	if scuttleguard_info.has("stat_ranges") and scuttleguard_info.has("guaranteed_tags"):
+		_log_success("Species data retrieval works")
+	else:
+		_log_error("Species data missing required fields")
+
+	# Test 4: Category organization
+	var starter_species: Array[String] = species_system.get_species_by_category("starter")
+	if starter_species.size() > 0:
+		_log_success("Category organization works (%d starter species)" % starter_species.size())
+	else:
+		_log_error("No starter species found in category organization")
+
+	# Test 5: Random species selection
+	var random_species: String = species_system.get_random_species()
+	if not random_species.is_empty() and species_system.is_valid_species(random_species):
+		_log_success("Random species selection works: %s" % random_species)
+	else:
+		_log_error("Random species selection failed")
+
+	# Test 6: CreatureGenerator integration
+	var test_creature: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard")
+	if test_creature != null and test_creature.species_id == "scuttleguard":
+		_log_success("CreatureGenerator integration works")
+	else:
+		_log_error("CreatureGenerator integration failed")
+
+	# Test 7: Performance check
+	var start_time: int = Time.get_ticks_msec()
+	for i in range(100):
+		var _info: Dictionary = species_system.get_species_info("scuttleguard")
+	var elapsed: int = Time.get_ticks_msec() - start_time
+	if elapsed < 50:  # Target: <50ms for 100 lookups
+		_log_success("Performance target met: %dms for 100 lookups" % elapsed)
+	else:
+		_log_warning("Performance below target: %dms for 100 lookups" % elapsed)
+
+func _test_global_enums() -> void:
+	"""Test GlobalEnums autoload and functionality."""
+	_start_test("Global Enums System (Task 11)")
+
+	# Test 1: Autoload accessibility
+	if GlobalEnums != null:
+		_log_success("GlobalEnums autoload accessible")
+	else:
+		_log_error("GlobalEnums autoload not accessible")
+		return
+
+	# Test 2: Age category enum values
+	if GlobalEnums.AgeCategory.BABY == 0 and GlobalEnums.AgeCategory.JUVENILE == 1 and \
+	   GlobalEnums.AgeCategory.ADULT == 2 and GlobalEnums.AgeCategory.ELDER == 3 and \
+	   GlobalEnums.AgeCategory.ANCIENT == 4:
+		_log_success("Age category enums defined correctly")
+	else:
+		_log_error("Age category enum values incorrect")
+
+	# Test 3: Stat type enum values
+	if GlobalEnums.StatType.STRENGTH == 0 and GlobalEnums.StatType.CONSTITUTION == 1 and \
+	   GlobalEnums.StatType.DEXTERITY == 2 and GlobalEnums.StatType.INTELLIGENCE == 3 and \
+	   GlobalEnums.StatType.WISDOM == 4 and GlobalEnums.StatType.DISCIPLINE == 5:
+		_log_success("Stat type enums defined correctly")
+	else:
+		_log_error("Stat type enum values incorrect")
+
+	# Test 4: String conversion functions
+	var age_str: String = GlobalEnums.age_category_to_string(GlobalEnums.AgeCategory.ADULT)
+	var age_enum: GlobalEnums.AgeCategory = GlobalEnums.string_to_age_category("Adult")
+	var stat_str: String = GlobalEnums.stat_type_to_string(GlobalEnums.StatType.STRENGTH)
+	var stat_enum: GlobalEnums.StatType = GlobalEnums.string_to_stat_type("strength")
+
+	if age_str == "Adult" and age_enum == GlobalEnums.AgeCategory.ADULT and \
+	   stat_str == "strength" and stat_enum == GlobalEnums.StatType.STRENGTH:
+		_log_success("String conversion functions working")
+	else:
+		_log_error("String conversion functions failed")
+
+	# Test 5: Stat tier calculation
+	var tier_weak: GlobalEnums.StatTier = GlobalEnums.get_stat_tier(100)
+	var tier_average: GlobalEnums.StatTier = GlobalEnums.get_stat_tier(500)
+	var tier_exceptional: GlobalEnums.StatTier = GlobalEnums.get_stat_tier(900)
+
+	if tier_weak == GlobalEnums.StatTier.WEAK and \
+	   tier_average == GlobalEnums.StatTier.AVERAGE and \
+	   tier_exceptional == GlobalEnums.StatTier.EXCEPTIONAL:
+		_log_success("Stat tier calculation working")
+	else:
+		_log_error("Stat tier calculation failed")
+
+	# Test 6: Validation functions
+	if GlobalEnums.is_valid_age_category(2) and not GlobalEnums.is_valid_age_category(10) and \
+	   GlobalEnums.is_valid_stat_type(3) and not GlobalEnums.is_valid_stat_type(10) and \
+	   GlobalEnums.is_valid_stat_value(500) and not GlobalEnums.is_valid_stat_value(2000):
+		_log_success("Validation functions working")
+	else:
+		_log_error("Validation functions failed")
+
+	# Test 7: All stat types array
+	var all_stats: Array[GlobalEnums.StatType] = GlobalEnums.get_all_stat_types()
+	if all_stats.size() == 6 and GlobalEnums.StatType.STRENGTH in all_stats and \
+	   GlobalEnums.StatType.DISCIPLINE in all_stats:
+		_log_success("All stat types array working")
+	else:
+		_log_error("All stat types array failed")
+
+	# Test 8: Species category conversions
+	var species_str: String = GlobalEnums.species_category_to_string(GlobalEnums.SpeciesCategory.STARTER)
+	var species_enum: GlobalEnums.SpeciesCategory = GlobalEnums.string_to_species_category("starter")
+
+	if species_str == "starter" and species_enum == GlobalEnums.SpeciesCategory.STARTER:
+		_log_success("Species category conversions working")
+	else:
+		_log_error("Species category conversions failed")
+
+	# Test 9: Performance check (enum access should be very fast)
+	var start_time: int = Time.get_ticks_msec()
+	for i in range(1000):
+		var _tier: GlobalEnums.StatTier = GlobalEnums.get_stat_tier(500)
+		var _str: String = GlobalEnums.age_category_to_string(GlobalEnums.AgeCategory.ADULT)
+	var elapsed: int = Time.get_ticks_msec() - start_time
+
+	if elapsed < 5:  # Target: <5ms for 1000 conversions
+		_log_success("Performance target met: %dms for 1000 enum operations" % elapsed)
+	else:
+		_log_warning("Performance below target: %dms for 1000 enum operations" % elapsed)

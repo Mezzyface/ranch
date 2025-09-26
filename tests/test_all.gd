@@ -9,7 +9,10 @@ const TESTS_TO_RUN: Array[Dictionary] = [
 	{"name": "CreatureGenerator", "scene": "res://tests/individual/test_generator.tscn"},
 	{"name": "AgeSystem", "scene": "res://tests/individual/test_age.tscn"},
 	{"name": "SaveSystem", "scene": "res://tests/individual/test_save.tscn"},
-	{"name": "PlayerCollection", "scene": "res://tests/individual/test_collection.tscn"}
+	{"name": "PlayerCollection", "scene": "res://tests/individual/test_collection.tscn"},
+	{"name": "ResourceTracker", "scene": "res://tests/individual/test_resource.tscn"},
+	{"name": "SpeciesSystem", "scene": "res://tests/individual/test_species.tscn"},
+	{"name": "GlobalEnums", "scene": "res://tests/individual/test_enums.tscn"}
 ]
 
 var current_test_index: int = 0

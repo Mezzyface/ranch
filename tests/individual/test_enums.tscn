@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bf1jgq8ijdqgv"]
+
+[ext_resource type="Script" path="res://tests/individual/test_enums.gd" id="1_vt0gi"]
+
+[node name="TestEnums" type="Node"]
+script = ExtResource("1_vt0gi")

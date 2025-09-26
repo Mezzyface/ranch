@@ -18,6 +18,8 @@ config/icon="res://icon.svg"
 [autoload]
 
 GameCore="*res://scripts/core/game_core.gd"
+GlobalEnums="*res://scripts/core/global_enums.gd"
+ItemDatabase="*res://scripts/data/item_database.gd"
 
 [display]
 
