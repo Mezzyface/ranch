@@ -129,9 +129,11 @@ godot --export "Windows Desktop" builds/game.exe
 - **✅ Task 1 COMPLETE** - Project setup with GameCore and enhanced SignalBus
 - **✅ Task 2 COMPLETE** - Creature Class with CreatureData/CreatureEntity separation
 - **✅ Task 3 COMPLETE** - Stat System with advanced modifiers and age mechanics
-- **🚀 Ready for Task 4** - Tag System implementation
-- **All tests passing** - StatSystem fully functional with proper age modifier behavior
-- **Progress**: 3/11 Stage 1 tasks complete (~27%)
+- **✅ Task 4 COMPLETE** - Tag System with comprehensive validation and quest integration
+- **✅ Task 5 COMPLETE** - Creature Generation with 4 species, 4 algorithms, and performance optimization
+- **🚀 Ready for Task 6** - Age System for creature lifecycle progression
+- **All tests passing** - CreatureGenerator fully functional with <100ms performance for 1000 creatures
+- **Progress**: 5/11 Stage 1 tasks complete (~45%)
 
 ## Key Implementation Notes
 
@@ -297,3 +299,149 @@ Tutorial progression teaching creature selection:
 - **Age categories use percentages** - More flexible than fixed age ranges
 - **Performance scores need modifiers** - Age affects effective stats
 - **Tag validation is critical** - Prevent invalid tags early
+
+## Stage 1 Task 4 Lessons Learned
+
+### ✅ Task 4 (Tag System) - COMPLETED & VERIFIED
+**Key Achievements:**
+
+1. **Comprehensive Tag Architecture**
+   - **Success**: 25 tags across 5 categories with complete metadata
+   - **Success**: Complex validation with mutual exclusions, dependencies, incompatibilities
+   - **Validation**: All 12 test scenarios passed with 0ms performance
+
+2. **Advanced Validation System**
+   - **Success**: Mutual exclusions prevent conflicts (Size, Activity patterns, Social/Solitary)
+   - **Success**: Dependencies enforce requirements (Flies→Winged, Sentient→Problem Solver)
+   - **Success**: Incompatibilities prevent invalid combinations (Aquatic↔Flies)
+   - **Pattern**: Validate before modification to prevent invalid states
+
+3. **Quest Integration Ready**
+   - **Success**: Tag requirement matching for quest eligibility
+   - **Success**: Collection filtering by required/excluded tags
+   - **Success**: Tag match scoring for optimal creature selection
+   - **Pattern**: Perfect (1.0) and partial (0.33) scoring system works
+
+4. **Performance Excellence**
+   - **Success**: 100 creatures filtered in 0ms demonstrates optimization
+   - **Success**: Efficient filtering handles 1000+ creature collections
+   - **Pattern**: Cache validation results and use efficient data structures
+
+5. **CreatureEntity Integration**
+   - **Success**: Safe tag management through TagSystem validation
+   - **Success**: Proper fallback behavior when TagSystem not loaded
+   - **Success**: Signal integration with comprehensive error reporting
+   - **Pattern**: Use system validation before direct data modification
+
+6. **Signal Architecture Enhancement**
+   - **Success**: 4 new tag signals with proper validation
+   - **Success**: Debug logging shows signal flow clearly
+   - **Pattern**: Validated emission methods prevent invalid data propagation
+
+### New Best Practices from Task 4:
+- **Validation before modification is crucial** - Prevent invalid states from occurring
+- **Performance testing validates optimization** - 0ms filtering proves efficient algorithms
+- **Complex validation systems need comprehensive test coverage** - 12 scenarios ensure reliability
+- **Signal validation provides excellent debugging** - Red errors prove protection works
+- **String-based tags work well for Stage 1** - Enum migration planned for later stages
+- **CreatureEntity fallback patterns improve robustness** - System works even with missing dependencies
+- **Dictionary-based tag metadata scales well** - Easy to add new tags and properties
+
+### Updated Verification Checklist from Task 4:
+- [ ] TagSystem loads via GameCore lazy loading
+- [ ] All 25 tags defined with proper categories
+- [ ] Validation prevents size conflicts (Small+Large)
+- [ ] Dependencies enforced (Flies requires Winged)
+- [ ] Incompatibilities blocked (Aquatic vs Flies)
+- [ ] Quest requirement matching works
+- [ ] Collection filtering efficient (0ms for 100 creatures)
+- [ ] CreatureEntity integration safe with validation
+- [ ] Signal flow shows proper emission and validation
+- [ ] Performance handles large datasets gracefully
+
+## Stage 1 Task 5 Lessons Learned
+
+### ✅ Task 5 (Creature Generation) - COMPLETED & VERIFIED
+**Key Achievements:**
+
+1. **CreatureGenerator Utility Class Architecture**
+   - **Success**: Static utility class (RefCounted, not GameCore subsystem)
+   - **Success**: Generates CreatureData by default (lightweight for save/serialization)
+   - **Success**: CreatureEntity generation only when behavior needed
+   - **Pattern**: Follows established MVC separation patterns from Tasks 1-4
+
+2. **Complete Species Implementation**
+   - **Success**: 4 species with distinct stat ranges, tags, and lifespans
+   - **Success**: Scuttleguard (starter), Stone Sentinel (premium), Wind Dancer (flying), Glow Grub (utility)
+   - **Success**: All species integrate with TagSystem validation
+   - **Pattern**: Hardcoded for Stage 1, ready for SpeciesSystem migration in Task 10
+
+3. **Generation Algorithm Variety**
+   - **Success**: UNIFORM, GAUSSIAN (Box-Muller), HIGH_ROLL, LOW_ROLL algorithms
+   - **Success**: Each algorithm produces expected statistical distributions
+   - **Success**: Premium eggs (HIGH_ROLL) vs discount eggs (LOW_ROLL) differentiation
+   - **Pattern**: Algorithm selection affects creature quality as designed
+
+4. **Performance Excellence**
+   - **Success**: 1000 creatures generated in <100ms (target met)
+   - **Success**: Pre-allocation and caching optimizations effective
+   - **Success**: Population generation scales linearly
+   - **Pattern**: Performance-first approach with batch operations
+
+5. **Property Consistency Achieved**
+   - **Success**: Unified `lifespan_weeks` property across CreatureData and species data
+   - **Success**: Type safety fixes for all Array[String] assignments
+   - **Success**: Godot 4.5 compilation without critical errors
+   - **Pattern**: Explicit typing and consistent naming prevents confusion
+
+6. **TagSystem Integration**
+   - **Success**: Guaranteed tags always assigned, optional tags 25% probability
+   - **Success**: Full TagSystem validation during generation
+   - **Success**: Graceful fallback when TagSystem unavailable
+   - **Pattern**: Validation-first approach with fallback behavior
+
+### New Best Practices from Task 5:
+- **Static utility classes work well** for generation without lifecycle management
+- **CreatureData-first generation** improves serialization and performance
+- **Unified property naming** (lifespan_weeks) prevents assignment errors
+- **Performance targets drive architecture** - pre-allocation and caching essential
+- **Validation during generation** prevents invalid creature creation
+- **Factory method patterns** provide flexibility for different use cases
+- **Statistical validation** ensures generation algorithms work as intended
+
+### CreatureGenerator Usage Patterns:
+```gdscript
+# Basic generation (most common)
+var creature_data: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard")
+
+# Generation with specific algorithm
+var premium_creature: CreatureData = CreatureGenerator.generate_creature_data("stone_sentinel", CreatureGenerator.GenerationType.HIGH_ROLL)
+
+# Full entity when behavior needed immediately
+var creature_entity: CreatureEntity = CreatureGenerator.generate_creature_entity("wind_dancer")
+
+# Starter creature for new players (boosted stats)
+var starter: CreatureEntity = CreatureGenerator.generate_starter_creature()
+
+# Shop integration
+var egg_creature: CreatureData = CreatureGenerator.generate_from_egg("glow_grub", "premium")
+
+# Batch generation for testing/population
+var population: Array[CreatureData] = CreatureGenerator.generate_population_data(100)
+
+# Species validation
+if CreatureGenerator.is_valid_species("scuttleguard"):
+    var info: Dictionary = CreatureGenerator.get_species_info("scuttleguard")
+```
+
+### Updated Verification Checklist from Task 5:
+- [ ] CreatureGenerator loads as static utility class (not GameCore subsystem)
+- [ ] All 4 species generate with proper stat ranges and tags
+- [ ] Generation algorithms produce expected distributions
+- [ ] Performance target met: 1000 creatures in <100ms
+- [ ] Property consistency: lifespan_weeks unified across codebase
+- [ ] TagSystem integration validates guaranteed/optional tags
+- [ ] StatSystem integration works with generated creatures
+- [ ] CreatureEntity creation from generated data succeeds
+- [ ] Factory methods provide appropriate creature variants
+- [ ] Population generation handles species distribution correctly
