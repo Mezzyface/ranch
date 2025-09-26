@@ -49,6 +49,17 @@ var data: CreatureData
 # CORRECT: Use SignalBus for communication
 SignalBus.creature_created.emit(creature_data)
 
+# CRITICAL: Use GlobalEnums for all shared data types (NOT strings or magic numbers!)
+# ❌ WRONG: creature.get_age_category() == 2  # Magic number
+# ❌ WRONG: creature.category = "starter"      # String constant
+# ✅ CORRECT: creature.get_age_category() == GlobalEnums.AgeCategory.ADULT
+# ✅ CORRECT: species.category = GlobalEnums.SpeciesCategory.STARTER
+
+# Always use enum-based methods when available:
+var stat_value = creature.get_stat_by_type(GlobalEnums.StatType.STRENGTH)  # Preferred
+var age_cat = creature.get_age_category()  # Returns GlobalEnums.AgeCategory
+species.rarity = GlobalEnums.SpeciesRarity.RARE  # Direct enum usage
+
 # Save System Options (choose based on needs):
 # Option 1: ConfigFile for simple data/settings
 var config := ConfigFile.new()
