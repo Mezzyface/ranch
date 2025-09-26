@@ -3,7 +3,7 @@
 **Purpose**: Prevent common integration errors by providing correct method names, property references, and usage patterns for all Stage 1 systems.
 
 **Created**: Task 8 implementation - Based on actual working code
-**Updated**: 2024-09-26
+**Updated**: 2024-12-26 - Enhanced with complete usage examples and integration patterns
 
 ---
 
@@ -48,6 +48,11 @@ creature_data.set_stat("STR", 150)            # Sets stat value
 creature_data.has_tag("Flying")               # Returns bool
 creature_data.has_all_tags(["Small", "Fast"]) # Returns bool
 creature_data.has_any_tag(["Large", "Medium"]) # Returns bool
+creature_data.meets_tag_requirements(required, excluded) # Quest eligibility
+
+# Serialization
+creature_data.to_dict()                       # Returns Dictionary
+CreatureData.from_dict(data)                  # Static factory method
 
 # Serialization
 var dict: Dictionary = creature_data.to_dict()

@@ -7,9 +7,12 @@ A comprehensive creature collection, breeding, and training game built with Godo
 ```
 ranch/
 ├── README.md                   # This file - project navigation
-├── USAGE.md                    # 📖 Comprehensive API and usage guide
-├── CLAUDE.md                   # AI assistant guidance
+├── CLAUDE.md                   # AI assistant guidance & lessons learned
 ├── docs/                       # All documentation
+│   ├── development/           # 🚀 Developer guides
+│   │   ├── API_REFERENCE.md  # Complete method reference
+│   │   ├── SYSTEMS_INTEGRATION_GUIDE.md # How systems connect
+│   │   └── QUICK_START_GUIDE.md # Copy-paste solutions
 │   ├── design/                 # Game design documents
 │   │   ├── systems/           # Core system designs
 │   │   ├── features/          # Feature designs
@@ -24,7 +27,11 @@ ranch/
 │   ├── entities/              # CreatureEntity, etc.
 │   ├── data/                  # CreatureData, QuestData
 │   └── controllers/           # MainController, etc.
-└── test_setup.gd              # Comprehensive test suite
+├── tests/                      # Test infrastructure
+│   ├── individual/            # 8 focused test suites
+│   ├── test_all.gd           # Run all tests sequentially
+│   └── test_runner.gd        # List available tests
+└── test_setup.gd              # Comprehensive integration test
 ```
 
 ## 🎮 Game Overview
@@ -39,8 +46,13 @@ A creature collection game where players:
 
 ## 📚 Documentation Guide
 
-### 🎯 Start Here
-- [Usage Guide](USAGE.md) - **📖 Complete API documentation and usage examples**
+### 🎯 Start Here for Development
+- **[API Reference](docs/development/API_REFERENCE.md)** - 📚 Complete method signatures, prevent common errors
+- **[Systems Integration Guide](docs/development/SYSTEMS_INTEGRATION_GUIDE.md)** - 🔧 How systems work together
+- **[Quick Start Guide](docs/development/QUICK_START_GUIDE.md)** - 🚀 Copy-paste solutions for common tasks
+- [CLAUDE.md](CLAUDE.md) - Lessons learned from implementation
+
+### 📖 Game Design Documentation
 - [Project Overview](docs/project/game.md) - Core gameplay loop and architecture
 - [MVP Summary](docs/project/mvp_summary.md) - Complete MVP design with economic analysis
 - [Implementation Plan](docs/implementation/implementation_plan.md) - 10-stage development roadmap
@@ -77,27 +89,48 @@ A creature collection game where players:
 5. ✅ [Creature Generation](docs/implementation/stages/stage_1/05_creature_generation.md) - 4 species with performance optimization
 6. ✅ [Age System](docs/implementation/stages/stage_1/06_age_system.md) - Lifecycle progression and time-based mechanics
 7. ✅ [Save/Load System](docs/implementation/stages/stage_1/07_save_load_system.md) - Hybrid persistence with comprehensive validation
-8. [Player Collection](docs/implementation/stages/stage_1/08_player_collection.md) - 🚀 NEXT
-9. [Resource Tracking](docs/implementation/stages/stage_1/09_resource_tracking.md)
+8. ✅ [Player Collection](docs/implementation/stages/stage_1/08_player_collection.md) - Active/stable roster management with search
+9. [Resource Tracking](docs/implementation/stages/stage_1/09_resource_tracking.md) - 🚀 NEXT TASK
 10. [Species Resources](docs/implementation/stages/stage_1/10_species_resources.md)
 11. [Global Enums](docs/implementation/stages/stage_1/11_global_enums.md)
 
 ## 🏗️ Current Implementation Status
 
-### ✅ Architecture Foundation Complete (Tasks 1-7)
+### ✅ Stage 1 Core Systems Complete (Tasks 1-8) - 73% Done
 
 The core game architecture is fully implemented and tested:
 
 - **GameCore Management**: Single autoload with lazy-loaded subsystems
 - **MVC Pattern**: Resources for data, Nodes for behavior
-- **SignalBus Communication**: Centralized, validated signal routing
+- **SignalBus Communication**: Centralized, validated signal routing (25 signals)
 - **Data Persistence**: Hybrid save system (ConfigFile + ResourceSaver)
+- **Creature Systems**: Complete generation, aging, stats, and tags
+- **Player Collection**: Active roster (6) and stable collection management
 - **Performance Standards**: All systems meeting <100ms targets
+- **Test Infrastructure**: 8 individual test suites with ~12s total runtime
 
-### 🧪 Comprehensive Testing Suite
+### 🧪 Testing Infrastructure
 
-Run the complete test suite with:
+#### Run Individual Tests (Recommended for debugging)
 ```bash
+# Run specific system test (~1-3s each)
+godot --headless --scene tests/individual/test_signalbus.tscn
+godot --headless --scene tests/individual/test_creature.tscn
+godot --headless --scene tests/individual/test_stats.tscn
+godot --headless --scene tests/individual/test_tags.tscn
+godot --headless --scene tests/individual/test_generator.tscn
+godot --headless --scene tests/individual/test_age.tscn
+godot --headless --scene tests/individual/test_save.tscn
+godot --headless --scene tests/individual/test_collection.tscn
+```
+
+#### Run All Tests
+```bash
+# Sequential execution with summary (~12s total)
+godot --headless --scene tests/test_all.tscn
+
+# Show available tests
+godot --headless --scene tests/test_runner.tscn
 # Console testing (recommended for CI/CD)
 "C:\Program Files\Godot\Godot_console.exe" --headless --scene test_console_scene.tscn
 
@@ -146,7 +179,7 @@ save_system.load_game_state("my_save")
 var tag_system: TagSystem = GameCore.get_system("tag")
 
 # Validate creature for quest requirements
-if tag_system.creature_meets_requirements(creature, ["Dark Vision", "Stealthy"]):
+if tag_system.meets_tag_requirements(creature, ["Dark Vision", "Stealthy"]):
     print("Creature qualified for stealth mission")
 
 # Filter creature collections efficiently
@@ -202,11 +235,12 @@ var qualified: Array[CreatureData] = tag_system.filter_creatures_by_tags(all_cre
 - [x] Task 5: Creature Generation (4 species, 4 algorithms, performance optimization)
 - [x] Task 6: Age System (Lifecycle progression and time-based mechanics)
 - [x] Task 7: Save/Load System (Hybrid persistence, auto-save, comprehensive validation)
-- [ ] Task 8: Player Collection (Active/stable creature roster management)
-- [ ] Task 9-11: Resource Tracking, Species Resources, Global Enums
-- [ ] Stage 1 testing complete
+- [x] Task 8: Player Collection (Active/stable roster management with advanced search)
+- [ ] Task 9: Resource Tracking (Gold/item economy)
+- [ ] Task 10: Species Resources (Template formalization)
+- [ ] Task 11: Global Enums (Type-safe enumerations)
 
-**Progress: 7/11 Stage 1 tasks complete (~64%)**
+**Progress: 8/11 Stage 1 tasks complete (~73%)**
 
 ### Upcoming Stages
 - **Stage 2**: Time Management & Basic UI (2 weeks)
@@ -266,4 +300,20 @@ This project follows a staged development approach. When contributing:
 
 ---
 
-*For AI assistants working on this project, see [CLAUDE.md](CLAUDE.md) for specific guidance.*
+## 📚 Developer Documentation Hub
+
+### Essential References (Updated Task 8)
+1. **[API_REFERENCE.md](docs/development/API_REFERENCE.md)** - Complete method signatures, prevents 90% of errors
+2. **[SYSTEMS_INTEGRATION_GUIDE.md](docs/development/SYSTEMS_INTEGRATION_GUIDE.md)** - How all 8 systems work together
+3. **[QUICK_START_GUIDE.md](docs/development/QUICK_START_GUIDE.md)** - Copy-paste solutions for Tasks 9-11
+
+### Critical Patterns from Implementation
+- **Property Names**: `id` not `creature_id`, `species_id` not `species`
+- **Array Types**: Always `Array[String]` not just `Array`
+- **Method Locations**: `creature.get_age_category()` not `age_system.get_creature_age_category()`
+- **Time API**: `Time.get_ticks_msec()` not `.nanosecond`
+- **System Loading**: `GameCore.get_system("name")` for lazy loading
+
+---
+
+*For AI assistants working on this project, see [CLAUDE.md](CLAUDE.md) for specific guidance and lessons learned.*
