@@ -2091,7 +2091,7 @@ func _test_player_collection_system(collection_system: Node, signal_bus: SignalB
 
 	var performance_metrics: Dictionary = collection_system.get_performance_metrics()
 	if performance_metrics.has("active_creatures") and performance_metrics.has("stable_summary"):
-		print("   ✅ Performance metrics structure correct")
+		print("   ✅ Performance metrics structure correct") 
 	else:
 		print("   ❌ Performance metrics missing required fields")
 
