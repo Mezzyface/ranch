@@ -87,6 +87,11 @@ func get_effective_stat(creature_data: CreatureData, stat_name: String) -> int:
 
 	return clampi(final_value, STAT_MIN, STAT_MAX)
 
+# Enum-based version of get_effective_stat (preferred)
+func get_effective_stat_by_type(creature_data: CreatureData, stat_type: GlobalEnums.StatType) -> int:
+	var stat_name := GlobalEnums.stat_type_to_string(stat_type)
+	return get_effective_stat(creature_data, stat_name)
+
 # Calculate competition performance stat (includes age modifier)
 # This is used for competitions and performance scoring, NOT quest requirements
 func get_competition_stat(creature_data: CreatureData, stat_name: String) -> int:

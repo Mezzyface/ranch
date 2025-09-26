@@ -284,7 +284,7 @@ func search_creatures(criteria: Dictionary) -> Array[CreatureData]:
 
 		# Age category filter
 		if matches and criteria.has("age_category"):
-			var age_category: int = creature.get_age_category()
+			var age_category: GlobalEnums.AgeCategory = creature.get_age_category()
 			if age_category != criteria.age_category:
 				matches = false
 
@@ -445,7 +445,7 @@ func get_performance_metrics() -> Dictionary:
 		creature_metrics.performance_score = float(total_stats) / float(stat_count)
 
 		# Age category
-		creature_metrics.age_category = creature.get_age_category()
+		creature_metrics.age_category = creature.get_age_category()  # Returns GlobalEnums.AgeCategory
 
 		metrics.active_creatures.append(creature_metrics)
 
@@ -457,7 +457,7 @@ func get_performance_metrics() -> Dictionary:
 		for creature_data in stable_collection.values():
 			total_age += creature_data.age_weeks
 
-			var age_cat: int = creature_data.get_age_category()
+			var age_cat: GlobalEnums.AgeCategory = creature_data.get_age_category()
 
 			if not age_categories.has(age_cat):
 				age_categories[age_cat] = 0

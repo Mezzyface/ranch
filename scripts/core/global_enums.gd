@@ -123,6 +123,18 @@ enum ItemRarity {
 	LEGENDARY = 4
 }
 
+# === TAG ENUMS ===
+
+# Tag categories for organization
+enum TagCategory {
+	SIZE = 0,
+	BEHAVIORAL = 1,
+	PHYSICAL = 2,
+	SENSORY = 3,
+	ABILITIES = 4,
+	ENVIRONMENTAL = 5
+}
+
 # === COLLECTION ENUMS ===
 
 # Collection types for organization
@@ -259,6 +271,28 @@ static func string_to_species_rarity(rarity_str: String) -> SpeciesRarity:
 		"rare": return SpeciesRarity.RARE
 		"legendary": return SpeciesRarity.LEGENDARY
 		_: return SpeciesRarity.COMMON
+
+# Convert tag category enum to string
+static func tag_category_to_string(category: TagCategory) -> String:
+	match category:
+		TagCategory.SIZE: return "SIZE"
+		TagCategory.BEHAVIORAL: return "BEHAVIORAL"
+		TagCategory.PHYSICAL: return "PHYSICAL"
+		TagCategory.SENSORY: return "SENSORY"
+		TagCategory.ABILITIES: return "ABILITIES"
+		TagCategory.ENVIRONMENTAL: return "ENVIRONMENTAL"
+		_: return "UNKNOWN"
+
+# Convert string to tag category enum
+static func string_to_tag_category(category_str: String) -> TagCategory:
+	match category_str.to_upper():
+		"SIZE": return TagCategory.SIZE
+		"BEHAVIORAL": return TagCategory.BEHAVIORAL
+		"PHYSICAL": return TagCategory.PHYSICAL
+		"SENSORY": return TagCategory.SENSORY
+		"ABILITIES": return TagCategory.ABILITIES
+		"ENVIRONMENTAL": return TagCategory.ENVIRONMENTAL
+		_: return TagCategory.PHYSICAL  # Default fallback
 
 # Validation functions
 static func is_valid_age_category(category: int) -> bool:

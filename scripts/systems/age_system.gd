@@ -65,11 +65,11 @@ func age_creature_to_category(creature_data: CreatureData, target_category: int)
 		push_error("AgeSystem: Cannot age null creature_data")
 		return false
 
-	if target_category < 0 or target_category >= AGE_CATEGORIES.size():
+	if not GlobalEnums.is_valid_age_category(target_category):
 		push_error("AgeSystem: Invalid target category: %d" % target_category)
 		return false
 
-	var current_category: int = creature_data.get_age_category()
+	var current_category: GlobalEnums.AgeCategory = creature_data.get_age_category()
 	if current_category >= target_category:
 		return true  # Already at or past target category
 
@@ -127,7 +127,7 @@ func check_age_category_change(creature_data: CreatureData, old_age: int, new_ag
 		"new_age": new_age
 	}
 
-func _check_age_category_change(creature_data: CreatureData, old_category: int, new_category: int) -> void:
+func _check_age_category_change(creature_data: CreatureData, old_category: GlobalEnums.AgeCategory, new_category: GlobalEnums.AgeCategory) -> void:
 	"""Internal method to handle age category changes and expiration."""
 	if old_category != new_category:
 		# Emit category change signal
@@ -154,7 +154,7 @@ func get_weeks_until_next_category(creature_data: CreatureData) -> int:
 	if not creature_data:
 		return 0
 
-	var current_category: int = creature_data.get_age_category()
+	var current_category: GlobalEnums.AgeCategory = creature_data.get_age_category()
 	if current_category >= 4:  # Ancient is max category
 		return 0
 
@@ -166,7 +166,7 @@ func get_weeks_to_category(creature_data: CreatureData, target_category: int) ->
 	if not creature_data:
 		return 0
 
-	if target_category < 0 or target_category >= AGE_CATEGORIES.size():
+	if not GlobalEnums.is_valid_age_category(target_category):
 		return 0
 
 	# Calculate target age based on category thresholds
@@ -211,7 +211,7 @@ func get_age_distribution(creature_list: Array[CreatureData]) -> Dictionary:
 			continue
 
 		total_age += creature_data.age_weeks
-		var category: int = creature_data.get_age_category()
+		var category: GlobalEnums.AgeCategory = creature_data.get_age_category()
 		if category in distribution.categories:
 			distribution.categories[category] += 1
 
