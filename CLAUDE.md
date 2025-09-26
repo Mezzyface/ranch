@@ -1,5 +1,107 @@
 # CLAUDE.md
 
+Primary machine-actionable guidance for AI coding agents (Claude, GPT, etc.). Keep this file short, stable, enumerated. Narrative/historical details have been archived.
+
+## 0. EXECUTION PROTOCOL (ALWAYS IN THIS ORDER)
+1. Preflight: `godot --headless --scene tests/preflight_check.tscn` (abort on fail)
+2. Identify minimal affected files (no broad search & replace unless explicit)
+3. Verify invariants (Section 1) before editing
+4. Apply minimal cohesive patch
+5. Re-run preflight + directly related individual test (if exists)
+6. Summarize: each user requirement → Done / Skipped (reason) + invariants status
+7. Never proceed to new feature if any invariant broken
+
+## 1. NON-NEGOTIABLE INVARIANTS
+- Data vs behavior: `CreatureData` Resource (no signals) / `CreatureEntity` Node (behavior + signaling via SignalBus ONLY)
+- Property names: `id`, `species_id`, `age_weeks`, `lifespan_weeks`, `creature_name` (NO legacy variants)
+- System access: ONLY `GameCore.get_system("<name>")`
+- Age category & modifier logic lives on `CreatureData` (do not duplicate)
+- Arrays are explicitly typed (e.g. `Array[String]`, `Array[CreatureData]`)
+- Signals: use existing SignalBus emission helpers; do not add wrappers unless introducing a new domain event (then document in Section 6)
+- Species truth: SpeciesSystem resources (hardcoded generator map = deprecated read‑only)
+- Performance: New batch ops must respect baselines (Section 7) or provide timing + justification
+- Save orchestration: SaveSystem coordinates; each system owns its own serialization (no duplication)
+
+## 2. ALLOWED / DISALLOWED
+ALLOWED: focused feature implementation, adding a precise enum value, introducing small interface (`ISaveable`, `ITickable`) with registration, adding targeted test scene.
+
+DISALLOWED (without explicit instruction): wide renames, new bespoke signal wrappers, extending deprecated species map, duplicating age/stat helpers, untyped public arrays, speculative refactors.
+
+## 3. TASK EXECUTION TEMPLATE (INTERNAL WORKFLOW)
+1. Intent → concrete edits list
+2. Read target files (only) to confirm assumptions
+3. Patch
+4. Preflight + individual test(s)
+5. Summarize results & invariant checklist
+
+## 4. FILE MAP QUICK REFERENCE
+Core Loader: `scripts/core/game_core.gd`
+Signals: `scripts/core/signal_bus.gd`
+Enums: `scripts/core/global_enums.gd`
+Systems: `scripts/systems/*.gd`
+Data: `scripts/data/*.gd`
+Generation: `scripts/generation/`
+Tests (unit/individual): `tests/individual/`
+Integration Harness: `tests/test_all.tscn`, `test_setup.tscn`
+Preflight: `tests/preflight_check.tscn`
+
+## 5. PATCH POLICY
+- Leave unrelated formatting untouched
+- Remove dead code only if zero references AND clearly deprecated
+- Use `# TODO(stage2): ...` for deferred refactors
+- Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
+
+## 6. CURRENT SYSTEM KEYS
+`collection`, `save`, `tag`, `age`, `stat`, `resource`, `species` (extend list when adding new system)
+
+## 7. PERFORMANCE BASELINES
+| Operation | Target |
+|-----------|--------|
+| 1000 creature generation | <100ms |
+| Batch aging 1000 creatures | <100ms |
+| Save/load 100 creatures | <200ms |
+| 100 species lookups | <50ms |
+If exceeded, add timing + mitigation note in summary.
+
+## 8. SUBMISSION CHECKLIST
+[ ] Preflight passes
+[ ] No forbidden property names introduced
+[ ] No new signal wrapper unless documented
+[ ] All arrays typed explicitly
+[ ] Only `GameCore.get_system()` used for system access
+[ ] No duplicated age/stat logic
+[ ] Species edits via resources only
+[ ] Tests updated/added as needed
+[ ] Performance within baseline or justified
+
+## 9. COMMON ERROR GUARDS
+- Untyped arrays → inference warnings (treated as errors)
+- Legacy property names (`creature_id`, `species`) → breaks tests & filters
+- Calling age/category on system instead of data → method not found
+- Time API misuse (`.nanosecond`) → invalid; use `Time.get_ticks_msec()`
+
+## 10. ADDING A NEW SYSTEM (MINIMAL STEPS)
+1. `scripts/systems/<name>_system.gd` (extends Node)
+2. Add case in `game_core.gd` loader
+3. Add small test in `tests/individual/`
+4. Append key to Section 6 list
+5. If persistent: implement save hooks or register future `ISaveable`
+
+## 11. STAGE 1 CONSOLIDATED LESSONS (REFERENCE)
+
+## Repository Overview
+### Testing Commands
+```bash
+godot --headless --scene tests/preflight_check.tscn
+godot --headless --scene tests/test_all.tscn
+# (Run specific individual test scenes if you modified a single system)
+```
+### M. Minimal Verification Checklist (Superseded by Section 8 Machine Protocol)
+
+---
+Legacy verbose per‑task narratives (Tag System through Species Resources) moved to `docs/development/ARCHIVE_STAGE1_TASK_DETAILS.md`.
+# CLAUDE.md
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
 ## Repository Overview
@@ -133,224 +235,96 @@ godot --export "Windows Desktop" builds/game.exe
 
 ### Testing Commands
 ```bash
-# Show available individual tests
-godot --headless --scene tests/test_runner.tscn
+## Stage 1 Consolidated Lessons (Tasks 1–10)
 
-# Run all tests sequentially
-godot --headless --scene tests/test_all.tscn
+This section replaces verbose per‑task blocks with a unified, low‑maintenance summary of durable principles. Historical granular logs can be moved to an archive if needed.
 
-# Run individual system tests
-godot --headless --scene tests/individual/test_signalbus.tscn
-godot --headless --scene tests/individual/test_creature.tscn
-godot --headless --scene tests/individual/test_stats.tscn
-godot --headless --scene tests/individual/test_tags.tscn
-godot --headless --scene tests/individual/test_generator.tscn
-godot --headless --scene tests/individual/test_age.tscn
-godot --headless --scene tests/individual/test_save.tscn
-godot --headless --scene tests/individual/test_collection.tscn
-godot --headless --scene tests/individual/test_resource.tscn
-godot --headless --scene tests/individual/test_species.tscn
+### A. Architecture & Data Separation
+- Data (Resource) vs Behavior (Node) line is non‑negotiable: `CreatureData` stays signal‑free; `CreatureEntity` mediates behavior.
+- GameCore = lazy loader + registry; avoid direct dictionary poking (`GameCore._systems[...]`). Always use `GameCore.get_system(name)`.
+- Species hardcoded map is now DEPRECATED (read‑only until full removal); SpeciesSystem resources are the source of truth.
 
-# Run comprehensive test (may timeout with verbose output)
-godot --headless --scene test_setup.tscn
+### B. Signals & Communication
+- Centralize through SignalBus; no new bespoke `emit_<event>()` wrappers—prepare for generic emitter migration.
+- Validate inputs before emission; red validation errors are protective, not failures.
+- Reduce signal surface by batching (e.g., roster changes emit full snapshot once).
 
-# Stage 2 preparation
-godot --headless --scene tests/stage_2_preflight.tscn
-```
+### C. Validation & Safety
+- Tag/Stat/Age logic lives in their owning systems or data classes—do not duplicate helper math elsewhere.
+- Fallback logic (e.g., local tag checks in `CreatureEntity`) is slated for removal; treat as legacy.
+- Explicit array typing `Array[String]` prevents subtle Godot 4.5 inference errors.
 
-### Current Status
-- **✅ Godot project created** - Complete with GameCore architecture
-- **✅ Task 1 COMPLETE** - Project setup with GameCore and enhanced SignalBus
-- **✅ Task 2 COMPLETE** - Creature Class with CreatureData/CreatureEntity separation
-- **✅ Task 3 COMPLETE** - Stat System with advanced modifiers and age mechanics
-- **✅ Task 4 COMPLETE** - Tag System with comprehensive validation and quest integration
-- **✅ Task 5 COMPLETE** - Creature Generation with 4 species, 4 algorithms, and performance optimization
-- **✅ Task 6 COMPLETE** - Age System for creature lifecycle progression and time-based mechanics
-- **✅ Task 7 COMPLETE** - Save/Load System with hybrid persistence, auto-save, and comprehensive validation
-- **✅ Task 8 COMPLETE** - Player Collection system with active/stable roster management and search
-- **✅ Task 9 COMPLETE** - Resource Tracking system with gold/item economy and feeding mechanics
-- **✅ Task 10 COMPLETE** - Species Resources system for creature template management
-- **🚀 Ready for Task 11** - Global Enums system for type-safe enumerations
-- **All tests passing** - Individual test infrastructure with 12 focused test suites (including resource and species tests)
-- **Documentation complete** - API Reference, Systems Integration Guide, Quick Start Guide, and Stage 1 Completion Summary
-- **Stage 2 ready** - Preflight checks implemented for next development phase
-- **Progress**: 10/11 Stage 1 tasks complete (~91%) - Final task ready for implementation
+### D. Performance Practices
+- Batch operations (aging, filtering, generation) must complete 1k scale < 100ms on baseline hardware.
+- Preallocate arrays for mass generation and aging.
+- Avoid per‑loop system lookups; cache references locally inside hot loops.
 
-## Key Implementation Notes
+### E. Persistence Principles
+- Hybrid model stays: ConfigFile for metadata, ResourceSaver for complex resource objects.
+- Future direction: introduce `ISaveable` (draft) so SaveSystem enumerates system states instead of hardcoding.
+- Creature collection owns its own serialization; SaveSystem should orchestrate, not duplicate logic.
 
-### Documentation Structure
-- **docs/design/**: Game mechanics and systems (16 files)
-- **docs/implementation/**: Technical specs and stage tasks (14+ files)
-- **docs/project/**: Project management documents
-- **Stage completion docs**: STAGE_1_COMPLETION_SUMMARY.md, task prompts
-- Full documentation map in `README.md` and `docs/STRUCTURE.md`
+### F. Collection & Domain Rules
+- Active roster cap enforced at system boundary; internal data structures never exceed 6 active.
+- Species + Tag assignment validated at creation time; invalid combinations never enter collection state.
+- Age modifiers affect performance/competitions, not quest requirement thresholds.
 
-### Stage 2 Preparation
-- **Preflight Check**: `godot --headless --scene tests/stage_2_preflight.tscn`
-- **New Systems Added**: ResourceTracker for economy, SpeciesSystem for templates
-- **Infrastructure Ready**: 12 individual test suites, comprehensive integration testing
-- **Documentation Complete**: API Reference, implementation guides, completion summary
+### G. Testing & Tooling
+- Individual system test scenes + one integration harness—fast isolated failures preferred over monolithic runs.
+- Deterministic generation (seeded path) planned; current statistical tolerance accepted for distribution tests.
+- Preflight / validator scripts catch 90% of common AI or contributor mistakes (property name, system loading, array typing).
 
-### Art Assets
-- **Using Tiny Swords asset pack** for creature sprites
-- 11 mapped species using available sprites (spiders, turtles, monks, etc.)
-- See `docs/design/ASSET_MAPPING_TINY_SWORDS.md` for sprite-to-species mappings
+### H. Logging & Debug (Transitional)
+- Verbose console logging is temporary; Stage 2 introduces channelized `DebugConfig` (levels + filters).
+- Quiet modes required for bulk operations (collection, generation) to keep CI output manageable.
 
-### Quest Line: "A Gem of a Problem" (TIM-01 to TIM-06)
-Tutorial progression teaching creature selection:
-- **TIM-01**: Basic warehouse guard (single creature with Dark Vision)
-- **TIM-02**: Cave exploration (Natural Armor + Camouflage)
-- **TIM-03**: Complex facility (pest control + sanitation + security)
-- **TIM-04**: Construction site (heavy labor + logistics)
-- **TIM-05**: High-security vault (elite guardian)
-- **TIM-06**: Exhibition setup (multiple specialized roles)
+### I. Anti‑Patterns (Do NOT Reintroduce)
+- Direct property name drift: `creature_id`, `species` (should be `id`, `species_id`).
+- Manual age category math outside `CreatureData` / `AgeSystem`.
+- Recreating species definitions outside SpeciesSystem resources.
+- Using system internals: `GameCore._systems[...]` or storing raw references for later without null checks.
+- Adding new per‑signal validation wrappers instead of consolidating.
 
-### Economic Flow
-- Starting: 500 gold + 2-3 creatures
-- Quest line net profit: +4,690 gold
-- Creature costs: 50-800 gold depending on rarity
-- Weekly food cost: ~25 gold per active creature
+### J. Metrics Snapshot (Pre‑Refactor Baseline)
+| Area | Current | Target (Stage 2+) |
+|------|---------|-------------------|
+| SignalBus LOC | ~600 | <350 (extraction + generic emitter) |
+| SaveSystem LOC | ~870 | <400 (modular split) |
+| Duplicate age logic copies | 3 | 1 |
+| Hardcoded species table | Present | Removed |
+| Fallback tag validation points | 2 | 0 |
 
-### Critical Godot 4.5 Gotchas
-- Resources with signals can cause issues - keep data and behavior separate
-- Use `take_over_path()` after saving Resources to handle cache bugs
-- Prefer ConfigFile for settings, ResourceSaver for complex game data
-- Always use typed GDScript for better performance and error checking
+### K. Task → Durable Principle Matrix
+| Task | Key Addition | Lasting Principle |
+|------|--------------|-------------------|
+| 1 Project Setup | GameCore + SignalBus | Centralized lazy loading & event routing |
+| 2 Creature Class | Data/behavior split | Resources stay pure data |
+| 3 Stat System | Modifier pipeline | Separate base vs contextual (age) stats |
+| 4 Tag System | Declarative metadata | Validate before mutation |
+| 5 Generation | Algorithm variants | Deterministic expansion path (seed later) |
+| 6 Age System | Lifecycle events | Orchestrate; no stat side effects directly |
+| 7 Save System | Hybrid persistence | Systems own their state; orchestrator coordinates |
+| 8 Collection | Dual-tier storage | Cap & invariant enforcement at boundary |
+| 9 Resource Tracking | Economy baseline | Emit domain deltas, not polled mutations |
+| 10 Species Resources | Resource-backed species | Data lives in assets, not code |
 
-## Stage 1 Lessons Learned
+### L. Stage 2 Forward Hooks
+- Introduce `TimeSystem` (weeks) → drives AgeSystem & modifier decay.
+- Replace per‑event emission wrappers with schema‑driven generic emitter.
+- Formalize `ISaveable` + `ITickable` contracts and register via GameCore.
+- Begin deprecating hardcoded species map (remove after migration test passes).
 
-### ✅ Task 1 (Project Setup) - COMPLETED & VERIFIED
-**Key Issues Discovered & Solutions:**
+### M. Minimal Verification Checklist (Supersedes Prior Per‑Task Lists)
+- [ ] No forbidden property names (`creature_id`, `species`).
+- [ ] All tag/stat/age computations delegated to owning system/data.
+- [ ] No new emit wrapper functions added.
+- [ ] Batch ops meet performance thresholds (<100ms / 1k items baseline).
+- [ ] Save orchestration does not directly serialize system internals ad hoc.
+- [ ] Species creation path uses SpeciesSystem (not hardcoded dictionary extension).
+- [ ] Fallback tag or species logic not invoked in normal runtime.
 
-1. **Autoload Class Naming Conflict**
-   - **Issue**: `class_name GameCore` conflicts with autoload singleton name
-   - **Solution**: Remove `class_name` from autoload scripts, use `extends Node` only
-   - **Why**: Godot 4.5 autoloads should not have class_name declarations
-
-2. **Type Inference Warnings**
-   - **Issue**: `var version := config.get_value()` causes Variant typing warnings
-   - **Solution**: Use explicit typing: `var version: int = config.get_value()`
-   - **Why**: Godot 4.5 treats warnings as errors in strict mode
-
-3. **Input Map Configuration**
-   - **Issue**: Input actions need proper modifier key settings in project.godot
-   - **Solution**: Set `"ctrl_pressed":true` for Ctrl+key combinations manually
-   - **Why**: Godot editor may not export modifier keys correctly to project file
-
-4. **Lazy Loading Verification**
-   - **Issue**: Systems won't load until first accessed, signals may not connect
-   - **Solution**: Force system loading before emitting relevant signals
-   - **Pattern**: `GameCore.get_system("save")` before `save_requested.emit()`
-
-5. **Missing Placeholder Classes**
-   - **Issue**: SignalBus references QuestData before it exists, causing parse errors
-   - **Solution**: Create minimal placeholder Resource classes early
-   - **Why**: GDScript requires all referenced types to exist for compilation
-
-6. **Input Action Conflicts**
-   - **Issue**: Multiple actions can map to same key (S for both shop and save)
-   - **Solution**: Use modifiers properly - S for shop, Ctrl+S for save
-   - **Testing**: Add debug prints to verify correct action triggering
-
-7. **Unused Signal Warnings**
-   - **Issue**: SignalBus declares all signals upfront, causing "never used" warnings
-   - **Solution**: Comment out unused signals during early development, uncomment as needed
-   - **Why**: Godot warns about declared but unused signals to prevent code bloat
-
-8. **Tool Mode vs Runtime Testing**
-   - **Issue**: `@tool` EditorScript can't access autoload methods (placeholder instance error)
-   - **Solution**: Use regular Node with `_ready()` and scene for testing instead of EditorScript
-   - **Pattern**: Create test.tscn scene with test script, run scene for integration testing
-
-### Best Practices Established:
-- **Always test compilation** after each script creation
-- **Add debug output** for input and signal verification during development
-- **Load systems explicitly** before emitting signals they need to handle
-- **Use explicit typing** for all variables to avoid inference warnings
-- **Create placeholder classes** for forward references immediately
-- **Prefix unused parameters** with underscore (`_config`) to avoid warnings
-
-### Verification Checklist for Future Tasks:
-- [ ] No compilation errors in Godot console
-- [ ] All referenced classes exist (even as placeholders)
-- [ ] Input actions work as expected with debug output
-- [ ] Systems load correctly when accessed
-- [ ] Signals flow from source to destination with debug confirmation
-
-## Stage 1 Task 2 Lessons Learned
-
-### ✅ Task 2 (SignalBus Enhancement) - COMPLETED & VERIFIED
-**Key Achievements:**
-
-1. **Enhanced Signal Architecture**
-   - **Success**: Uncommented creature lifecycle signals while keeping unused signals commented
-   - **Pattern**: Declare signals as needed, not all upfront to avoid unused warnings
-   - **Result**: Clean console with expected "unused signal" warnings for future features
-
-2. **Robust Connection Management**
-   - **Success**: `connect_signal_safe()` and `disconnect_signal_safe()` with full validation
-   - **Pattern**: Return boolean success values, track connections for debugging
-   - **Result**: Bulletproof signal connections with comprehensive error handling
-
-3. **Validated Signal Emission**
-   - **Success**: Emission wrapper methods prevent invalid data from propagating
-   - **Pattern**: Validate inputs before emission, use debug logging for verification
-   - **Result**: Red error messages in console confirm validation works (this is good!)
-
-4. **Debug System Architecture**
-   - **Success**: Toggle debug mode, connection tracking, comprehensive logging
-   - **Pattern**: Debug information helps during development, can be disabled in production
-   - **Result**: Excellent visibility into signal flow for troubleshooting
-
-### New Best Practices Established:
-- **Signal validation is critical** - Never emit with null/invalid data
-- **Connection tracking aids debugging** - Know what's connected where
-- **Expected warnings are acceptable** - Yellow unused signal warnings are normal during development
-- **Red validation errors are good** - They prove the system is protecting against bad data
-- **Comprehensive test coverage** - Test both success and failure cases
-- **Debug logging during development** - Essential for verifying signal flow
-
-### Updated Verification Checklist:
-- [ ] Expected unused signal warnings (yellow) are acceptable
-- [ ] Validation error messages (red) prove protection works
-- [ ] Signal emissions work with valid data
-- [ ] Connection management tracks properly
-- [ ] Debug mode toggle functions correctly
-
-## Stage 1 Task 2 Lessons Learned
-
-### ✅ Task 2 (Creature Classes) - COMPLETED & VERIFIED
-**Key Achievements:**
-
-1. **Perfect Data/Behavior Separation**
-   - **Success**: CreatureData (Resource) contains only data, NO signals
-   - **Success**: CreatureEntity (Node) handles all behavior and signal emission
-   - **Validation**: Test confirms "CreatureData has NO signals (correct!)"
-
-2. **Stat System Foundation**
-   - **Success**: Stats clamp properly to 1-1000 range
-   - **Success**: Stat accessors work with multiple names (STR/STRENGTH)
-   - **Success**: Age modifiers calculate correctly
-
-3. **Serialization Ready**
-   - **Success**: to_dict() and from_dict() implemented
-   - **Pattern**: Clean serialization without signals ensures save stability
-
-4. **Signal Integration**
-   - **Success**: All creature signals emit through centralized SignalBus
-   - **Success**: Validation prevents null/invalid data emission
-   - **Pattern**: Use SignalBus emit helpers for consistency
-
-### New Best Practices from Task 2:
-- **Array.erase() returns void in Godot 4** - Check existence first with has() methods
-- **Resource setters work for clamping** - Use set(value) for automatic validation
-- **Age categories use percentages** - More flexible than fixed age ranges
-- **Performance scores need modifiers** - Age affects effective stats
-- **Tag validation is critical** - Prevent invalid tags early
-
-## Stage 1 Task 4 Lessons Learned
-
-### ✅ Task 4 (Tag System) - COMPLETED & VERIFIED
+---
+*Legacy detailed task narratives were removed to reduce churn. Retrieve from version control history if deep forensic context is required.*
 **Key Achievements:**
 
 1. **Comprehensive Tag Architecture**
