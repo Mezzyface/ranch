@@ -56,26 +56,26 @@ func _init() -> void:
 		id = "creature_%d_%06d" % [Time.get_unix_time_from_system(), randi() % 999999]
 
 # Utility functions (pure calculations, no state changes)
-func get_age_category() -> int:
+func get_age_category() -> GlobalEnums.AgeCategory:
 	var life_percentage: float = (age_weeks / float(lifespan_weeks)) * 100
 	if life_percentage < 10:
-		return 0  # BABY
+		return GlobalEnums.AgeCategory.BABY
 	elif life_percentage < 25:
-		return 1  # JUVENILE
+		return GlobalEnums.AgeCategory.JUVENILE
 	elif life_percentage < 75:
-		return 2  # ADULT
+		return GlobalEnums.AgeCategory.ADULT
 	elif life_percentage < 90:
-		return 3  # ELDER
+		return GlobalEnums.AgeCategory.ELDER
 	else:
-		return 4  # ANCIENT
+		return GlobalEnums.AgeCategory.ANCIENT
 
 func get_age_modifier() -> float:
 	match get_age_category():
-		0: return 0.6  # BABY
-		1: return 0.8  # JUVENILE
-		2: return 1.0  # ADULT
-		3: return 0.8  # ELDER
-		4: return 0.6  # ANCIENT
+		GlobalEnums.AgeCategory.BABY: return 0.6
+		GlobalEnums.AgeCategory.JUVENILE: return 0.8
+		GlobalEnums.AgeCategory.ADULT: return 1.0
+		GlobalEnums.AgeCategory.ELDER: return 0.8
+		GlobalEnums.AgeCategory.ANCIENT: return 0.6
 		_: return 1.0
 
 # Stat Accessors with typed return values
@@ -91,6 +91,17 @@ func get_stat(stat_name: String) -> int:
 			push_warning("Invalid stat name: " + stat_name)
 			return 0
 
+# Enum-based stat accessor (preferred)
+func get_stat_by_type(stat_type: GlobalEnums.StatType) -> int:
+	match stat_type:
+		GlobalEnums.StatType.STRENGTH: return strength
+		GlobalEnums.StatType.CONSTITUTION: return constitution
+		GlobalEnums.StatType.DEXTERITY: return dexterity
+		GlobalEnums.StatType.INTELLIGENCE: return intelligence
+		GlobalEnums.StatType.WISDOM: return wisdom
+		GlobalEnums.StatType.DISCIPLINE: return discipline
+		_: return 0
+
 func set_stat(stat_name: String, value: int) -> void:
 	match stat_name.to_upper():
 		"STR", "STRENGTH": strength = value
@@ -101,6 +112,16 @@ func set_stat(stat_name: String, value: int) -> void:
 		"DIS", "DISCIPLINE": discipline = value
 		_:
 			push_warning("Invalid stat name: " + stat_name)
+
+# Enum-based stat setter (preferred)
+func set_stat_by_type(stat_type: GlobalEnums.StatType, value: int) -> void:
+	match stat_type:
+		GlobalEnums.StatType.STRENGTH: strength = value
+		GlobalEnums.StatType.CONSTITUTION: constitution = value
+		GlobalEnums.StatType.DEXTERITY: dexterity = value
+		GlobalEnums.StatType.INTELLIGENCE: intelligence = value
+		GlobalEnums.StatType.WISDOM: wisdom = value
+		GlobalEnums.StatType.DISCIPLINE: discipline = value
 
 # Simple tag queries (no state changes)
 func has_tag(tag: String) -> bool:

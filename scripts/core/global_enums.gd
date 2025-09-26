@@ -242,6 +242,24 @@ static func string_to_species_category(category_str: String) -> SpeciesCategory:
 		"utility": return SpeciesCategory.UTILITY
 		_: return SpeciesCategory.COMMON
 
+# Convert species rarity enum to string
+static func species_rarity_to_string(rarity: SpeciesRarity) -> String:
+	match rarity:
+		SpeciesRarity.COMMON: return "common"
+		SpeciesRarity.UNCOMMON: return "uncommon"
+		SpeciesRarity.RARE: return "rare"
+		SpeciesRarity.LEGENDARY: return "legendary"
+		_: return "common"
+
+# Convert string to species rarity enum
+static func string_to_species_rarity(rarity_str: String) -> SpeciesRarity:
+	match rarity_str.to_lower():
+		"common": return SpeciesRarity.COMMON
+		"uncommon": return SpeciesRarity.UNCOMMON
+		"rare": return SpeciesRarity.RARE
+		"legendary": return SpeciesRarity.LEGENDARY
+		_: return SpeciesRarity.COMMON
+
 # Validation functions
 static func is_valid_age_category(category: int) -> bool:
 	return category >= 0 and category <= 4

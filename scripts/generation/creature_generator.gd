@@ -4,13 +4,9 @@
 class_name CreatureGenerator
 extends RefCounted
 
-# Generation algorithms
-enum GenerationType {
-	UNIFORM,     # Equal probability across stat range
-	GAUSSIAN,    # Bell curve distribution (Box-Muller transform)
-	HIGH_ROLL,   # Max of two rolls (premium eggs)
-	LOW_ROLL     # Min of two rolls (discount eggs)
-}
+# Use GlobalEnums for generation types
+# Keeping local reference for backward compatibility
+const GenerationType = GlobalEnums.GenerationType
 
 # Species data structure for Stage 1 (hardcoded, will migrate to SpeciesSystem in Task 10)
 const SPECIES_DATA := {
@@ -114,7 +110,7 @@ static var _generation_stats: Dictionary = {}
 
 # === CORE GENERATION METHODS ===
 
-static func generate_creature_data(species_id: String, generation_type: GenerationType = GenerationType.UNIFORM, creature_name: String = "") -> CreatureData:
+static func generate_creature_data(species_id: String, generation_type: GlobalEnums.GenerationType = GlobalEnums.GenerationType.UNIFORM, creature_name: String = "") -> CreatureData:
 	"""
 	Generate lightweight CreatureData (default approach for save/serialization efficiency).
 	Use this for most generation needs unless behavior is immediately required.
@@ -150,7 +146,7 @@ static func generate_creature_data(species_id: String, generation_type: Generati
 
 	return data
 
-static func generate_creature_entity(species_id: String, generation_type: GenerationType = GenerationType.UNIFORM, creature_name: String = "") -> CreatureEntity:
+static func generate_creature_entity(species_id: String, generation_type: GlobalEnums.GenerationType = GlobalEnums.GenerationType.UNIFORM, creature_name: String = "") -> CreatureEntity:
 	"""
 	Generate full CreatureEntity with behavior (heavier, use when behavior needed immediately).
 	This creates both CreatureData and CreatureEntity wrapper.
@@ -252,13 +248,13 @@ static func _generate_stats(data: CreatureData, species: Dictionary, generation_
 	var ranges: Dictionary = species.stat_ranges
 
 	match generation_type:
-		GenerationType.UNIFORM:
+		GlobalEnums.GenerationType.UNIFORM:
 			_generate_uniform_stats(data, ranges)
-		GenerationType.GAUSSIAN:
+		GlobalEnums.GenerationType.GAUSSIAN:
 			_generate_gaussian_stats(data, ranges)
-		GenerationType.HIGH_ROLL:
+		GlobalEnums.GenerationType.HIGH_ROLL:
 			_generate_high_roll_stats(data, ranges)
-		GenerationType.LOW_ROLL:
+		GlobalEnums.GenerationType.LOW_ROLL:
 			_generate_low_roll_stats(data, ranges)
 
 static func _generate_uniform_stats(data: CreatureData, ranges: Dictionary) -> void:

@@ -4,8 +4,8 @@ extends Resource
 @export var species_id: String = ""
 @export var display_name: String = ""
 @export var description: String = ""
-@export var category: String = "common"  # starter, common, uncommon, rare, legendary
-@export var rarity: String = "common"
+@export var category: GlobalEnums.SpeciesCategory = GlobalEnums.SpeciesCategory.COMMON
+@export var rarity: GlobalEnums.SpeciesRarity = GlobalEnums.SpeciesRarity.COMMON
 @export var base_price: int = 200
 
 # Lifecycle properties
@@ -14,7 +14,7 @@ extends Resource
 @export var peak_weeks: int = 260      # Peak performance period
 
 # Physical characteristics
-@export var size_category: String = "medium"  # small, medium, large, massive
+@export var size_category: GlobalEnums.SizeCategory = GlobalEnums.SizeCategory.MEDIUM
 @export var habitat_preference: String = "terrestrial"  # terrestrial, aquatic, aerial, underground
 
 # Stat ranges for generation

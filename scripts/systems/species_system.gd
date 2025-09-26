@@ -63,12 +63,12 @@ func _organize_species_data() -> void:
 	for species_id in species_registry:
 		var species: SpeciesResource = species_registry[species_id]
 
-		# Organize by category
+		# Organize by category (store by enum value)
 		if not species_by_category.has(species.category):
 			species_by_category[species.category] = []
 		species_by_category[species.category].append(species_id)
 
-		# Organize by rarity
+		# Organize by rarity (store by enum value)
 		if not species_by_rarity.has(species.rarity):
 			species_by_rarity[species.rarity] = []
 		species_by_rarity[species.rarity].append(species_id)
@@ -85,7 +85,12 @@ func get_all_species() -> Array[String]:
 	return ids
 
 func get_species_by_category(category: String) -> Array[String]:
-	"""Get species IDs by category."""
+	"""Get species IDs by category (accepts string for backward compatibility)."""
+	var category_enum: GlobalEnums.SpeciesCategory = GlobalEnums.string_to_species_category(category)
+	return get_species_by_category_enum(category_enum)
+
+func get_species_by_category_enum(category: GlobalEnums.SpeciesCategory) -> Array[String]:
+	"""Get species IDs by category enum (preferred)."""
 	var result: Array[String] = []
 	var category_species = species_by_category.get(category, [])
 	for species_id in category_species:
@@ -93,7 +98,12 @@ func get_species_by_category(category: String) -> Array[String]:
 	return result
 
 func get_species_by_rarity(rarity: String) -> Array[String]:
-	"""Get species IDs by rarity."""
+	"""Get species IDs by rarity (accepts string for backward compatibility)."""
+	var rarity_enum: GlobalEnums.SpeciesRarity = GlobalEnums.string_to_species_rarity(rarity)
+	return get_species_by_rarity_enum(rarity_enum)
+
+func get_species_by_rarity_enum(rarity: GlobalEnums.SpeciesRarity) -> Array[String]:
+	"""Get species IDs by rarity enum (preferred)."""
 	var result: Array[String] = []
 	var rarity_species = species_by_rarity.get(rarity, [])
 	for species_id in rarity_species:
@@ -234,8 +244,11 @@ func _populate_species_from_dict(species: SpeciesResource, data: Dictionary) -> 
 	"""Populate a SpeciesResource from dictionary data."""
 	species.species_id = data.get("species_id", "")
 	species.display_name = data.get("display_name", "")
-	species.category = data.get("category", "common")
-	species.rarity = data.get("rarity", "common")
+	# Convert string categories to enums
+	var category_str: String = data.get("category", "common")
+	species.category = GlobalEnums.string_to_species_category(category_str)
+	var rarity_str: String = data.get("rarity", "common")
+	species.rarity = GlobalEnums.string_to_species_rarity(rarity_str)
 	species.base_price = data.get("base_price", 200)
 	species.lifespan_weeks = data.get("lifespan_weeks", 520)
 
