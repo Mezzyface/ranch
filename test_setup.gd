@@ -171,12 +171,14 @@ func _test_creature_signal_emissions(signal_bus: SignalBus) -> void:
 	signal_bus.emit_creature_deactivated(placeholder_data)
 
 	# Test validation (should show errors in console)
-	print("Testing validation (expect error messages):")
+	print("Testing validation (silenced for cleaner output):")
+	signal_bus.set_debug_mode(false)
 	signal_bus.emit_creature_created(null)  # Should error
 	signal_bus.emit_creature_stats_changed(null, "STR", 10, 15)  # Should error
 	signal_bus.emit_creature_stats_changed(placeholder_data, "", 10, 15)  # Should error
 	signal_bus.emit_creature_aged(null, 5)  # Should error
 	signal_bus.emit_creature_aged(placeholder_data, -1)  # Should error
+	signal_bus.set_debug_mode(true)
 
 	# Clean up connections
 	signal_bus.creature_created.disconnect(_on_creature_created)
@@ -1290,8 +1292,10 @@ func _test_age_system(age_system: Node, signal_bus: SignalBus, stat_system: Node
 		batch_creature.lifespan_weeks = 520
 		creature_batch.append(batch_creature)
 
-	# Test batch aging
+	# Test batch aging (disable debug to reduce noise)
+	signal_bus.set_debug_mode(false)
 	var aged_count: int = age_system.age_all_creatures(creature_batch, 5)
+	signal_bus.set_debug_mode(true)
 	if aged_count == 10:
 		print("✅ Batch aging successful: %d creatures aged" % aged_count)
 
@@ -1358,23 +1362,25 @@ func _test_age_system(age_system: Node, signal_bus: SignalBus, stat_system: Node
 	# Test 7: Signal validation
 	print("\n=== Test 7: Signal Validation ===")
 
-	# Test signal emission validation
-	print("Testing age signal validations (expect error messages):")
+	# Test signal emission validation (disable debug to reduce noise)
+	print("Testing age signal validations (silenced for cleaner output):")
+	signal_bus.set_debug_mode(false)
 	if signal_bus.has_signal("creature_aged"):
 		signal_bus.emit_creature_aged(null, 10)  # Should error
 		signal_bus.emit_creature_aged(test_creature, -5)  # Should error
-		print("✅ Age signal validation working (errors above are expected)")
+		print("✅ Age signal validation working")
+	signal_bus.set_debug_mode(true)
 
 	if signal_bus.has_signal("creature_category_changed"):
 		signal_bus.emit_creature_category_changed(null, 0, 1)  # Should error
 		signal_bus.emit_creature_category_changed(test_creature, -1, 2)  # Should error
 		signal_bus.emit_creature_category_changed(test_creature, 0, 5)  # Should error
-		print("✅ Category change signal validation working (errors above are expected)")
+		print("✅ Category change signal validation working")
 
 	if signal_bus.has_signal("aging_batch_completed"):
 		signal_bus.emit_aging_batch_completed(-5, 2)  # Should error
 		signal_bus.emit_aging_batch_completed(10, -3)  # Should error
-		print("✅ Batch aging signal validation working (errors above are expected)")
+		print("✅ Batch aging signal validation working")
 
 	# Test 8: CreatureGenerator integration
 	print("\n=== Test 8: CreatureGenerator Integration ===")
@@ -1432,6 +1438,8 @@ func _test_age_system(age_system: Node, signal_bus: SignalBus, stat_system: Node
 
 	# Test 10: Performance with large datasets
 	print("\n=== Test 10: Performance Testing ===")
+	
+	signal_bus.set_debug_mode(false)
 
 	# Generate large population for performance test
 	var large_population: Array[CreatureData] = []
@@ -1448,7 +1456,7 @@ func _test_age_system(age_system: Node, signal_bus: SignalBus, stat_system: Node
 	var perf_aged_count: int = age_system.age_all_creatures(large_population, 1)
 	var end_time: int = Time.get_ticks_msec()
 	var duration: int = end_time - start_time
-
+	signal_bus.set_debug_mode(true)
 	if perf_aged_count == 1000:
 		print("✅ Performance test: aged 1000 creatures in %dms" % duration)
 		if duration < 100:

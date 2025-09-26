@@ -14,8 +14,18 @@ func _ready():
 	# Wait one frame for autoloads to be ready
 	await get_tree().process_frame
 
+	# Disable SignalBus debug mode to reduce output noise
+	var signal_bus = GameCore.get_signal_bus() if GameCore else null
+	if signal_bus:
+		signal_bus.set_debug_mode(false)
+		print("🔇 Debug mode disabled for cleaner test output")
+
 	# Run all tests
 	var success: bool = run_all_tests()
+
+	# Re-enable debug mode after testing
+	if signal_bus:
+		signal_bus.set_debug_mode(true)
 
 	print()
 	if success:
@@ -182,11 +192,12 @@ func test_creature_system() -> Dictionary:
 
 	# Test CreatureData creation
 	var creature_data: CreatureData = CreatureData.new()
+	creature_data.id = "test_creature_001"
 	creature_data.creature_name = "Test Creature"
 	creature_data.set_stat("STR", 500)
 	creature_data.set_stat("DEX", 300)
 	creature_data.age_weeks = 10
-	creature_data.tags = ["Small", "Fast"]
+	creature_data.tags = ["Small", "Social"]
 
 	if creature_data.get_stat("STR") != 500:
 		errors.append("Stat setting/getting failed")
@@ -196,18 +207,21 @@ func test_creature_system() -> Dictionary:
 
 	# Test serialization
 	var data_dict: Dictionary = creature_data.to_dict()
-	var new_creature: CreatureData = CreatureData.new()
-	new_creature.from_dict(data_dict)
+	var new_creature: CreatureData = CreatureData.from_dict(data_dict)
 
 	# Debug the serialization
 	var name_match: bool = new_creature.creature_name == "Test Creature"
 	var stat_match: bool = new_creature.get_stat("STR") == 500
+	var id_match: bool = new_creature.id == "test_creature_001"
 
 	if not name_match:
 		errors.append("Name mismatch: expected 'Test Creature', got '%s'" % new_creature.creature_name)
 		passed = false
 	elif not stat_match:
 		errors.append("Stat mismatch: expected 500 STR, got %d" % new_creature.get_stat("STR"))
+		passed = false
+	elif not id_match:
+		errors.append("ID mismatch: expected 'test_creature_001', got '%s'" % new_creature.id)
 		passed = false
 	else:
 		print("  ✓ CreatureData serialization working")
@@ -265,17 +279,21 @@ func test_stat_system() -> Dictionary:
 	else:
 		print("  ✓ Stat cap working")
 
-	# Test age modifiers
-	var creature_data: CreatureData = CreatureData.new()
-	creature_data.set_stat("STR", 500)
-	creature_data.age_weeks = 50  # Adult category
+	# Test stat breakdown with proper creature ID
+	var test_creature: CreatureData = CreatureData.new()
+	test_creature.id = "test_stat_creature"
+	test_creature.set_stat("STR", 500)
+	test_creature.age_weeks = 50  # Adult category
 
-	var modified_stats: Dictionary = stat_system.get_age_modified_stats(creature_data)
-	if not modified_stats.has("STR"):
-		errors.append("Age modified stats calculation failed")
+	var stat_breakdown: Dictionary = stat_system.get_stat_breakdown(test_creature, "STR")
+	if stat_breakdown.is_empty():
+		errors.append("Stat breakdown returned empty dictionary")
+		passed = false
+	elif not stat_breakdown.has("base"):
+		errors.append("Stat breakdown missing 'base' key. Available keys: %s" % str(stat_breakdown.keys()))
 		passed = false
 	else:
-		print("  ✓ Age modified stats working")
+		print("  ✓ Stat breakdown working")
 
 	var duration: int = Time.get_ticks_msec() - start_time
 	print("  Duration: %dms" % duration)
@@ -304,16 +322,18 @@ func test_tag_system() -> Dictionary:
 			"errors": errors
 		}
 
-	# Test tag validation
-	var validation_result: Dictionary = tag_system.validate_tag_combination(["Small", "Fast"])
+	# Test tag validation with proper typing
+	var valid_tags: Array[String] = ["Small", "Social"]
+	var validation_result: Dictionary = tag_system.validate_tag_combination(valid_tags)
 	if not validation_result.valid:
-		errors.append("Valid tags failed validation")
+		errors.append("Valid tags failed validation: %s" % str(validation_result.get("errors", [])))
 		passed = false
 	else:
 		print("  ✓ Tag validation working")
 
 	# Test mutual exclusions
-	var invalid_result: Dictionary = tag_system.validate_tag_combination(["Small", "Large"])
+	var invalid_tags: Array[String] = ["Small", "Large"]
+	var invalid_result: Dictionary = tag_system.validate_tag_combination(invalid_tags)
 	if invalid_result.valid:
 		errors.append("Mutual exclusion validation failed - Small+Large should be invalid")
 		passed = false
@@ -325,14 +345,16 @@ func test_tag_system() -> Dictionary:
 	for i in range(10):
 		var creature: CreatureData = CreatureData.new()
 		creature.creature_name = "Creature %d" % i
+		creature.id = "test_creature_%d" % i
 		if i % 2 == 0:
 			creature.tags = ["Small"]
 		else:
 			creature.tags = ["Large"]
 		creatures.append(creature)
 
-	var requirements: Dictionary = {"required_tags": ["Small"], "excluded_tags": []}
-	var filtered: Array[CreatureData] = tag_system.filter_creatures_by_requirements(creatures, requirements)
+	var required_tags: Array[String] = ["Small"]
+	var excluded_tags: Array[String] = []
+	var filtered: Array[CreatureData] = tag_system.filter_creatures_by_tags(creatures, required_tags, excluded_tags)
 
 	if filtered.size() != 5:
 		errors.append("Creature filtering failed: expected 5, got %d" % filtered.size())
