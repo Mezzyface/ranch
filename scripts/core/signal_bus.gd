@@ -12,6 +12,7 @@ signal load_completed(success: bool)
 # Core creature lifecycle signals (uncommented for Task 2+)
 signal creature_created(data: CreatureData)
 signal creature_stats_changed(data: CreatureData, stat: String, old_value: int, new_value: int)
+signal creature_modifiers_changed(creature_id: String, stat_name: String)
 signal creature_aged(data: CreatureData, new_age: int)
 signal creature_activated(data: CreatureData)
 signal creature_deactivated(data: CreatureData)
@@ -129,6 +130,18 @@ func emit_creature_stats_changed(data: CreatureData, stat: String, old_value: in
 		print("SignalBus: Emitting creature_stats_changed for '%s': %s %d->%d" % [data.creature_name, stat, old_value, new_value])
 
 	creature_stats_changed.emit(data, stat, old_value, new_value)
+
+func emit_creature_modifiers_changed(creature_id: String, stat_name: String) -> void:
+	"""Emit creature_modifiers_changed signal with validation."""
+	if creature_id.is_empty():
+		push_error("SignalBus: Cannot emit creature_modifiers_changed with empty creature_id")
+		return
+	if stat_name.is_empty():
+		push_error("SignalBus: Cannot emit creature_modifiers_changed with empty stat_name")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting creature_modifiers_changed for creature '%s': %s" % [creature_id, stat_name])
+	creature_modifiers_changed.emit(creature_id, stat_name)
 
 func emit_creature_aged(data: CreatureData, new_age: int) -> void:
 	"""Emit creature_aged signal with validation."""
