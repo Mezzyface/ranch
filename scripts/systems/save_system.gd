@@ -59,7 +59,7 @@ func save_game_state(slot_name: String = DEFAULT_SLOT) -> bool:
 		_emit_save_completed(false)
 		return false
 
-	var slot_path: String = _get_slot_path(slot_name)
+	var slot_path: String = get_slot_path(slot_name)
 	_ensure_directory(slot_path)
 
 	var success: bool = true
@@ -130,7 +130,7 @@ func delete_save_slot(slot_name: String) -> bool:
 		push_error("SaveSystem: Cannot delete non-existent slot: %s" % slot_name)
 		return false
 
-	var slot_path: String = _get_slot_path(slot_name)
+	var slot_path: String = get_slot_path(slot_name)
 	var dir: DirAccess = DirAccess.open(slot_path)
 
 	if dir == null:
@@ -208,7 +208,7 @@ func get_save_info(slot_name: String) -> Dictionary:
 
 	# Load metadata from ConfigFile
 	var config: ConfigFile = ConfigFile.new()
-	var game_data_path: String = _get_slot_path(slot_name) + GAME_DATA_FILE
+	var game_data_path: String = get_slot_path(slot_name) + GAME_DATA_FILE
 
 	if config.load(game_data_path) == OK:
 		info.created_timestamp = config.get_value("save_metadata", "created_timestamp", 0)
@@ -235,7 +235,7 @@ func save_creature_collection(creatures: Array[CreatureData], slot_name: String)
 		return true
 
 	var start_time: float = float(Time.get_ticks_msec())
-	var creatures_path: String = _get_slot_path(slot_name) + CREATURES_FOLDER
+	var creatures_path: String = get_slot_path(slot_name) + CREATURES_FOLDER
 	_ensure_directory(creatures_path)
 
 	var success_count: int = 0
@@ -265,7 +265,7 @@ func save_creature_collection(creatures: Array[CreatureData], slot_name: String)
 func load_creature_collection(slot_name: String) -> Array[CreatureData]:
 	"""Load creature collection from save slot."""
 	var creatures: Array[CreatureData] = []
-	var creatures_path: String = _get_slot_path(slot_name) + CREATURES_FOLDER
+	var creatures_path: String = get_slot_path(slot_name) + CREATURES_FOLDER
 
 	if not DirAccess.dir_exists_absolute(creatures_path):
 		print("SaveSystem: No creatures directory found in slot: %s" % slot_name)
@@ -310,7 +310,7 @@ func save_individual_creature(creature: CreatureData, slot_name: String) -> bool
 		push_error("SaveSystem: Cannot save invalid creature")
 		return false
 
-	var creatures_path: String = _get_slot_path(slot_name) + CREATURES_FOLDER
+	var creatures_path: String = get_slot_path(slot_name) + CREATURES_FOLDER
 	_ensure_directory(creatures_path)
 
 	var creature_file: String = creatures_path + creature.id + ".tres"
@@ -333,7 +333,7 @@ func load_individual_creature(creature_id: String, slot_name: String) -> Creatur
 		push_error("SaveSystem: Cannot load creature with empty ID")
 		return null
 
-	var creature_file: String = _get_slot_path(slot_name) + CREATURES_FOLDER + creature_id + ".tres"
+	var creature_file: String = get_slot_path(slot_name) + CREATURES_FOLDER + creature_id + ".tres"
 
 	if not FileAccess.file_exists(creature_file):
 		print("SaveSystem: Creature file not found: %s" % creature_id)
@@ -401,7 +401,7 @@ func validate_save_data(slot_name: String) -> Dictionary:
 		result.error = "Save slot does not exist"
 		return result
 
-	var game_data_path: String = _get_slot_path(slot_name) + GAME_DATA_FILE
+	var game_data_path: String = get_slot_path(slot_name) + GAME_DATA_FILE
 	var config: ConfigFile = ConfigFile.new()
 
 	# Check 1: Game data file loads
@@ -433,7 +433,7 @@ func validate_save_data(slot_name: String) -> Dictionary:
 	# Check 4: Creature files validation
 	result.checks_performed += 1
 	var total_creatures: int = config.get_value("statistics", "total_creatures_owned", 0)
-	var creatures_path: String = _get_slot_path(slot_name) + CREATURES_FOLDER
+	var creatures_path: String = get_slot_path(slot_name) + CREATURES_FOLDER
 
 	if total_creatures > 0:
 		if not DirAccess.dir_exists_absolute(creatures_path):
@@ -464,7 +464,7 @@ func repair_corrupted_save(slot_name: String) -> bool:
 	print("SaveSystem: Attempting to repair corrupted save: %s" % slot_name)
 
 	# For now, basic repair - ensure required sections exist
-	var game_data_path: String = _get_slot_path(slot_name) + GAME_DATA_FILE
+	var game_data_path: String = get_slot_path(slot_name) + GAME_DATA_FILE
 	var config: ConfigFile = ConfigFile.new()
 
 	if config.load(game_data_path) != OK:
@@ -540,7 +540,7 @@ func restore_from_backup(slot_name: String, backup_name: String) -> bool:
 func _save_game_data(slot_name: String) -> bool:
 	"""Save main game data using ConfigFile."""
 	var config: ConfigFile = ConfigFile.new()
-	var game_data_path: String = _get_slot_path(slot_name) + GAME_DATA_FILE
+	var game_data_path: String = get_slot_path(slot_name) + GAME_DATA_FILE
 
 	# Save metadata
 	config.set_value("save_metadata", "version", SAVE_VERSION)
@@ -572,7 +572,7 @@ func _save_game_data(slot_name: String) -> bool:
 func _load_game_data(slot_name: String) -> bool:
 	"""Load main game data from ConfigFile."""
 	var config: ConfigFile = ConfigFile.new()
-	var game_data_path: String = _get_slot_path(slot_name) + GAME_DATA_FILE
+	var game_data_path: String = get_slot_path(slot_name) + GAME_DATA_FILE
 
 	if config.load(game_data_path) != OK:
 		return false
@@ -612,25 +612,40 @@ func _load_creature_collection(slot_name: String) -> bool:
 func _save_system_states(slot_name: String) -> bool:
 	"""Save state of all game systems."""
 	var config: ConfigFile = ConfigFile.new()
-	var systems_path: String = _get_slot_path(slot_name) + "system_states.cfg"
+	var slot_path: String = get_slot_path(slot_name)
+	_ensure_directory(slot_path)  # Ensure directory exists
+	var systems_path: String = slot_path + "system_states.cfg"
 
 	# Save StatSystem state (modifiers, temporary effects)
 	if stat_system:
 		# Placeholder - will integrate when StatSystem has persistent state
 		config.set_value("stat_system", "initialized", true)
+	else:
+		# Mark as not available but still save the file
+		config.set_value("stat_system", "not_loaded", true)
 
 	# AgeSystem doesn't need persistent state (calculated from creature data)
+	if age_system:
+		config.set_value("age_system", "initialized", true)
+	else:
+		config.set_value("age_system", "not_loaded", true)
 
 	# Save other system states as needed
 	config.set_value("save_system", "auto_save_enabled", auto_save_enabled)
 	config.set_value("save_system", "auto_save_interval", auto_save_interval_minutes)
 
-	return config.save(systems_path) == OK
+	var save_result: int = config.save(systems_path)
+	if save_result == OK:
+		print("SaveSystem: System states saved to: %s" % systems_path)
+		return true
+	else:
+		push_error("SaveSystem: Failed to save system states (error: %d)" % save_result)
+		return false
 
 func _load_system_states(slot_name: String) -> bool:
 	"""Load state of all game systems."""
 	var config: ConfigFile = ConfigFile.new()
-	var systems_path: String = _get_slot_path(slot_name) + "system_states.cfg"
+	var systems_path: String = get_slot_path(slot_name) + "system_states.cfg"
 
 	if not FileAccess.file_exists(systems_path):
 		print("SaveSystem: No system states file found (using defaults)")
@@ -661,7 +676,7 @@ func _ensure_directory(path: String) -> void:
 	if not DirAccess.dir_exists_absolute(path):
 		DirAccess.make_dir_recursive_absolute(path)
 
-func _get_slot_path(slot_name: String) -> String:
+func get_slot_path(slot_name: String) -> String:
 	"""Get full path to save slot directory."""
 	return SAVE_BASE_PATH + slot_name + "/"
 
@@ -680,7 +695,7 @@ func _validate_slot_name(slot_name: String) -> bool:
 
 func _validate_slot_exists(slot_name: String) -> bool:
 	"""Check if save slot exists."""
-	var game_data_path: String = _get_slot_path(slot_name) + GAME_DATA_FILE
+	var game_data_path: String = get_slot_path(slot_name) + GAME_DATA_FILE
 	return FileAccess.file_exists(game_data_path)
 
 func _validate_creature_data(creature: CreatureData) -> bool:
@@ -704,7 +719,7 @@ func _validate_creature_data(creature: CreatureData) -> bool:
 func _calculate_slot_size(slot_name: String) -> float:
 	"""Calculate total size of save slot in MB."""
 	var total_size: int = 0
-	var slot_path: String = _get_slot_path(slot_name)
+	var slot_path: String = get_slot_path(slot_name)
 
 	# Get size of game data file
 	var game_data_path: String = slot_path + GAME_DATA_FILE
@@ -735,8 +750,8 @@ func _calculate_slot_size(slot_name: String) -> float:
 
 func _copy_slot(source_slot: String, target_slot: String) -> bool:
 	"""Copy entire save slot to another location."""
-	var source_path: String = _get_slot_path(source_slot)
-	var target_path: String = _get_slot_path(target_slot)
+	var source_path: String = get_slot_path(source_slot)
+	var target_path: String = get_slot_path(target_slot)
 
 	_ensure_directory(target_path)
 
