@@ -25,11 +25,12 @@ Primary machine-actionable guidance for AI coding agents (Claude, GPT, etc.). Ke
 - Performance: New batch ops must respect baselines (Section 7) or include timing comment (Section 13)
 - Save orchestration: SaveSystem coordinates; each system owns its serialization (no duplication inside SaveSystem)
 - No partial SaveSystem modularization unless an explicit task states "SaveSystem modular refactor"
+- **Fail-fast principle**: System dependencies must be explicit; NO silent fallbacks that bypass validation (push_error and return failure)
 
 ## 2. ALLOWED / DISALLOWED
 ALLOWED: focused feature implementation, adding a precise enum value, introducing small interface (`ISaveable`, `ITickable`) with registration, adding targeted test scene.
 
-DISALLOWED (without explicit instruction): wide renames, new bespoke signal wrappers, extending deprecated species map, duplicating age/stat helpers, untyped public arrays, speculative refactors.
+DISALLOWED (without explicit instruction): wide renames, new bespoke signal wrappers, extending deprecated species map, duplicating age/stat helpers, untyped public arrays, speculative refactors, **silent fallback patterns that bypass system validation**.
 
 ## 3. TASK EXECUTION TEMPLATE (INTERNAL WORKFLOW)
 1. Intent → concrete edits list
@@ -118,6 +119,8 @@ If exceeded, add timing + mitigation note in summary.
 - Time API misuse (`.nanosecond`) → invalid; use `Time.get_ticks_msec()`
 - Reordered enum values → subtle corruption (never reorder)
 - Structural refactor without approval label → likely scope creep (abort & request explicit task)
+- Silent fallback patterns → data corruption; use push_error() and fail fast
+- Direct tag array manipulation → bypasses validation; use TagSystem methods only
 
 ## 11. ADDING A NEW SYSTEM (MINIMAL STEPS)
 1. `scripts/systems/<name>_system.gd` (extends Node)

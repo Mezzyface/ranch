@@ -23,6 +23,7 @@ func _ready() -> void:
 	_test_method_calls()
 	_test_array_typing()
 	_test_system_loading()
+	_test_system_dependencies()  # NEW: Check that systems fail properly without dependencies
 	_test_signal_integration()
 	_test_common_workflows()
 
@@ -147,6 +148,57 @@ func _test_system_loading() -> void:
 		validation_results.errors_found += 1
 
 	print("  ⚠️ NEVER USE: GameCore.systems['name'] directly")
+	print("")
+
+func _test_system_dependencies() -> void:
+	print("🔗 Testing System Dependency Enforcement...")
+
+	# Test that CreatureEntity methods fail properly without systems
+	var creature_data = CreatureData.new()
+	creature_data.id = "test_dep"
+	creature_data.creature_name = "Dependency Test"
+
+	var entity = CreatureEntity.new()
+	entity.data = creature_data
+
+	# Temporarily clear the systems to test failure modes
+	# This simulates what happens if TagSystem isn't loaded
+	var original_tag = entity.tag_system
+	entity.tag_system = null
+
+	# Test that tag operations fail without TagSystem
+	var tag_added = entity.add_tag("TestTag")
+	if not tag_added:
+		print("  ✅ CreatureEntity.add_tag() correctly fails without TagSystem")
+	else:
+		print("  ❌ CreatureEntity.add_tag() should fail without TagSystem!")
+		validation_results.errors_found += 1
+
+	# Test that validation fails without TagSystem
+	var can_add = entity.can_add_tag("TestTag")
+	if can_add.has("reason") and can_add.reason == "TagSystem not loaded":
+		print("  ✅ CreatureEntity.can_add_tag() correctly reports missing TagSystem")
+	else:
+		print("  ❌ CreatureEntity.can_add_tag() should report missing TagSystem!")
+		validation_results.errors_found += 1
+
+	# Restore the system
+	entity.tag_system = original_tag
+
+	# Test StatSystem dependency
+	var original_stat = entity.stat_system
+	entity.stat_system = null
+
+	var perf_score = entity.get_performance_score()
+	if perf_score == 0.0:
+		print("  ✅ CreatureEntity.get_performance_score() correctly returns 0 without StatSystem")
+	else:
+		print("  ❌ CreatureEntity.get_performance_score() should return 0 without StatSystem!")
+		validation_results.errors_found += 1
+
+	entity.stat_system = original_stat
+
+	print("  • Systems properly enforce dependencies and fail safely")
 	print("")
 
 func _test_signal_integration() -> void:

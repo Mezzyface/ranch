@@ -88,6 +88,57 @@ var end: int = Time.get_ticks_msec()              # CORRECT
 var duration: int = end - start                   # CORRECT
 ```
 
+### System Dependencies (Fail-Fast Principle)
+
+```gdscript
+# ❌ NEVER - Silent fallbacks that bypass validation
+func add_tag(tag: String) -> bool:
+    if tag_system:
+        return tag_system.add_tag_to_creature(self, tag)
+    else:
+        # WRONG! This bypasses all validation rules!
+        data.tags.append(tag)
+        return true
+
+# ✅ ALWAYS - Fail fast with clear errors
+func add_tag(tag: String) -> bool:
+    if not tag_system:
+        push_error("CreatureEntity.add_tag: TagSystem required")
+        return false  # CORRECT - Fail explicitly
+    return tag_system.add_tag_to_creature(self, tag)
+
+# ❌ NEVER - Direct tag array manipulation
+creature.data.tags.append("Flying")               # WRONG!
+creature.data.tags.erase("Small")                 # WRONG!
+
+# ✅ ALWAYS - Use system methods for validation
+creature.add_tag("Flying")                        # CORRECT
+creature.remove_tag("Small")                      # CORRECT
+```
+
+### GlobalEnums Validation (Fail-Fast)
+
+```gdscript
+# ❌ NEVER - Assume invalid input will be handled silently
+var category = GlobalEnums.string_to_age_category("invalid")  # WRONG! This logs errors now
+var unknown_enum = GlobalEnums.species_category_to_string(999)  # WRONG! Returns "unknown"
+
+# ✅ ALWAYS - Validate input before conversion
+if GlobalEnums.is_valid_age_category(category_int):
+    var category = GlobalEnums.age_category_to_string(category_int)  # CORRECT
+
+# ✅ ALWAYS - Use validation functions for user input
+func set_species_category(category_str: String) -> bool:
+    var category = GlobalEnums.string_to_species_category(category_str)
+    if not GlobalEnums.is_valid_species_category(category):
+        return false  # Handle invalid input explicitly
+    # ... use category safely
+
+# ✅ ALWAYS - Use enhanced validation with context
+if not GlobalEnums.validate_age_category(age_val, "creature_creation"):
+    return false  # CORRECT - Clear error context
+```
+
 ---
 
 ## 📋 Copy-Paste Templates for Common Tasks

@@ -164,7 +164,7 @@ static func age_category_to_string(category: AgeCategory) -> String:
 		AgeCategory.ANCIENT: return "Ancient"
 		_: return "Unknown"
 
-# Convert string to age category enum
+# Convert string to age category enum (fail-fast)
 static func string_to_age_category(category_str: String) -> AgeCategory:
 	match category_str.to_lower():
 		"baby": return AgeCategory.BABY
@@ -172,7 +172,9 @@ static func string_to_age_category(category_str: String) -> AgeCategory:
 		"adult": return AgeCategory.ADULT
 		"elder": return AgeCategory.ELDER
 		"ancient": return AgeCategory.ANCIENT
-		_: return AgeCategory.ADULT  # Default fallback
+		_:
+			push_error("GlobalEnums.string_to_age_category: Invalid age category '%s'" % category_str)
+			return AgeCategory.ADULT  # Return most common but log error
 
 # Convert stat type enum to string
 static func stat_type_to_string(stat: StatType) -> String:
@@ -185,7 +187,7 @@ static func stat_type_to_string(stat: StatType) -> String:
 		StatType.DISCIPLINE: return "discipline"
 		_: return "unknown"
 
-# Convert string to stat type enum
+# Convert string to stat type enum (fail-fast)
 static func string_to_stat_type(stat_str: String) -> StatType:
 	match stat_str.to_lower():
 		"strength", "str": return StatType.STRENGTH
@@ -194,7 +196,9 @@ static func string_to_stat_type(stat_str: String) -> StatType:
 		"intelligence", "int": return StatType.INTELLIGENCE
 		"wisdom", "wis": return StatType.WISDOM
 		"discipline", "dis": return StatType.DISCIPLINE
-		_: return StatType.STRENGTH  # Default fallback
+		_:
+			push_error("GlobalEnums.string_to_stat_type: Invalid stat type '%s'" % stat_str)
+			return StatType.STRENGTH  # Return fallback but log error
 
 # Get all stat types as array
 static func get_all_stat_types() -> Array[StatType]:
@@ -230,7 +234,7 @@ static func stat_tier_to_string(tier: StatTier) -> String:
 		StatTier.EXCEPTIONAL: return "EXCEPTIONAL"
 		_: return "UNKNOWN"
 
-# Convert species category enum to string
+# Convert species category enum to string (fail-fast)
 static func species_category_to_string(category: SpeciesCategory) -> String:
 	match category:
 		SpeciesCategory.STARTER: return "starter"
@@ -240,9 +244,11 @@ static func species_category_to_string(category: SpeciesCategory) -> String:
 		SpeciesCategory.LEGENDARY: return "legendary"
 		SpeciesCategory.PREMIUM: return "premium"
 		SpeciesCategory.UTILITY: return "utility"
-		_: return "common"
+		_:
+			push_error("GlobalEnums.species_category_to_string: Invalid category enum %d" % category)
+			return "unknown"
 
-# Convert string to species category enum
+# Convert string to species category enum (fail-fast)
 static func string_to_species_category(category_str: String) -> SpeciesCategory:
 	match category_str.to_lower():
 		"starter": return SpeciesCategory.STARTER
@@ -252,25 +258,31 @@ static func string_to_species_category(category_str: String) -> SpeciesCategory:
 		"legendary": return SpeciesCategory.LEGENDARY
 		"premium": return SpeciesCategory.PREMIUM
 		"utility": return SpeciesCategory.UTILITY
-		_: return SpeciesCategory.COMMON
+		_:
+			push_error("GlobalEnums.string_to_species_category: Invalid category '%s'" % category_str)
+			return SpeciesCategory.COMMON  # Return fallback but log error
 
-# Convert species rarity enum to string
+# Convert species rarity enum to string (fail-fast)
 static func species_rarity_to_string(rarity: SpeciesRarity) -> String:
 	match rarity:
 		SpeciesRarity.COMMON: return "common"
 		SpeciesRarity.UNCOMMON: return "uncommon"
 		SpeciesRarity.RARE: return "rare"
 		SpeciesRarity.LEGENDARY: return "legendary"
-		_: return "common"
+		_:
+			push_error("GlobalEnums.species_rarity_to_string: Invalid rarity enum %d" % rarity)
+			return "unknown"
 
-# Convert string to species rarity enum
+# Convert string to species rarity enum (fail-fast)
 static func string_to_species_rarity(rarity_str: String) -> SpeciesRarity:
 	match rarity_str.to_lower():
 		"common": return SpeciesRarity.COMMON
 		"uncommon": return SpeciesRarity.UNCOMMON
 		"rare": return SpeciesRarity.RARE
 		"legendary": return SpeciesRarity.LEGENDARY
-		_: return SpeciesRarity.COMMON
+		_:
+			push_error("GlobalEnums.string_to_species_rarity: Invalid rarity '%s'" % rarity_str)
+			return SpeciesRarity.COMMON  # Return fallback but log error
 
 # Convert tag category enum to string
 static func tag_category_to_string(category: TagCategory) -> String:
@@ -283,7 +295,7 @@ static func tag_category_to_string(category: TagCategory) -> String:
 		TagCategory.ENVIRONMENTAL: return "ENVIRONMENTAL"
 		_: return "UNKNOWN"
 
-# Convert string to tag category enum
+# Convert string to tag category enum (fail-fast)
 static func string_to_tag_category(category_str: String) -> TagCategory:
 	match category_str.to_upper():
 		"SIZE": return TagCategory.SIZE
@@ -292,9 +304,11 @@ static func string_to_tag_category(category_str: String) -> TagCategory:
 		"SENSORY": return TagCategory.SENSORY
 		"ABILITIES": return TagCategory.ABILITIES
 		"ENVIRONMENTAL": return TagCategory.ENVIRONMENTAL
-		_: return TagCategory.PHYSICAL  # Default fallback
+		_:
+			push_error("GlobalEnums.string_to_tag_category: Invalid category '%s'" % category_str)
+			return TagCategory.PHYSICAL  # Return fallback but log error
 
-# Validation functions
+# Validation functions (fail-fast)
 static func is_valid_age_category(category: int) -> bool:
 	return category >= 0 and category <= 4
 
@@ -303,3 +317,31 @@ static func is_valid_stat_type(stat: int) -> bool:
 
 static func is_valid_stat_value(value: int) -> bool:
 	return value >= 1 and value <= 1000
+
+static func is_valid_species_category(category: int) -> bool:
+	return category >= 0 and category <= 6
+
+static func is_valid_species_rarity(rarity: int) -> bool:
+	return rarity >= 0 and rarity <= 3
+
+static func is_valid_tag_category(category: int) -> bool:
+	return category >= 0 and category <= 5
+
+# Enhanced validation with error logging
+static func validate_age_category(category: int, context: String = "") -> bool:
+	if not is_valid_age_category(category):
+		push_error("GlobalEnums: Invalid age category %d in %s" % [category, context])
+		return false
+	return true
+
+static func validate_stat_type(stat: int, context: String = "") -> bool:
+	if not is_valid_stat_type(stat):
+		push_error("GlobalEnums: Invalid stat type %d in %s" % [stat, context])
+		return false
+	return true
+
+static func validate_species_category(category: int, context: String = "") -> bool:
+	if not is_valid_species_category(category):
+		push_error("GlobalEnums: Invalid species category %d in %s" % [category, context])
+		return false
+	return true

@@ -110,10 +110,69 @@ When adding new persisted fields:
 4. Update this section (append only) and `CLAUDE.md` if new invariant introduced.
 
 ---
-## 2. Planned Formal Interfaces
+## 2. CreatureEntity (Node)
+Path: `scripts/entities/creature_entity.gd`
+Class name: `CreatureEntity`
+Purpose: Behavioral wrapper for CreatureData, manages system interactions and signals
+
+### 2.1 Properties
+| Name | Type | Notes |
+|------|------|-------|
+| data | CreatureData | Core data resource (required) |
+| tag_system | Node | Reference to TagSystem (auto-loaded) |
+| stat_system | Node | Reference to StatSystem (auto-loaded) |
+| signal_bus | SignalBus | Reference to SignalBus (auto-loaded) |
+
+### 2.2 System Dependency Requirements
+**CRITICAL**: All methods that depend on systems now fail fast without fallbacks (as of 2025-09-26).
+
+| Method | Required System | Failure Behavior |
+|--------|----------------|------------------|
+| add_tag() | TagSystem | push_error() and return false |
+| remove_tag() | TagSystem | push_error() and return false |
+| can_add_tag() | TagSystem | push_error() and return {can_add: false, reason: "TagSystem not loaded"} |
+| get_performance_score() | StatSystem | push_error() and return 0.0 |
+| get_competition_stat() | StatSystem | push_error() and return 0 |
+| matches_requirements() | StatSystem/TagSystem | push_error() and return false if required |
+
+### 2.3 Public Methods
+| Method | Signature | Notes |
+|--------|----------|-------|
+| assign_data | `func assign_data(creature: CreatureData) -> void` | Sets data and loads systems |
+| add_tag | `func add_tag(tag: String) -> bool` | Requires TagSystem |
+| remove_tag | `func remove_tag(tag: String) -> bool` | Requires TagSystem |
+| can_add_tag | `func can_add_tag(tag: String) -> Dictionary` | Requires TagSystem |
+| get_tags_by_category | `func get_tags_by_category(category: int) -> Array[String]` | Delegates to data |
+| age_by_weeks | `func age_by_weeks(weeks: int) -> void` | Emits signals |
+| consume_stamina | `func consume_stamina(amount: int) -> bool` | Returns false if insufficient |
+| restore_stamina | `func restore_stamina(amount: int) -> void` | Clamps to max |
+| rest_fully | `func rest_fully() -> void` | Sets to max stamina |
+| set_active | `func set_active(active: bool) -> void` | Emits activation signals |
+| matches_requirements | `func matches_requirements(req_stats: Dictionary, req_tags: Array[String]) -> bool` | Requires systems |
+| get_performance_score | `func get_performance_score() -> float` | Requires StatSystem |
+| get_effective_stat | `func get_effective_stat(stat_name: String) -> int` | Falls back to base stat |
+| get_competition_stat | `func get_competition_stat(stat_name: String) -> int` | Requires StatSystem |
+
+### 2.4 Invariants
+- MUST have systems loaded for tag/stat operations (no dangerous fallbacks)
+- All system-dependent operations fail fast with clear errors
+- Signal emission only through SignalBus validated helpers
+- Never modifies CreatureData tags directly (always through TagSystem)
+- _is_valid_tag() is deprecated - use TagSystem.is_valid_tag()
+
+### 2.5 Common Misuse Patterns (Reject)
+| Misuse | Correct Alternative |
+|--------|---------------------|
+| Direct tag array manipulation | Use add_tag()/remove_tag() methods |
+| Fallback tag validation | Require TagSystem to be loaded |
+| Hardcoded tag lists | Use TagSystem as single source of truth |
+| Silent system failures | push_error() and fail fast |
+
+---
+## 3. Planned Formal Interfaces
 (Scaffolds—implement when first consumer exists.)
 
-### 2.1 ISaveable (planned)
+### 3.1 ISaveable (planned)
 Proposed location: `scripts/core/interfaces/i_saveable.gd`
 Minimum contract (draft):
 ```
@@ -126,7 +185,7 @@ Notes:
 - Systems implement to allow SaveSystem modular enumeration instead of hardcoded switch.
 - Must be idempotent: calling `load_state(save_state())` should not drift state.
 
-### 2.2 ITickable (planned)
+### 3.2 ITickable (planned)
 ```
 interface ITickable:
   func tick(delta_weeks: int) -> void
@@ -136,21 +195,23 @@ Notes:
 - Must not emit signals directly for batch operations until after loop (aggregate if needed).
 
 ---
-## 3. Change Log (Append Only)
+## 4. Change Log (Append Only)
 | Date | Change | Notes |
 |------|--------|-------|
 | 2025-09-26 | Initial creation with CreatureData contract | Baseline |
 | 2025-09-26 | Added implemented system/data interface summaries (TagSystem, AgeSystem, PlayerCollection, StatSystem, SpeciesSystem, ResourceTracker, SaveSystem, ItemDatabase, QuestData) | Expansion |
 | 2025-09-26 | Added CreatureGenerator & SpeciesResource contracts | Generation layer coverage |
+| 2025-09-26 | Added CreatureEntity contract with fail-fast dependency enforcement | Removed dangerous fallbacks |
+| 2025-09-26 | Updated GlobalEnums with fail-fast validation patterns | Replaced silent fallbacks with explicit error logging |
 
 ---
-## 4. Maintenance Rules
+## 5. Maintenance Rules
 - Append-only except to correct factual inaccuracies.
 - Keep table formats stable for machine parsing.
 - If a contract becomes deprecated, mark with `(DEPRECATED)` but do not delete.
 
 ---
-## 5. Implemented Data Models & Utilities
+## 6. Implemented Data Models & Utilities
 
 ### 5.1 QuestData (Resource)
 Path: `scripts/data/quest_data.gd`
@@ -188,7 +249,7 @@ Static Methods:
 | get_items_by_type | `static func get_items_by_type(item_type: String) -> Array[String]` | Filter by `type` |
 
 ---
-## 6. Implemented Systems (Public Surfaces)
+## 7. Implemented Systems (Public Surfaces)
 Only externally safe, non-underscore methods documented. Underscore-prefixed helpers are internal.
 
 ### 6.1 TagSystem
@@ -354,7 +415,7 @@ Key Public API (subset of very large file):
 Invariants: Slot name validated; creature resource validation on load; hybrid resource + config model stable; enums append-only assumption.
 
 ---
-## 7. Core Layer Interfaces
+## 8. Core Layer Interfaces
 Central foundational APIs used by all higher-level systems. Changes here are high risk; treat as stable contracts unless explicitly versioned.
 
 ### 7.1 GameCore (Autoload Root)
@@ -406,28 +467,41 @@ Invariants:
 
 ### 7.3 GlobalEnums (Autoload)
 Path: `scripts/core/global_enums.gd`
-Purpose: Central enumeration & conversion utilities.
+Purpose: Central enumeration & conversion utilities with fail-fast validation.
 
 Enum Groups (append-only): AgeCategory, StatType, StatTier, SizeCategory, SpeciesCategory, SpeciesRarity, GenerationType, QuestDifficulty, QuestStatus, QuestType, CurrencyType, ItemType, ItemRarity, TagCategory, CollectionType, CollectionOperation.
+
+**CRITICAL (as of 2025-09-26)**: All conversion functions now use fail-fast validation with push_error() logging.
 
 Utility Methods (subset):
 | Method | Signature | Notes |
 |--------|----------|-------|
 | age_category_to_string | `static func age_category_to_string(category: AgeCategory) -> String` | Mapping |
-| string_to_age_category | `static func string_to_age_category(category_str: String) -> AgeCategory` | Fallback to ADULT |
+| string_to_age_category | `static func string_to_age_category(category_str: String) -> AgeCategory` | Logs error on invalid input |
 | stat_type_to_string | `static func stat_type_to_string(stat: StatType) -> String` | Lowercase names |
-| string_to_stat_type | `static func string_to_stat_type(stat_str: String) -> StatType` | Accepts abbreviations |
+| string_to_stat_type | `static func string_to_stat_type(stat_str: String) -> StatType` | Accepts abbreviations; logs error on invalid |
 | get_all_stat_types | `static func get_all_stat_types() -> Array[StatType]` | Ordered list |
 | get_stat_tier | `static func get_stat_tier(value: int) -> StatTier` | Range classification |
 | stat_tier_to_string | `static func stat_tier_to_string(tier: StatTier) -> String` | Tier label |
-| species_category_to_string | `static func species_category_to_string(category: SpeciesCategory) -> String` | Lowercase category |
-| string_to_species_category | `static func string_to_species_category(category_str: String) -> SpeciesCategory` | Default COMMON |
+| species_category_to_string | `static func species_category_to_string(category: SpeciesCategory) -> String` | Returns "unknown" on invalid enum |
+| string_to_species_category | `static func string_to_species_category(category_str: String) -> SpeciesCategory` | Logs error on invalid input |
+| species_rarity_to_string | `static func species_rarity_to_string(rarity: SpeciesRarity) -> String` | Returns "unknown" on invalid enum |
+| string_to_species_rarity | `static func string_to_species_rarity(rarity_str: String) -> SpeciesRarity` | Logs error on invalid input |
+| string_to_tag_category | `static func string_to_tag_category(category_str: String) -> TagCategory` | Logs error on invalid input |
 | is_valid_age_category | `static func is_valid_age_category(category: int) -> bool` | Bounds check |
 | is_valid_stat_type | `static func is_valid_stat_type(stat: int) -> bool` | Bounds check |
 | is_valid_stat_value | `static func is_valid_stat_value(value: int) -> bool` | 1..1000 |
+| is_valid_species_category | `static func is_valid_species_category(category: int) -> bool` | 0..6 bounds check |
+| is_valid_species_rarity | `static func is_valid_species_rarity(rarity: int) -> bool` | 0..3 bounds check |
+| is_valid_tag_category | `static func is_valid_tag_category(category: int) -> bool` | 0..5 bounds check |
+| validate_age_category | `static func validate_age_category(category: int, context: String = "") -> bool` | Enhanced validation with context |
+| validate_stat_type | `static func validate_stat_type(stat: int, context: String = "") -> bool` | Enhanced validation with context |
+| validate_species_category | `static func validate_species_category(category: int, context: String = "") -> bool` | Enhanced validation with context |
 
 Invariants:
 - Never reorder enum entries; only append to preserve ordinal compatibility (save data, comparisons, switch statements).
+- All conversion functions log errors on invalid input instead of silent fallbacks.
+- Invalid enum-to-string conversions return "unknown" instead of arbitrary defaults.
 - All new conversion helpers MUST have both directions (enum↔string) when user input or persistence is involved.
 
 ### 7.4 SystemValidator (Utility)
@@ -452,7 +526,7 @@ Invariants:
 
 ---
 
-## 8. Generation & Species Resources
+## 9. Generation & Species Resources
 
 ### 8.1 CreatureGenerator (Static Utility)
 Path: `scripts/generation/creature_generator.gd`

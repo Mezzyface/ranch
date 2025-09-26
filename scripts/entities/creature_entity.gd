@@ -40,41 +40,24 @@ func decrease_stat(stat_name: String, amount: int) -> void:
 # Tag management through TagSystem
 func add_tag(tag: String) -> bool:
 	"""Add a tag to this creature, validated through TagSystem."""
-	if tag_system:
-		return tag_system.add_tag_to_creature(self, tag)
-	else:
-		# Fallback if TagSystem not loaded
-		if not data.has_tag(tag) and _is_valid_tag(tag):
-			data.tags.append(tag)
-			if signal_bus and _debug_mode():
-				print("CreatureEntity: Added tag '%s' to %s (fallback)" % [tag, data.creature_name])
-			return true
+	if not tag_system:
+		push_error("CreatureEntity.add_tag: TagSystem required but not loaded. Cannot add tag '%s' to %s" % [tag, data.creature_name])
 		return false
+	return tag_system.add_tag_to_creature(self, tag)
 
 func remove_tag(tag: String) -> bool:
 	"""Remove a tag from this creature, through TagSystem."""
-	if tag_system:
-		return tag_system.remove_tag_from_creature(self, tag)
-	else:
-		# Fallback if TagSystem not loaded
-		if data.has_tag(tag):
-			data.tags.erase(tag)
-			if signal_bus and _debug_mode():
-				print("CreatureEntity: Removed tag '%s' from %s (fallback)" % [tag, data.creature_name])
-			return true
+	if not tag_system:
+		push_error("CreatureEntity.remove_tag: TagSystem required but not loaded. Cannot remove tag '%s' from %s" % [tag, data.creature_name])
 		return false
+	return tag_system.remove_tag_from_creature(self, tag)
 
 func can_add_tag(tag: String) -> Dictionary:
 	"""Check if a tag can be added to this creature."""
-	if tag_system:
-		return tag_system.can_add_tag_to_creature(data, tag)
-	else:
-		# Fallback validation
-		if not _is_valid_tag(tag):
-			return {"can_add": false, "reason": "Invalid tag"}
-		if data.has_tag(tag):
-			return {"can_add": false, "reason": "Creature already has this tag"}
-		return {"can_add": true, "reason": ""}
+	if not tag_system:
+		push_error("CreatureEntity.can_add_tag: TagSystem required but not loaded.")
+		return {"can_add": false, "reason": "TagSystem not loaded"}
+	return tag_system.can_add_tag_to_creature(data, tag)
 
 func get_tags_by_category(category: int) -> Array[String]:
 	"""Get all tags this creature has in a specific category."""
@@ -145,73 +128,54 @@ func set_active(active: bool) -> void:
 			else:
 				signal_bus.emit_creature_deactivated(data)
 
-# Validation
+# Validation - DEPRECATED: Use TagSystem for all validation
 func _is_valid_tag(tag: String) -> bool:
-	# Define valid tags based on design documents
-	const VALID_TAGS = [
-		# Size tags
-		"Small", "Medium", "Large",
-		# Social tags
-		"Territorial", "Social", "Solitary",
-		# Movement tags
-		"Winged", "Aquatic", "Terrestrial",
-		# Activity tags
-		"Nocturnal", "Diurnal", "Crepuscular",
-		# Environment tags
-		"Dark Vision", "Natural Armor", "Camouflage",
-		# Utility tags
-		"Heavy Labor", "Sanitation", "Pest Control", "Security"
-	]
-	return tag in VALID_TAGS
+	# This function should not be used - TagSystem is the source of truth
+	push_warning("CreatureEntity._is_valid_tag is deprecated. Use TagSystem.is_valid_tag()")
+	if tag_system:
+		return tag_system.is_valid_tag(tag)
+	return false  # Fail closed without TagSystem
 
 # Quest requirement matching using StatSystem and TagSystem
 func matches_requirements(req_stats: Dictionary, req_tags: Array[String]) -> bool:
-	# Use StatSystem for accurate stat calculations
-	if stat_system and not stat_system.meets_requirements(data, req_stats):
-		return false
+	# Require StatSystem for stat validation if stats specified
+	if not req_stats.is_empty():
+		if not stat_system:
+			push_error("CreatureEntity.matches_requirements: StatSystem required for stat requirements")
+			return false
+		if not stat_system.meets_requirements(data, req_stats):
+			return false
 
-	# Use TagSystem for accurate tag checking
-	if tag_system and not tag_system.meets_tag_requirements(data, req_tags):
-		return false
-
-	# Fallback to data methods if systems not loaded
-	if not tag_system:
-		return data.has_all_tags(req_tags)
+	# Require TagSystem for tag validation if tags specified
+	if not req_tags.is_empty():
+		if not tag_system:
+			push_error("CreatureEntity.matches_requirements: TagSystem required for tag requirements")
+			return false
+		if not tag_system.meets_tag_requirements(data, req_tags):
+			return false
 
 	return true
 
 # Performance calculations using StatSystem (includes age modifier)
 func get_performance_score() -> float:
-	if stat_system:
-		return stat_system.calculate_performance(data)
-	else:
-		# Fallback calculation with age modifier
-		var base_score: float = 0.0
-		base_score += data.strength * 0.15
-		base_score += data.constitution * 0.15
-		base_score += data.dexterity * 0.15
-		base_score += data.intelligence * 0.15
-		base_score += data.wisdom * 0.15
-		base_score += data.discipline * 0.25
-		return base_score * data.get_age_modifier()
+	if not stat_system:
+		push_error("CreatureEntity.get_performance_score: StatSystem required for performance calculation")
+		return 0.0  # Return worst score without proper calculation
+	return stat_system.calculate_performance(data)
 
 func get_effective_stat(stat_name: String) -> int:
 	"""Get stat value for quest requirements (NO age modifier, modifiers only)."""
-	if stat_system:
-		return stat_system.get_effective_stat(data, stat_name)
-	else:
-		# Fallback: base stat only (no age modifier for quest requirements)
-		return data.get_stat(stat_name)
+	if not stat_system:
+		push_error("CreatureEntity.get_effective_stat: StatSystem required for modifier calculations")
+		return data.get_stat(stat_name)  # Return base only as emergency fallback
+	return stat_system.get_effective_stat(data, stat_name)
 
 func get_competition_stat(stat_name: String) -> int:
 	"""Get stat value for competitions (includes age modifier)."""
-	if stat_system:
-		return stat_system.get_competition_stat(data, stat_name)
-	else:
-		# Fallback: apply age modifier for competitions
-		var base_stat: int = data.get_stat(stat_name)
-		var age_mod: float = data.get_age_modifier()
-		return int(base_stat * age_mod)
+	if not stat_system:
+		push_error("CreatureEntity.get_competition_stat: StatSystem required for competition calculations")
+		return 0  # Return worst value without proper calculation
+	return stat_system.get_competition_stat(data, stat_name)
 
 # Modifier management through StatSystem
 func apply_stat_modifier(stat_name: String, value: int, modifier_type: int = 0,
