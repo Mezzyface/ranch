@@ -88,20 +88,19 @@ ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
 9. **Stage 9**: Polish & Additional Vendors (2 weeks)
 10. **Stage 10**: Balancing & MVP Completion (1-2 weeks)
 
-### Stage 1 Tasks - Detailed Implementation Order
-Full task list with file references:
-1. **✅ Project Setup** (`docs/implementation/stages/stage_1/01_project_setup.md`) - GameCore autoload COMPLETE
-2. **✅ SignalBus** (`docs/implementation/stages/stage_1/02_signal_bus.md`) - Enhanced signal management COMPLETE
-3. **🚀 CreatureData** (`docs/implementation/stages/stage_1/03_creature_resource.md`) - Pure data resource NEXT
-4. **SpeciesData** (`docs/implementation/stages/stage_1/04_species_resource.md`) - Template system
-5. **Stat System** (`docs/implementation/stages/stage_1/05_stat_system.md`) - Calculation utilities
-6. **Tag System** (`docs/implementation/stages/stage_1/06_tag_system.md`) - Tag management
-7. **CreatureEntity** (`docs/implementation/stages/stage_1/07_creature_entity.md`) - Behavior node
-8. **Controllers** (`docs/implementation/stages/stage_1/08_system_controllers.md`) - Subsystems
-9. **Save System** (`docs/implementation/stages/stage_1/09_save_system.md`) - ConfigFile persistence
-10. **Collection Manager** (`docs/implementation/stages/stage_1/10_collection_manager.md`) - Pooling
-11. **Resource Tracker** (`docs/implementation/stages/stage_1/11_resource_tracking.md`) - Economy
-12. **Stage 1 Testing** (`docs/implementation/stages/stage_1/12_stage_1_testing.md`) - Integration tests
+### Stage 1 Tasks - Implementation Order (Aligned with Actual Files)
+Full task list with correct file references:
+1. **✅ Project Setup & SignalBus** (`01_project_setup.md`) - GameCore autoload + SignalBus COMPLETE
+2. **✅ Creature Class** (`02_creature_class.md`) - CreatureData + CreatureEntity COMPLETE
+3. **🚀 Stat System** (`03_stat_system.md`) - Stat calculations and utilities NEXT
+4. **Tag System** (`04_tag_system.md`) - Tag management and validation
+5. **Creature Generation** (`05_creature_generation.md`) - Random creature creation
+6. **Age System** (`06_age_system.md`) - Age progression and effects
+7. **Save/Load System** (`07_save_load_system.md`) - ConfigFile persistence
+8. **Player Collection** (`08_player_collection.md`) - Active/stable roster management
+9. **Resource Tracking** (`09_resource_tracking.md`) - Gold/item economy
+10. **Species Resources** (`10_species_resources.md`) - Species templates
+11. **Global Enums** (`11_global_enums.md`) - Type-safe enumerations
 
 ⚠️ **CRITICAL**: See `docs/implementation/IMPROVED_ARCHITECTURE.md` for architecture details
 
@@ -127,10 +126,12 @@ godot --export "Windows Desktop" builds/game.exe
 
 ### Current Status
 - **✅ Godot project created** - Complete with GameCore architecture
-- **✅ Task 1 COMPLETE** - Project setup fully tested and verified
-- **✅ Task 2 COMPLETE** - SignalBus enhancement with creature signals, connection management, and validation
-- **🚀 Ready for Task 3** - CreatureData Resource (pure data implementation)
-- **All tests passing** - Enhanced SignalBus validation confirmed, clean console output
+- **✅ Task 1 COMPLETE** - Project setup with GameCore and enhanced SignalBus
+- **✅ Task 2 COMPLETE** - Creature Class with CreatureData/CreatureEntity separation
+- **✅ Task 3 COMPLETE** - Stat System with advanced modifiers and age mechanics
+- **🚀 Ready for Task 4** - Tag System implementation
+- **All tests passing** - StatSystem fully functional with proper age modifier behavior
+- **Progress**: 3/11 Stage 1 tasks complete (~27%)
 
 ## Key Implementation Notes
 
@@ -265,3 +266,34 @@ Tutorial progression teaching creature selection:
 - [ ] Signal emissions work with valid data
 - [ ] Connection management tracks properly
 - [ ] Debug mode toggle functions correctly
+
+## Stage 1 Task 2 Lessons Learned
+
+### ✅ Task 2 (Creature Classes) - COMPLETED & VERIFIED
+**Key Achievements:**
+
+1. **Perfect Data/Behavior Separation**
+   - **Success**: CreatureData (Resource) contains only data, NO signals
+   - **Success**: CreatureEntity (Node) handles all behavior and signal emission
+   - **Validation**: Test confirms "CreatureData has NO signals (correct!)"
+
+2. **Stat System Foundation**
+   - **Success**: Stats clamp properly to 1-1000 range
+   - **Success**: Stat accessors work with multiple names (STR/STRENGTH)
+   - **Success**: Age modifiers calculate correctly
+
+3. **Serialization Ready**
+   - **Success**: to_dict() and from_dict() implemented
+   - **Pattern**: Clean serialization without signals ensures save stability
+
+4. **Signal Integration**
+   - **Success**: All creature signals emit through centralized SignalBus
+   - **Success**: Validation prevents null/invalid data emission
+   - **Pattern**: Use SignalBus emit helpers for consistency
+
+### New Best Practices from Task 2:
+- **Array.erase() returns void in Godot 4** - Check existence first with has() methods
+- **Resource setters work for clamping** - Use set(value) for automatic validation
+- **Age categories use percentages** - More flexible than fixed age ranges
+- **Performance scores need modifiers** - Age affects effective stats
+- **Tag validation is critical** - Prevent invalid tags early

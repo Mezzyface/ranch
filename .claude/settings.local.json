@@ -9,7 +9,12 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(find:*)",
-      "Bash(godot:*)"
+      "Bash(godot:*)",
+      "Bash(for:*)",
+      "Bash(head:*)",
+      "Bash(done)",
+      "Bash(git pull:*)",
+      "Bash(git reset:*)"
     ],
     "deny": [],
     "ask": []

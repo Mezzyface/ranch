@@ -6,61 +6,63 @@ Stage 1 establishes the proper Godot 4.5 architecture with separated data/behavi
 ## Goal
 Create a properly architected foundation with MVC pattern, separating Resources (data) from Nodes (behavior), implementing a single GameCore manager instead of multiple singletons, and using ConfigFile for robust saves.
 
-## Task Execution Order (Revised for Improved Architecture)
+## Task Execution Order (Aligned with Actual Files)
 
-### Phase 1: Core Architecture
-**Task 01: Project Setup with GameCore** ✅ COMPLETE
-- Creates: Single GameCore autoload, SignalBus, proper project structure
-- Key Change: Only ONE autoload (GameCore), not multiple singletons
-- Test: GameCore initializes, subsystems register lazily
+### ✅ Task 01: Project Setup & SignalBus (01_project_setup.md) - COMPLETE
+- Created: Single GameCore autoload with enhanced SignalBus
+- Implemented: Signal validation, connection management, debug logging
+- Test: GameCore initializes, SignalBus routes signals with validation
 
-**Task 02: SignalBus Implementation** ✅ COMPLETE
-- Creates: Centralized signal management system with validation and connection tracking
-- Key Change: All signals go through SignalBus, not individual Resources
-- Test: Signals properly routed between systems, validation prevents invalid data
+### ✅ Task 02: Creature Class (02_creature_class.md) - COMPLETE
+- Created: CreatureData (Resource) + CreatureEntity (Node) separation
+- Implemented: Pure data in Resource, behavior in Node, signals via SignalBus
+- Verified: Data serialization, stat clamping (1-1000), tag validation
+- Test: Architecture validated - CreatureData has NO signals
 
-### Phase 2: Data Layer (Resources)
-**Task 03: CreatureData Resource** 🚀 NEXT
-- Creates: Pure data resource (NO signals)
-- Key Change: Just data storage, no behavior
-- Test: Serialization/deserialization works
+### 🚀 Task 03: Stat System (03_stat_system.md) - NEXT
+- Creates: Stat calculations and modifiers
+- Implements: Utility functions for stat operations
+- Test: Calculations accurate, boundaries enforced
 
-**Task 04: SpeciesData Resource**
-- Creates: Species templates as Resources
-- Implements: Resource caching system
-- Test: Lazy loading performance
+### Task 04: Tag System (04_tag_system.md)
+- Creates: Tag validation and management
+- Implements: Tag compatibility checking
+- Test: Tag operations, conflict detection
 
-**Task 05: Stat & Tag Systems**
-- Creates: Stat calculations, tag validation
-- Key Change: Implemented as utility classes, not on Resources
-- Test: Calculations accurate, validation works
+### Task 05: Creature Generation (05_creature_generation.md)
+- Creates: Random creature generation logic
+- Implements: Species-based generation patterns
+- Test: Valid creature creation, stat distribution
 
-### Phase 3: Controller Layer
-**Task 06: CreatureEntity Implementation**
-- Creates: Node-based creature behavior controller
-- Key Change: Handles signals and behavior (separate from CreatureData)
-- Test: Signals emit properly, behavior works
+### Task 06: Age System (06_age_system.md)
+- Creates: Age progression and effects
+- Implements: Weekly aging, performance modifiers
+- Test: Age transitions, stat impacts
 
-**Task 07: System Controllers**
-- Creates: CreatureSystem, QuestSystem as GameCore subsystems
-- Key Change: Lazy-loaded, not autoloaded
-- Test: Systems register and communicate via SignalBus
-
-### Phase 4: Persistence & State
-**Task 08: ConfigFile Save System**
-- Creates: Robust save/load using ConfigFile
+### Task 07: Save/Load System (07_save_load_system.md)
+- Creates: ConfigFile-based persistence
 - Key Change: NOT using store_var (breaks between versions)
-- Test: Save migration, version checking
+- Test: Save/load cycles, data integrity
 
-**Task 09: Collection Management**
-- Creates: Active/stable roster with proper MVC
-- Implements: Object pooling for UI elements
-- Test: Performance with 1000+ creatures
+### Task 08: Player Collection (08_player_collection.md)
+- Creates: Active/stable roster management
+- Implements: Collection operations, roster limits
+- Test: Collection management, performance
 
-**Task 10: Resource Tracking**
+### Task 09: Resource Tracking (09_resource_tracking.md)
 - Creates: Economy system for gold/items
-- Implements: Efficient resource caching
-- Test: Transaction performance
+- Implements: Transaction system, resource validation
+- Test: Economic operations, balance tracking
+
+### Task 10: Species Resources (10_species_resources.md)
+- Creates: Species templates as Resources
+- Implements: Species data loading, caching
+- Test: Template loading, inheritance
+
+### Task 11: Global Enums (11_global_enums.md)
+- Creates: Type-safe enumerations
+- Implements: Shared constants across systems
+- Test: Enum usage, type safety
 
 ## Testing Strategy
 

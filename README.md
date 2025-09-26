@@ -62,17 +62,17 @@ A creature collection game where players:
 - [Global Enums](docs/implementation/enum.md) - Type-safe enumerations
 
 **Stage 1 Tasks (In Order):**
-1. [Project Setup](docs/implementation/stages/stage_1/01_project_setup.md)
-2. [Global Enums](docs/implementation/stages/stage_1/11_global_enums.md)
-3. [Creature Class](docs/implementation/stages/stage_1/02_creature_class.md)
-4. [Stat System](docs/implementation/stages/stage_1/03_stat_system.md)
-5. [Tag System](docs/implementation/stages/stage_1/04_tag_system.md)
-6. [Creature Generation](docs/implementation/stages/stage_1/05_creature_generation.md)
-7. [Age System](docs/implementation/stages/stage_1/06_age_system.md)
-8. [Species Resources](docs/implementation/stages/stage_1/10_species_resources.md)
-9. [Save/Load System](docs/implementation/stages/stage_1/07_save_load_system.md)
-10. [Player Collection](docs/implementation/stages/stage_1/08_player_collection.md)
-11. [Resource Tracking](docs/implementation/stages/stage_1/09_resource_tracking.md)
+1. ✅ [Project Setup & SignalBus](docs/implementation/stages/stage_1/01_project_setup.md)
+2. ✅ [Creature Class](docs/implementation/stages/stage_1/02_creature_class.md) - CreatureData + CreatureEntity
+3. [Stat System](docs/implementation/stages/stage_1/03_stat_system.md) - 🚀 NEXT
+4. [Tag System](docs/implementation/stages/stage_1/04_tag_system.md)
+5. [Creature Generation](docs/implementation/stages/stage_1/05_creature_generation.md)
+6. [Age System](docs/implementation/stages/stage_1/06_age_system.md)
+7. [Save/Load System](docs/implementation/stages/stage_1/07_save_load_system.md)
+8. [Player Collection](docs/implementation/stages/stage_1/08_player_collection.md)
+9. [Resource Tracking](docs/implementation/stages/stage_1/09_resource_tracking.md)
+10. [Species Resources](docs/implementation/stages/stage_1/10_species_resources.md)
+11. [Global Enums](docs/implementation/stages/stage_1/11_global_enums.md)
 
 ## 🚀 Getting Started
 
@@ -110,12 +110,12 @@ A creature collection game where players:
 - [x] Design specifications finalized
 - [x] Implementation tasks defined
 - [x] Godot project created
-- [x] Task 1: Project Setup & GameCore architecture
-- [x] Task 2: SignalBus enhancement with creature signals
-- [ ] Task 3+: CreatureData Resource and remaining core systems
+- [x] Task 1: Project Setup & SignalBus (GameCore + enhanced SignalBus)
+- [x] Task 2: Creature Class (CreatureData/CreatureEntity separation)
+- [ ] Task 3-11: Remaining core systems
 - [ ] Stage 1 testing complete
 
-**Progress: 2/12 Stage 1 tasks complete (17%)**
+**Progress: 2/11 Stage 1 tasks complete (~18%)**
 
 ### Upcoming Stages
 - **Stage 2**: Time Management & Basic UI (2 weeks)
