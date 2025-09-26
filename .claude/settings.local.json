@@ -14,7 +14,9 @@
       "Bash(head:*)",
       "Bash(done)",
       "Bash(git pull:*)",
-      "Bash(git reset:*)"
+      "Bash(git reset:*)",
+      "Bash(git push:*)",
+      "Bash(dir)"
     ],
     "deny": [],
     "ask": []
