@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-Primary machine-actionable guidance for AI coding agents (Claude, GPT, etc.). Keep this file short, stable, enumerated. Narrative/historical details have been archived.
+Primary machine-actionable guidance for AI coding agents (Claude, GPT, etc.). Keep this file short, stable, enumerated. Narrative/historical details live in `docs/development/ARCHIVE_STAGE1_TASK_DETAILS.md`.
 
 ## 0. EXECUTION PROTOCOL (ALWAYS IN THIS ORDER)
 1. Preflight: `godot --headless --scene tests/preflight_check.tscn` (abort on fail)
@@ -16,11 +16,13 @@ Primary machine-actionable guidance for AI coding agents (Claude, GPT, etc.). Ke
 - Property names: `id`, `species_id`, `age_weeks`, `lifespan_weeks`, `creature_name` (NO legacy variants)
 - System access: ONLY `GameCore.get_system("<name>")`
 - Age category & modifier logic lives on `CreatureData` (do not duplicate)
-- Arrays are explicitly typed (e.g. `Array[String]`, `Array[CreatureData]`)
-- Signals: use existing SignalBus emission helpers; do not add wrappers unless introducing a new domain event (then document in Section 6)
-- Species truth: SpeciesSystem resources (hardcoded generator map = deprecated read‑only)
-- Performance: New batch ops must respect baselines (Section 7) or provide timing + justification
-- Save orchestration: SaveSystem coordinates; each system owns its own serialization (no duplication)
+- Arrays explicitly typed (e.g. `Array[String]`, `Array[CreatureData]`)
+- Signals: use existing SignalBus emission helpers; no new bespoke wrapper unless a brand‑new domain event (see Section 12)
+- Species truth: SpeciesSystem resources (Deprecated Hardcoded Species Map is read‑only; do not extend)
+- Enums are append‑only: NEVER reorder or repurpose existing values (breaks save compatibility & comparisons)
+- Performance: New batch ops must respect baselines (Section 7) or include timing comment (Section 13)
+- Save orchestration: SaveSystem coordinates; each system owns its serialization (no duplication inside SaveSystem)
+- No partial SaveSystem modularization unless an explicit task states "SaveSystem modular refactor"
 
 ## 2. ALLOWED / DISALLOWED
 ALLOWED: focused feature implementation, adding a precise enum value, introducing small interface (`ISaveable`, `ITickable`) with registration, adding targeted test scene.
@@ -52,7 +54,8 @@ Preflight: `tests/preflight_check.tscn`
 - Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
 
 ## 6. CURRENT SYSTEM KEYS
-`collection`, `save`, `tag`, `age`, `stat`, `resource`, `species` (extend list when adding new system)
+`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`  
+(Extend list when adding new system; update tests referencing keys.)
 
 ## 7. PERFORMANCE BASELINES
 | Operation | Target |
@@ -64,21 +67,24 @@ Preflight: `tests/preflight_check.tscn`
 If exceeded, add timing + mitigation note in summary.
 
 ## 8. SUBMISSION CHECKLIST
-[ ] Preflight passes
-[ ] No forbidden property names introduced
-[ ] No new signal wrapper unless documented
-[ ] All arrays typed explicitly
-[ ] Only `GameCore.get_system()` used for system access
-[ ] No duplicated age/stat logic
-[ ] Species edits via resources only
-[ ] Tests updated/added as needed
-[ ] Performance within baseline or justified
+- [ ] Preflight passes
+- [ ] No forbidden property names introduced
+- [ ] No new signal wrapper (or documented & tested if added)
+- [ ] All arrays typed explicitly
+- [ ] Only `GameCore.get_system()` used for systems
+- [ ] No duplicated age/stat logic
+- [ ] Species edits via resources only (not Deprecated Hardcoded Species Map)
+- [ ] Tests updated/added for changed logic
+- [ ] Performance within baseline or timing comment added
+- [ ] Enums only appended (if touched)
+- [ ] SaveSystem untouched unless task explicitly permits refactor
 
 ## 9. COMMON ERROR GUARDS
 - Untyped arrays → inference warnings (treated as errors)
 - Legacy property names (`creature_id`, `species`) → breaks tests & filters
 - Calling age/category on system instead of data → method not found
 - Time API misuse (`.nanosecond`) → invalid; use `Time.get_ticks_msec()`
+- Reordered enum values → subtle corruption (never reorder)
 
 ## 10. ADDING A NEW SYSTEM (MINIMAL STEPS)
 1. `scripts/systems/<name>_system.gd` (extends Node)
@@ -88,245 +94,50 @@ If exceeded, add timing + mitigation note in summary.
 5. If persistent: implement save hooks or register future `ISaveable`
 
 ## 11. STAGE 1 CONSOLIDATED LESSONS (REFERENCE)
+Concise durable principles from Stage 1 (Tasks 1–10):
+- Data/behavior separation enforced (Resources never emit signals)
+- Central SignalBus with pending future generic emitter consolidation
+- Validation-before-mutation for tags, age transitions, stats
+- Batch-first performance mindset (1k operations under stated thresholds)
+- Hybrid persistence (ConfigFile + ResourceSaver) orchestrated—not duplicated—by SaveSystem
+- Deprecated Hardcoded Species Map slated for removal after full migration verification
+- Active roster cap + invariants enforced at system boundary
+- Quiet/debug modes required for bulk operations & CI readability
+- Anti-patterns: duplicate age math, expanding deprecated species map, bespoke signal wrappers, property drift
 
-## Repository Overview
-### Testing Commands
-```bash
-godot --headless --scene tests/preflight_check.tscn
-godot --headless --scene tests/test_all.tscn
-# (Run specific individual test scenes if you modified a single system)
-```
-### M. Minimal Verification Checklist (Superseded by Section 8 Machine Protocol)
+## 12. SIGNAL EVENT ADDITION PROTOCOL
+1. Define event: name + payload param list (types) in a comment block
+2. Add signal to `signal_bus.gd` in alphabetic order within its domain cluster
+3. Add or extend validation (null/empty/type checks) in emission path
+4. Provide minimal test (emit success + invalid payload rejection) in `tests/individual/`
+5. Update Section 6 only if a new system domain introduced
+6. Add summary line to PR / task output referencing test name
 
----
-Legacy verbose per‑task narratives (Tag System through Species Resources) moved to `docs/development/ARCHIVE_STAGE1_TASK_DETAILS.md`.
-# CLAUDE.md
-
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-
-## Repository Overview
-
-A creature collection/breeding game built with Godot 4.5. Currently implementing Stage 1 (Core Foundation) with basic GameCore autoload and SignalBus architecture completed. The game features creature collection, training, breeding, and quest completion through strategic creature management.
-
-## Core Architecture (v2.0 - Improved)
-
-### Game Systems
-- **6 Core Stats**: STR, CON, DEX, INT, WIS, DIS (scale 1-1000)
-- **Tag System**: Environmental, behavioral, physical, and utility tags for creature traits
-- **Age System**: 5 age categories (Baby, Juvenile, Adult, Elder, Ancient) with performance modifiers
-- **Time Management**: Weekly cycles for training, competitions, and aging
-- **Resource Economy**: Gold currency, food requirements, creature acquisition through shops
-- **Collection Management**: Active roster (6 limit) and stable collection (unlimited) with advanced search
-- **Species Templates**: Resource-based species system with category/rarity organization
-
-### Data Architecture (Godot 4.5) - UPDATED
-- **MVC Pattern**: Resources for data, Nodes for behavior, clear separation
-- **Single GameCore**: One autoload managing subsystems (NOT multiple singletons)
-- **SignalBus**: Centralized signal routing (Resources don't emit signals)
-- **Flexible Save System**: ConfigFile for settings, ResourceSaver for complex data (NOT store_var)
-- **Lazy Loading**: Subsystems and resources loaded on demand
-- **Object Pooling**: UI elements reused for performance
-- **Cache Management**: Handle Godot 4 resource cache bugs with workarounds
-
-## Godot 4.5 Implementation Guidelines
-
-### Key Godot 4.x Features to Use
-- **Strong Typing**: Use typed GDScript (`var creature: Creature`, `func get_stats() -> Dictionary`)
-- **@export Variables**: For inspector-configurable creature attributes and species templates
-- **Custom Resources**: Extend Resource class for Creature, Species, Quest data models
-- **Signal Bus Pattern**: Central signal manager for decoupled communication
-- **Node Groups**: For managing creature collections and batch operations
-
-### GDScript Best Practices - CRITICAL UPDATES
+## 13. PERFORMANCE MEASUREMENT PATTERN
+Use this pattern when measuring new or potentially expensive operations:
 ```gdscript
-# CORRECT: Separate data from behavior
-class_name CreatureData extends Resource  # Pure data, NO signals
-@export var creature_name: String = ""
-@export var stats: Dictionary = {}
-
-class_name CreatureEntity extends Node  # Behavior and signals here
-signal stats_changed(creature: CreatureData)
-var data: CreatureData
-
-# CORRECT: Use SignalBus for communication
-SignalBus.creature_created.emit(creature_data)
-
-# CRITICAL: Use GlobalEnums for all shared data types (NOT strings or magic numbers!)
-# ❌ WRONG: creature.get_age_category() == 2  # Magic number
-# ❌ WRONG: creature.category = "starter"      # String constant
-# ✅ CORRECT: creature.get_age_category() == GlobalEnums.AgeCategory.ADULT
-# ✅ CORRECT: species.category = GlobalEnums.SpeciesCategory.STARTER
-
-# Always use enum-based methods when available:
-var stat_value = creature.get_stat_by_type(GlobalEnums.StatType.STRENGTH)  # Preferred
-var age_cat = creature.get_age_category()  # Returns GlobalEnums.AgeCategory
-species.rarity = GlobalEnums.SpeciesRarity.RARE  # Direct enum usage
-
-# Save System Options (choose based on needs):
-# Option 1: ConfigFile for simple data/settings
-var config := ConfigFile.new()
-config.set_value("creatures", id, creature.to_dict())
-config.save("user://save.cfg")
-
-# Option 2: ResourceSaver for complex Resources (Godot's native approach)
-ResourceSaver.save(creature_data, "user://creature_%s.tres" % id)
-# WARNING: Resources can contain scripts - validate loaded data!
-
-# Resource Cache Workaround (Godot 4 bug):
-# After saving:
-resource.take_over_path(resource.resource_path)
-# When loading:
-ResourceLoader.load(path, "", ResourceLoader.CACHE_MODE_IGNORE)
+var _t0: int = Time.get_ticks_msec()
+# ... operation ...
+var _dt: int = Time.get_ticks_msec() - _t0
+print("AI_NOTE: performance(batch_aging_1000) = %d ms (baseline <100ms)" % _dt)
 ```
+Embed one timing line per new batch operation; remove exploratory spam.
 
-### Performance Considerations
-- **Object Pooling**: Reuse creature instances for UI elements
-- **Resource Preloading**: Cache frequently used species templates
-- **Lazy Loading**: Load creature sprites only when visible
-- **Dictionary Caching**: Store calculated stats to avoid recomputation
-- **Signal Connections**: Prefer loaded Resources over .new() for reliable signals
-- **Cache Invalidation**: Use take_over_path() after saving Resources to update cache
-
-## Implementation Plan
-
-### Current Stage: Stage 1 - Core Foundation (Near Complete - 10/11 Tasks Done)
-10-stage implementation roadmap totaling 19-24 weeks:
-
-1. **Stage 1**: Core Data Models & Foundation (2-3 weeks) - Creature class, stats, tags, species resources
-2. **Stage 2**: Time Management & Basic UI (2 weeks)
-3. **Stage 3**: Shop System & Economy (2 weeks)
-4. **Stage 4**: Training System (2 weeks)
-5. **Stage 5**: Quest System - Tutorial Phase (2-3 weeks)
-6. **Stage 6**: Competition System (2 weeks)
-7. **Stage 7**: Advanced Quests (2-3 weeks)
-8. **Stage 8**: Breeding System (2 weeks)
-9. **Stage 9**: Polish & Additional Vendors (2 weeks)
-10. **Stage 10**: Balancing & MVP Completion (1-2 weeks)
-
-### Stage 1 Tasks - Implementation Order (Aligned with Actual Files)
-Full task list with correct file references:
-1. **✅ Project Setup & SignalBus** (`01_project_setup.md`) - GameCore autoload + SignalBus COMPLETE
-2. **✅ Creature Class** (`02_creature_class.md`) - CreatureData + CreatureEntity COMPLETE
-3. **✅ Stat System** (`03_stat_system.md`) - Stat calculations and utilities COMPLETE
-4. **✅ Tag System** (`04_tag_system.md`) - Tag management and validation COMPLETE
-5. **✅ Creature Generation** (`05_creature_generation.md`) - Random creature creation COMPLETE
-6. **✅ Age System** (`06_age_system.md`) - Age progression and effects COMPLETE
-7. **✅ Save/Load System** (`07_save_load_system.md`) - ConfigFile persistence COMPLETE
-8. **✅ Player Collection** (`08_player_collection.md`) - Active/stable roster management COMPLETE
-9. **✅ Resource Tracking** (`09_resource_tracking.md`) - Gold/item economy COMPLETE
-10. **✅ Species Resources** (`10_species_resources.md`) - Species templates COMPLETE
-11. **Global Enums** (`11_global_enums.md`) - Type-safe enumerations
-
-⚠️ **CRITICAL**: See `docs/implementation/IMPROVED_ARCHITECTURE.md` for architecture details
-
-## Commands
-
-### Development Commands
-```bash
-# Open Godot project
-godot project.godot
-
-# Check project compilation
-godot --check-only project.godot
-
-# Export build (after export templates configured)
-godot --export "Windows Desktop" builds/game.exe
+## 14. REQUIREMENT SUMMARY FORMAT (END OF AI TASK)
+Provide a concise block like:
 ```
-
-### Testing Commands
-```bash
-## Stage 1 Consolidated Lessons (Tasks 1–10)
-
-This section replaces verbose per‑task blocks with a unified, low‑maintenance summary of durable principles. Historical granular logs can be moved to an archive if needed.
-
-### A. Architecture & Data Separation
-- Data (Resource) vs Behavior (Node) line is non‑negotiable: `CreatureData` stays signal‑free; `CreatureEntity` mediates behavior.
-- GameCore = lazy loader + registry; avoid direct dictionary poking (`GameCore._systems[...]`). Always use `GameCore.get_system(name)`.
-- Species hardcoded map is now DEPRECATED (read‑only until full removal); SpeciesSystem resources are the source of truth.
-
-### B. Signals & Communication
-- Centralize through SignalBus; no new bespoke `emit_<event>()` wrappers—prepare for generic emitter migration.
-- Validate inputs before emission; red validation errors are protective, not failures.
-- Reduce signal surface by batching (e.g., roster changes emit full snapshot once).
-
-### C. Validation & Safety
-- Tag/Stat/Age logic lives in their owning systems or data classes—do not duplicate helper math elsewhere.
-- Fallback logic (e.g., local tag checks in `CreatureEntity`) is slated for removal; treat as legacy.
-- Explicit array typing `Array[String]` prevents subtle Godot 4.5 inference errors.
-
-### D. Performance Practices
-- Batch operations (aging, filtering, generation) must complete 1k scale < 100ms on baseline hardware.
-- Preallocate arrays for mass generation and aging.
-- Avoid per‑loop system lookups; cache references locally inside hot loops.
-
-### E. Persistence Principles
-- Hybrid model stays: ConfigFile for metadata, ResourceSaver for complex resource objects.
-- Future direction: introduce `ISaveable` (draft) so SaveSystem enumerates system states instead of hardcoding.
-- Creature collection owns its own serialization; SaveSystem should orchestrate, not duplicate logic.
-
-### F. Collection & Domain Rules
-- Active roster cap enforced at system boundary; internal data structures never exceed 6 active.
-- Species + Tag assignment validated at creation time; invalid combinations never enter collection state.
-- Age modifiers affect performance/competitions, not quest requirement thresholds.
-
-### G. Testing & Tooling
-- Individual system test scenes + one integration harness—fast isolated failures preferred over monolithic runs.
-- Deterministic generation (seeded path) planned; current statistical tolerance accepted for distribution tests.
-- Preflight / validator scripts catch 90% of common AI or contributor mistakes (property name, system loading, array typing).
-
-### H. Logging & Debug (Transitional)
-- Verbose console logging is temporary; Stage 2 introduces channelized `DebugConfig` (levels + filters).
-- Quiet modes required for bulk operations (collection, generation) to keep CI output manageable.
-
-### I. Anti‑Patterns (Do NOT Reintroduce)
-- Direct property name drift: `creature_id`, `species` (should be `id`, `species_id`).
-- Manual age category math outside `CreatureData` / `AgeSystem`.
-- Recreating species definitions outside SpeciesSystem resources.
-- Using system internals: `GameCore._systems[...]` or storing raw references for later without null checks.
-- Adding new per‑signal validation wrappers instead of consolidating.
-
-### J. Metrics Snapshot (Pre‑Refactor Baseline)
-| Area | Current | Target (Stage 2+) |
-|------|---------|-------------------|
-| SignalBus LOC | ~600 | <350 (extraction + generic emitter) |
-| SaveSystem LOC | ~870 | <400 (modular split) |
-| Duplicate age logic copies | 3 | 1 |
-| Hardcoded species table | Present | Removed |
-| Fallback tag validation points | 2 | 0 |
-
-### K. Task → Durable Principle Matrix
-| Task | Key Addition | Lasting Principle |
-|------|--------------|-------------------|
-| 1 Project Setup | GameCore + SignalBus | Centralized lazy loading & event routing |
-| 2 Creature Class | Data/behavior split | Resources stay pure data |
-| 3 Stat System | Modifier pipeline | Separate base vs contextual (age) stats |
-| 4 Tag System | Declarative metadata | Validate before mutation |
-| 5 Generation | Algorithm variants | Deterministic expansion path (seed later) |
-| 6 Age System | Lifecycle events | Orchestrate; no stat side effects directly |
-| 7 Save System | Hybrid persistence | Systems own their state; orchestrator coordinates |
-| 8 Collection | Dual-tier storage | Cap & invariant enforcement at boundary |
-| 9 Resource Tracking | Economy baseline | Emit domain deltas, not polled mutations |
-| 10 Species Resources | Resource-backed species | Data lives in assets, not code |
-
-### L. Stage 2 Forward Hooks
-- Introduce `TimeSystem` (weeks) → drives AgeSystem & modifier decay.
-- Replace per‑event emission wrappers with schema‑driven generic emitter.
-- Formalize `ISaveable` + `ITickable` contracts and register via GameCore.
-- Begin deprecating hardcoded species map (remove after migration test passes).
-
-### M. Minimal Verification Checklist (Supersedes Prior Per‑Task Lists)
-- [ ] No forbidden property names (`creature_id`, `species`).
-- [ ] All tag/stat/age computations delegated to owning system/data.
-- [ ] No new emit wrapper functions added.
-- [ ] Batch ops meet performance thresholds (<100ms / 1k items baseline).
-- [ ] Save orchestration does not directly serialize system internals ad hoc.
-- [ ] Species creation path uses SpeciesSystem (not hardcoded dictionary extension).
-- [ ] Fallback tag or species logic not invoked in normal runtime.
+Requirements:
+- Add age modifier caching: Done
+- Preserve existing signals: Done
+- Avoid new wrappers: Done
+Performance: batch_aging_1000 = 62ms (<100ms) PASS
+Invariants: All pass
+Enums touched: None
+Follow-ups: TODO(stage2): unify species random selection weighting
+```
 
 ---
-*Legacy detailed task narratives were removed to reduce churn. Retrieve from version control history if deep forensic context is required.*
-**Key Achievements:**
-
+Legacy detailed task narratives moved to: `docs/development/ARCHIVE_STAGE1_TASK_DETAILS.md`
 1. **Comprehensive Tag Architecture**
    - **Success**: 25 tags across 5 categories with complete metadata
    - **Success**: Complex validation with mutual exclusions, dependencies, incompatibilities
