@@ -41,6 +41,16 @@ signal tag_validation_failed(tags: Array[String], errors: Array[String])
 # signal item_purchased(item_id: String, quantity: int)
 # signal item_consumed(item_id: String, quantity: int)
 
+# === COLLECTION SIGNALS (Task 8) ===
+# Creature collection events
+signal creature_acquired(creature_data: CreatureData, source: String)
+signal creature_released(creature_data: CreatureData, reason: String)
+signal active_roster_changed(new_roster: Array[CreatureData])
+signal stable_collection_updated(operation: String, creature_id: String)
+
+# Collection milestones
+signal collection_milestone_reached(milestone: String, count: int)
+
 # === TIME SIGNALS ===
 # Time progression signals (will be used in later tasks)
 # signal week_advanced(new_week: int)
@@ -389,6 +399,87 @@ func set_debug_mode(enabled: bool) -> void:
 	"""Enable or disable debug logging for signals."""
 	_debug_mode = enabled
 	print("SignalBus: Debug mode %s" % ("enabled" if enabled else "disabled"))
+
+# === COLLECTION SIGNAL EMISSION (Task 8) ===
+func emit_creature_acquired(creature_data: CreatureData, source: String) -> void:
+	"""Emit creature_acquired signal with validation."""
+	if creature_data == null:
+		push_error("SignalBus: Cannot emit creature_acquired with null creature_data")
+		return
+
+	if source.is_empty():
+		push_error("SignalBus: Cannot emit creature_acquired with empty source")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting creature_acquired for '%s' from '%s'" % [creature_data.creature_name, source])
+
+	creature_acquired.emit(creature_data, source)
+
+func emit_creature_released(creature_data: CreatureData, reason: String) -> void:
+	"""Emit creature_released signal with validation."""
+	if creature_data == null:
+		push_error("SignalBus: Cannot emit creature_released with null creature_data")
+		return
+
+	if reason.is_empty():
+		push_error("SignalBus: Cannot emit creature_released with empty reason")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting creature_released for '%s' reason: '%s'" % [creature_data.creature_name, reason])
+
+	creature_released.emit(creature_data, reason)
+
+func emit_active_roster_changed(new_roster: Array[CreatureData]) -> void:
+	"""Emit active_roster_changed signal with validation."""
+	if new_roster == null:
+		push_error("SignalBus: Cannot emit active_roster_changed with null roster")
+		return
+
+	# Validate roster size doesn't exceed 6
+	if new_roster.size() > 6:
+		push_error("SignalBus: Active roster size exceeds limit: %d" % new_roster.size())
+		return
+
+	if _debug_mode:
+		var creature_names: Array[String] = []
+		for creature in new_roster:
+			if creature != null:
+				creature_names.append(creature.creature_name)
+		print("SignalBus: Emitting active_roster_changed: [%s]" % ", ".join(creature_names))
+
+	active_roster_changed.emit(new_roster)
+
+func emit_stable_collection_updated(operation: String, creature_id: String) -> void:
+	"""Emit stable_collection_updated signal with validation."""
+	if operation.is_empty():
+		push_error("SignalBus: Cannot emit stable_collection_updated with empty operation")
+		return
+
+	if creature_id.is_empty():
+		push_error("SignalBus: Cannot emit stable_collection_updated with empty creature_id")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting stable_collection_updated: %s for creature '%s'" % [operation, creature_id])
+
+	stable_collection_updated.emit(operation, creature_id)
+
+func emit_collection_milestone_reached(milestone: String, count: int) -> void:
+	"""Emit collection_milestone_reached signal with validation."""
+	if milestone.is_empty():
+		push_error("SignalBus: Cannot emit collection_milestone_reached with empty milestone")
+		return
+
+	if count < 0:
+		push_error("SignalBus: Cannot emit collection_milestone_reached with negative count: %d" % count)
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting collection_milestone_reached: '%s' at count %d" % [milestone, count])
+
+	collection_milestone_reached.emit(milestone, count)
 
 func _setup_signal_validation() -> void:
 	"""Set up internal signal validation and logging."""

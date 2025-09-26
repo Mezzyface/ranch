@@ -36,6 +36,8 @@ func _load_system(system_name: String) -> void:
 			system = preload("res://scripts/systems/tag_system.gd").new()
 		"age":
 			system = preload("res://scripts/systems/age_system.gd").new()
+		"collection":
+			system = preload("res://scripts/systems/player_collection.gd").new()
 		_:
 			push_error("Unknown system: " + system_name)
 			return

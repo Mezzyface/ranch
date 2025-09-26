@@ -111,17 +111,33 @@ Full task list with correct file references:
 # Open Godot project
 godot project.godot
 
-# Run integration tests (current)
-godot test_setup.tscn
-
 # Check project compilation
 godot --check-only project.godot
 
-# Run tests (after test framework setup)
-godot --script res://tests/run_tests.gd
-
 # Export build (after export templates configured)
 godot --export "Windows Desktop" builds/game.exe
+```
+
+### Testing Commands
+```bash
+# Show available individual tests
+godot --headless --scene tests/test_runner.tscn
+
+# Run all tests sequentially
+godot --headless --scene tests/test_all.tscn
+
+# Run individual system tests
+godot --headless --scene tests/individual/test_signalbus.tscn
+godot --headless --scene tests/individual/test_creature.tscn
+godot --headless --scene tests/individual/test_stats.tscn
+godot --headless --scene tests/individual/test_tags.tscn
+godot --headless --scene tests/individual/test_generator.tscn
+godot --headless --scene tests/individual/test_age.tscn
+godot --headless --scene tests/individual/test_save.tscn
+godot --headless --scene tests/individual/test_collection.tscn
+
+# Run comprehensive test (may timeout with verbose output)
+godot --headless --scene test_setup.tscn
 ```
 
 ### Current Status
