@@ -45,6 +45,20 @@ enum StatType {
 - **Quest Usage**: Study guards (DIS > 80), logistics helpers (DIS > 110), vault guardians (DIS > 180)
 - **Training Focus**: Obedience training, focus exercises, command drills
 
+## Age Modifiers (IMPORTANT CLARIFICATION)
+
+**Age modifiers DO NOT affect base stats used for quest requirements.**
+
+Age modifiers affect:
+- **Training gains only** (different rates by age category)
+- **Competition performance scores** (multiplied by age modifier)
+- **Stamina recovery rates** (age-dependent)
+
+Age modifiers DO NOT affect:
+- **Quest requirement validation** (uses base stats)
+- **Base stat values** (permanently unchanged)
+- **Effective stats for requirement checking**
+
 ## Training Stat (Range: 0-100)
 
 ### Stamina (STA)
