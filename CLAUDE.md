@@ -57,6 +57,13 @@ Preflight: `tests/preflight_check.tscn`
 `collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`  
 (Extend list when adding new system; update tests referencing keys.)
 
+Canonical signal usage (do NOT invent new wrappers):
+```gdscript
+var bus = GameCore.get_signal_bus()
+bus.creature_acquired.emit(creature, "shop")  # existing signal
+```
+If a new domain event truly required, follow Section 12 before adding.
+
 ## 7. PERFORMANCE BASELINES
 | Operation | Target |
 |-----------|--------|
@@ -78,6 +85,7 @@ If exceeded, add timing + mitigation note in summary.
 - [ ] Performance within baseline or timing comment added
 - [ ] Enums only appended (if touched)
 - [ ] SaveSystem untouched unless task explicitly permits refactor
+- [ ] No structural refactor attempted without explicit label (e.g. REFRACTOR_APPROVED:save_system)
 
 ## 9. COMMON ERROR GUARDS
 - Untyped arrays → inference warnings (treated as errors)
@@ -85,6 +93,7 @@ If exceeded, add timing + mitigation note in summary.
 - Calling age/category on system instead of data → method not found
 - Time API misuse (`.nanosecond`) → invalid; use `Time.get_ticks_msec()`
 - Reordered enum values → subtle corruption (never reorder)
+- Structural refactor without approval label → likely scope creep (abort & request explicit task)
 
 ## 10. ADDING A NEW SYSTEM (MINIMAL STEPS)
 1. `scripts/systems/<name>_system.gd` (extends Node)
@@ -92,6 +101,7 @@ If exceeded, add timing + mitigation note in summary.
 3. Add small test in `tests/individual/`
 4. Append key to Section 6 list
 5. If persistent: implement save hooks or register future `ISaveable`
+6. Place future interfaces in `scripts/core/interfaces/` and list in `INTERFACES.md`
 
 ## 11. STAGE 1 CONSOLIDATED LESSONS (REFERENCE)
 Concise durable principles from Stage 1 (Tasks 1–10):
@@ -123,7 +133,44 @@ print("AI_NOTE: performance(batch_aging_1000) = %d ms (baseline <100ms)" % _dt)
 ```
 Embed one timing line per new batch operation; remove exploratory spam.
 
+Always prefix automated performance logs with `AI_NOTE:` so they are easily greppable and can be stripped from release builds.
+
 ## 14. REQUIREMENT SUMMARY FORMAT (END OF AI TASK)
+Provide a concise, standardized summary after changes:
+```
+Requirements:
+- Add age modifier caching: Done
+- Preserve existing signals: Done
+- Avoid new wrappers: Done
+Performance: batch_aging_1000 = 62ms (<100ms) PASS
+Invariants: All pass
+Enums touched: None
+Follow-ups: TODO(stage2): unify species random selection weighting
+```
+Rules:
+- List every explicit user requirement (even if skipped → mark Skipped + reason)
+- Include at most one performance line per operation type
+- Omit unchanged systems from summary
+- If any invariant fails → STOP (do not submit patch)
+## 15. DOC AUTHORITY MATRIX
+| Doc | Purpose | Modify When |
+|-----|---------|-------------|
+| CLAUDE.md | Operational AI protocol & invariants | New invariant / process change |
+| AI_AGENT_GUIDE.md | Expanded examples & templates | New common pattern emerges |
+| README.md | Human overview & milestones | Milestone / scope shift |
+| ARCHIVE_STAGE1_TASK_DETAILS.md | Historical narrative | New stage archive only |
+| INTERFACES.md (planned) | Interface contracts index | First interface introduced |
+
+## 16. DEPRECATED ARTIFACTS
+- Deprecated Hardcoded Species Map: constant `SPECIES_DATA` in `scripts/generation/creature_generator.gd` (read‑only; do NOT extend; removal scheduled post-migration validation)
+- Legacy per-signal wrapper pattern (replaced by central validation + future generic emitter)
+
+## 17. COMMIT MESSAGE GUIDELINE (FOR AI-GENERATED PATCHES)
+Format: `type(scope): summary | invariants OK`
+Types: feat, fix, chore, docs, test, perf, refactor (refactor only with approval label)
+Example: `feat(age): add weeks_to_category util (62ms/1k) | invariants OK`
+
+---
 Provide a concise block like:
 ```
 Requirements:
@@ -253,173 +300,10 @@ var premium_creature: CreatureData = CreatureGenerator.generate_creature_data("s
 # Full entity when behavior needed immediately
 var creature_entity: CreatureEntity = CreatureGenerator.generate_creature_entity("wind_dancer")
 
-# Starter creature for new players (boosted stats)
-var starter: CreatureEntity = CreatureGenerator.generate_starter_creature()
+Example: `feat(age): add weeks_to_category util (62ms/1k) | invariants OK`
 
-# Shop integration
-var egg_creature: CreatureData = CreatureGenerator.generate_from_egg("glow_grub", "premium")
-
-# Batch generation for testing/population
-var population: Array[CreatureData] = CreatureGenerator.generate_population_data(100)
-
-# Species validation
-if CreatureGenerator.is_valid_species("scuttleguard"):
-    var info: Dictionary = CreatureGenerator.get_species_info("scuttleguard")
-```
-
-### Updated Verification Checklist from Task 5:
-- [ ] CreatureGenerator loads as static utility class (not GameCore subsystem)
-- [ ] All 4 species generate with proper stat ranges and tags
-- [ ] Generation algorithms produce expected distributions
-- [ ] Performance target met: 1000 creatures in <100ms
-- [ ] Property consistency: lifespan_weeks unified across codebase
-- [ ] TagSystem integration validates guaranteed/optional tags
-- [ ] StatSystem integration works with generated creatures
-- [ ] CreatureEntity creation from generated data succeeds
-- [ ] Factory methods provide appropriate creature variants
-- [ ] Population generation handles species distribution correctly
-
-## Stage 1 Task 6 Lessons Learned
-
-### ✅ Task 6 (Age System) - COMPLETED & VERIFIED
-**Key Achievements:**
-
-1. **Complete AgeSystem GameCore Subsystem Architecture**
-   - **Success**: AgeSystem follows lazy loading pattern with full SignalBus integration
-   - **Success**: 5 age categories (Baby→Juvenile→Adult→Elder→Ancient) with performance modifiers
-   - **Success**: Manual aging, category transitions, and batch processing implemented
-   - **Pattern**: Consistent with established GameCore subsystem patterns
-
-2. **Advanced Age Progression & Lifecycle Management**
-   - **Success**: age_creature_by_weeks(), age_creature_to_category(), age_all_creatures() methods
-   - **Success**: Lifecycle event detection (expiration handling, category changes)
-   - **Success**: Age statistics and population analysis with get_age_distribution()
-   - **Pattern**: Comprehensive age management for creature lifecycle progression
-
-3. **Perfect StatSystem Integration**
-   - **Success**: Quest requirements use base stats (NO age modifiers) for fairness
-   - **Success**: Competition stats apply age modifiers for realistic performance
-   - **Success**: Age transitions update StatSystem when categories change
-   - **Pattern**: Dual-stat approach maintains quest balance while adding realism
-
-4. **Enhanced SignalBus with Age Events**
-   - **Success**: 3 new age-related signals with comprehensive validation
-   - **Success**: creature_category_changed, creature_expired, aging_batch_completed
-   - **Success**: Validated emission helpers prevent invalid data propagation
-   - **Pattern**: Signal validation provides excellent debugging with clear error messages
-
-5. **Performance Excellence Maintained**
-   - **Success**: Batch aging 1000 creatures in <100ms (target met)
-   - **Success**: Age analysis and statistics calculations highly optimized
-   - **Success**: Pre-allocation and efficient data structures for large populations
-   - **Pattern**: Performance-first approach scales linearly with creature count
-
-### New Best Practices from Task 6:
-- **Explicit typing mandatory** - Godot 4.5 treats type inference warnings as errors
-- **Parameter naming matters** - Avoid shadowing built-in Node properties like "name"
-- **Signal validation is critical** - Comprehensive error messages aid debugging significantly
-- **Batch operations essential** - Large-scale creature management requires optimized processing
-- **Lifecycle events need careful handling** - Age transitions affect multiple systems
-- **Performance testing validates optimization** - Always measure against concrete targets
-
-### Updated Verification Checklist from Task 6:
-- [ ] AgeSystem loads via GameCore lazy loading pattern
-- [ ] All age progression methods work (manual aging, category transitions, batch processing)
-- [ ] Age category transitions emit proper signals with validation
-- [ ] StatSystem integration maintains dual-stat approach (quest vs competition)
-- [ ] SignalBus validation prevents invalid age operations with clear errors
-- [ ] Batch aging handles large creature collections efficiently (<100ms for 1000)
-- [ ] Lifecycle events (expiration, category changes) detected correctly
-- [ ] CreatureGenerator integration allows aging of generated creatures
-- [ ] Species lifespan variety respected (different lifespans per species)
-- [ ] Performance standards maintained with comprehensive testing
-
-## Stage 1 Task 7 Lessons Learned
-
-### ✅ Task 7 (Save/Load System) - COMPLETED & VERIFIED
-**Key Achievements:**
-
-1. **Comprehensive Hybrid Save Architecture**
-   - **Success**: ConfigFile for settings/metadata, ResourceSaver for complex creature data
-   - **Success**: Slot-based save system with validation, backup/restore functionality
-   - **Success**: Auto-save with configurable intervals and manual triggers
-   - **Pattern**: Hybrid approach balances performance with data integrity
-
-2. **Advanced Data Persistence & Validation**
-   - **Success**: Individual creature save/load with .tres format and cache workarounds
-   - **Success**: Batch creature collection operations with performance optimization
-   - **Success**: Comprehensive save data validation with repair capabilities
-   - **Pattern**: Validation-first approach with graceful error recovery
-
-3. **Perfect System Integration**
-   - **Success**: System states persistence for all GameCore subsystems
-   - **Success**: SignalBus integration with save/load completion events
-   - **Success**: Performance targets met: <200ms for 100 creatures
-   - **Pattern**: Seamless integration with existing GameCore architecture
-
-4. **Robust Error Handling & Recovery**
-   - **Success**: Slot validation, corruption detection, and automatic backup creation
-   - **Success**: Graceful fallbacks for missing data or system references
-   - **Success**: Comprehensive logging and debug information for troubleshooting
-   - **Pattern**: Defensive programming with multiple layers of validation
-
-5. **Test Quality & Signal Handling Fixes**
-   - **Success**: Fixed lambda scope issues with class-level variables for signal testing
-   - **Success**: Resolved age category transition detection with proper timing
-   - **Success**: Corrected weeks calculation test logic with accurate expectations
-   - **Pattern**: Robust test patterns ensure reliable system validation
-
-### New Best Practices from Task 7:
-- **Hybrid save approaches** work best - ConfigFile for simple data, ResourceSaver for complex objects
-- **Signal scope handling** requires class-level variables for lambda functions in tests
-- **Directory creation** must be explicit before saving files to avoid path errors
-- **Method visibility** should match usage - make methods public when tests need access
-- **Test expectations** must match actual system behavior, not idealized assumptions
-- **Performance validation** should include both save and load operations
-- **Cache workarounds** are essential with Godot 4.5 Resource system bugs
-
-### SaveSystem Usage Patterns:
-```gdscript
-# Basic save/load operations
-var save_system: SaveSystem = GameCore.get_system("save")
-save_system.save_game_state("my_save_slot")
-save_system.load_game_state("my_save_slot")
-
-# Creature persistence
-var creatures: Array[CreatureData] = get_player_creatures()
-save_system.save_creature_collection(creatures, "my_slot")
-var loaded: Array[CreatureData] = save_system.load_creature_collection("my_slot")
-
-# Auto-save functionality
-save_system.enable_auto_save(5)  # Every 5 minutes
-save_system.trigger_auto_save()  # Manual trigger
-
-# Backup and validation
-save_system.create_backup("main_save", "backup_slot")
-var validation: Dictionary = save_system.validate_save_data("main_save")
-if not validation.valid:
-    save_system.repair_corrupted_save("main_save")
-```
-
-### Updated Verification Checklist from Task 7:
-- [ ] SaveSystem loads via GameCore lazy loading pattern
-- [ ] Basic save/load operations work with slot management
-- [ ] Creature collection persistence handles large datasets efficiently
-- [ ] Individual creature save/load works with proper cache handling
-- [ ] Auto-save functionality triggers correctly with configurable intervals
-- [ ] Data validation detects corruption and enables repair workflows
-- [ ] Backup/restore operations preserve data integrity
-- [ ] SignalBus integration emits save/load completion events properly
-- [ ] Performance targets met: <200ms for 100 creature operations
-- [ ] Error handling provides graceful fallbacks and comprehensive logging
-- [ ] System integration saves/loads state for all GameCore subsystems
-- [ ] Test patterns handle signal scope and timing correctly
-
-## Stage 1 Task 8 Lessons Learned
-
-### ✅ Task 8 (Player Collection) - COMPLETED & VERIFIED
-**Key Achievements:**
-
+---
+(Full historical task narratives have been removed from this file; see `docs/development/ARCHIVE_STAGE1_TASK_DETAILS.md` for legacy detail.)
 1. **Complete Player Collection System Architecture**
    - **Success**: Active roster (6 creature limit) with swap mechanics
    - **Success**: Stable collection (unlimited) with promotion/demotion
