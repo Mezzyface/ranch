@@ -114,7 +114,7 @@ static var _generation_stats: Dictionary = {}
 
 # === CORE GENERATION METHODS ===
 
-static func generate_creature_data(species_id: String, generation_type: GenerationType = GenerationType.UNIFORM, name: String = "") -> CreatureData:
+static func generate_creature_data(species_id: String, generation_type: GenerationType = GenerationType.UNIFORM, creature_name: String = "") -> CreatureData:
 	"""
 	Generate lightweight CreatureData (default approach for save/serialization efficiency).
 	Use this for most generation needs unless behavior is immediately required.
@@ -128,7 +128,7 @@ static func generate_creature_data(species_id: String, generation_type: Generati
 
 	# Basic creature info
 	data.species_id = species_id
-	data.creature_name = name if name != "" else _generate_random_name(species_id)
+	data.creature_name = creature_name if creature_name != "" else _generate_random_name(species_id)
 	data.id = _generate_unique_id()
 
 	# Generate stats using specified algorithm
@@ -150,12 +150,12 @@ static func generate_creature_data(species_id: String, generation_type: Generati
 
 	return data
 
-static func generate_creature_entity(species_id: String, generation_type: GenerationType = GenerationType.UNIFORM, name: String = "") -> CreatureEntity:
+static func generate_creature_entity(species_id: String, generation_type: GenerationType = GenerationType.UNIFORM, creature_name: String = "") -> CreatureEntity:
 	"""
 	Generate full CreatureEntity with behavior (heavier, use when behavior needed immediately).
 	This creates both CreatureData and CreatureEntity wrapper.
 	"""
-	var data: CreatureData = generate_creature_data(species_id, generation_type, name)
+	var data: CreatureData = generate_creature_data(species_id, generation_type, creature_name)
 	if data == null:
 		return null
 

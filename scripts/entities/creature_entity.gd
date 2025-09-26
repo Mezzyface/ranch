@@ -269,11 +269,11 @@ func get_summary() -> String:
 	]
 
 # Create a new creature with random stats
-static func create_random(name: String = "", species: String = "") -> CreatureEntity:
+static func create_random(creature_name: String = "", species: String = "") -> CreatureEntity:
 	var entity: CreatureEntity = CreatureEntity.new()
 
-	if not name.is_empty():
-		entity.data.creature_name = name
+	if not creature_name.is_empty():
+		entity.data.creature_name = creature_name
 	else:
 		entity.data.creature_name = "Creature_%d" % (randi() % 9999)
 
