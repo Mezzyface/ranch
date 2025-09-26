@@ -31,7 +31,7 @@ func _run_next_test() -> void:
 
 	var test: Dictionary = TESTS_TO_RUN[current_test_index]
 	print("Running test %d/%d: %s" % [current_test_index + 1, TESTS_TO_RUN.size(), test.name])
-	print("=" * 50)
+	print("==================================================")  # 50 equals signs
 
 	var start_time: int = Time.get_ticks_msec()
 
