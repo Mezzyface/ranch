@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://test_ai_mistakes"]
+
+[ext_resource type="Script" path="res://tests/individual/test_ai_mistakes.gd" id="1"]
+
+[node name="TestAIMistakes" type="Node"]
+script = ExtResource("1")

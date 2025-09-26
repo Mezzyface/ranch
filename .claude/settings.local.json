@@ -40,7 +40,8 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_creature.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_collection.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/test_runner.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/test_all.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/test_all.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/preflight_check.tscn)"
     ],
     "deny": [],
     "ask": []
