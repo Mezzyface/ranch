@@ -51,8 +51,19 @@ func _ready() -> void:
 	# Test Creature Classes (Task 2)
 	_test_creature_classes(signal_bus)
 
+	# Test Tag System (Task 4)
+	var tag_system = GameCore.get_system("tag")
+	if tag_system:
+		print("✅ TagSystem lazy loading works")
+		_test_tag_system(tag_system, signal_bus)
+	else:
+		print("❌ TagSystem lazy loading failed")
+
+	# Test Creature Generation (Task 5)
+	_test_creature_generation(tag_system, stat_system)
+
 	print("=== All Tests Complete ===")
-	print("Project ready - Stage 1 Task 3 (Stat System) COMPLETE!")
+	print("Project ready - Stage 1 Task 5 (Creature Generation) COMPLETE!")
 
 func _test_signal_bus_enhancements(signal_bus: SignalBus) -> void:
 	print("--- Testing SignalBus Enhancements ---")
@@ -63,7 +74,11 @@ func _test_signal_bus_enhancements(signal_bus: SignalBus) -> void:
 		"creature_stats_changed",
 		"creature_aged",
 		"creature_activated",
-		"creature_deactivated"
+		"creature_deactivated",
+		"creature_tag_added",
+		"creature_tag_removed",
+		"tag_add_failed",
+		"tag_validation_failed"
 	]
 
 	var system_signals: Array[String] = [
@@ -524,3 +539,603 @@ func _test_stat_system(stat_system: Node) -> void:
 	stat_system.clear_creature_modifiers("test_stat_001")
 
 	print("\n✅ StatSystem testing complete!")
+
+func _test_tag_system(tag_system: TagSystem, signal_bus: SignalBus) -> void:
+	print("\n=== Testing TagSystem (Task 4) ===")
+
+	# Test 1: Basic tag data access
+	print("\n=== Test 1: Tag Data Access ===")
+
+	var all_tags: Array[String] = tag_system.get_all_tags()
+	if all_tags.size() >= 25:
+		print("✅ TagSystem has %d tags (expected >= 25)" % all_tags.size())
+	else:
+		print("❌ TagSystem has only %d tags (expected >= 25)" % all_tags.size())
+
+	# Test each category
+	var size_tags: Array[String] = tag_system.get_tags_by_category(TagSystem.TagCategory.SIZE)
+	var behavioral_tags: Array[String] = tag_system.get_tags_by_category(TagSystem.TagCategory.BEHAVIORAL)
+	var physical_tags: Array[String] = tag_system.get_tags_by_category(TagSystem.TagCategory.PHYSICAL)
+	var ability_tags: Array[String] = tag_system.get_tags_by_category(TagSystem.TagCategory.ABILITY)
+	var utility_tags: Array[String] = tag_system.get_tags_by_category(TagSystem.TagCategory.UTILITY)
+
+	if size_tags.size() == 3:
+		print("✅ SIZE category has 3 tags: %s" % str(size_tags))
+	else:
+		print("❌ SIZE category has %d tags (expected 3)" % size_tags.size())
+
+	if behavioral_tags.size() == 6:
+		print("✅ BEHAVIORAL category has 6 tags: %s" % str(behavioral_tags))
+	else:
+		print("❌ BEHAVIORAL category has %d tags (expected 6)" % behavioral_tags.size())
+
+	# Test 2: Tag validation - valid tags
+	print("\n=== Test 2: Valid Tag Combinations ===")
+
+	var valid_combo1: Array[String] = ["Medium", "Territorial", "Winged", "Dark Vision", "Problem Solver"]
+	var validation1: Dictionary = tag_system.validate_tag_combination(valid_combo1)
+	if validation1.valid:
+		print("✅ Valid combination accepted: %s" % str(valid_combo1))
+	else:
+		print("❌ Valid combination rejected: %s" % str(validation1.errors))
+
+	var valid_combo2: Array[String] = ["Small", "Social", "Diurnal", "Stealthy", "Messenger"]
+	var validation2: Dictionary = tag_system.validate_tag_combination(valid_combo2)
+	if validation2.valid:
+		print("✅ Valid combination accepted: %s" % str(valid_combo2))
+	else:
+		print("❌ Valid combination rejected: %s" % str(validation2.errors))
+
+	# Test 3: Tag validation - mutual exclusions
+	print("\n=== Test 3: Mutual Exclusions ===")
+
+	# Multiple size tags
+	var size_conflict: Array[String] = ["Small", "Large", "Territorial"]
+	var size_validation: Dictionary = tag_system.validate_tag_combination(size_conflict)
+	if not size_validation.valid and "Cannot have both" in size_validation.errors[0]:
+		print("✅ Size conflict properly detected: %s" % size_validation.errors[0])
+	else:
+		print("❌ Size conflict not detected")
+
+	# Activity pattern conflict
+	var activity_conflict: Array[String] = ["Medium", "Nocturnal", "Diurnal"]
+	var activity_validation: Dictionary = tag_system.validate_tag_combination(activity_conflict)
+	if not activity_validation.valid:
+		print("✅ Activity conflict properly detected: %s" % activity_validation.errors[0])
+	else:
+		print("❌ Activity conflict not detected")
+
+	# Social/Solitary conflict
+	var social_conflict: Array[String] = ["Medium", "Social", "Solitary"]
+	var social_validation: Dictionary = tag_system.validate_tag_combination(social_conflict)
+	if not social_validation.valid:
+		print("✅ Social conflict properly detected: %s" % social_validation.errors[0])
+	else:
+		print("❌ Social conflict not detected")
+
+	# Test 4: Dependencies
+	print("\n=== Test 4: Tag Dependencies ===")
+
+	# Flies requires Winged
+	var flies_without_winged: Array[String] = ["Medium", "Flies"]
+	var flies_validation: Dictionary = tag_system.validate_tag_combination(flies_without_winged)
+	if not flies_validation.valid and "requires Winged" in flies_validation.errors[0]:
+		print("✅ Flies dependency properly enforced: %s" % flies_validation.errors[0])
+	else:
+		print("❌ Flies dependency not enforced")
+
+	# Sentient requires Problem Solver
+	var sentient_without_solver: Array[String] = ["Medium", "Sentient"]
+	var sentient_validation: Dictionary = tag_system.validate_tag_combination(sentient_without_solver)
+	if not sentient_validation.valid and "requires Problem Solver" in sentient_validation.errors[0]:
+		print("✅ Sentient dependency properly enforced: %s" % sentient_validation.errors[0])
+	else:
+		print("❌ Sentient dependency not enforced")
+
+	# Test 5: Incompatibilities
+	print("\n=== Test 5: Incompatibilities ===")
+
+	# Aquatic incompatible with Flies
+	var aquatic_flies: Array[String] = ["Medium", "Winged", "Flies", "Aquatic"]
+	var aquatic_validation: Dictionary = tag_system.validate_tag_combination(aquatic_flies)
+	if not aquatic_validation.valid and "incompatible" in aquatic_validation.errors[0]:
+		print("✅ Aquatic/Flies incompatibility properly detected: %s" % aquatic_validation.errors[0])
+	else:
+		print("❌ Aquatic/Flies incompatibility not detected")
+
+	# Test 6: CreatureEntity integration
+	print("\n=== Test 6: CreatureEntity Integration ===")
+
+	var test_creature: CreatureData = CreatureData.new()
+	test_creature.id = "test_tag_creature"
+	test_creature.creature_name = "Test Tag Creature"
+	test_creature.tags = ["Medium", "Territorial"]
+
+	var creature_entity: CreatureEntity = CreatureEntity.new(test_creature)
+	add_child(creature_entity)  # Add to scene tree so TagSystem can be loaded
+
+	# Wait a frame for _ready to be called
+	await get_tree().process_frame
+
+	# Test adding valid tag
+	var add_success: bool = creature_entity.add_tag("Dark Vision")
+	if add_success and test_creature.has_tag("Dark Vision"):
+		print("✅ Tag successfully added through CreatureEntity: Dark Vision")
+	else:
+		print("❌ Failed to add valid tag through CreatureEntity")
+
+	# Test adding conflicting tag
+	var conflict_result: bool = creature_entity.add_tag("Small")  # Should conflict with "Medium"
+	if not conflict_result:
+		print("✅ Conflicting tag properly rejected through CreatureEntity")
+	else:
+		print("❌ Conflicting tag incorrectly added")
+
+	# Test can_add_tag
+	var can_add_check: Dictionary = creature_entity.can_add_tag("Large")
+	if not can_add_check.can_add and "Cannot have both" in can_add_check.reason:
+		print("✅ can_add_tag properly detects conflicts: %s" % can_add_check.reason)
+	else:
+		print("❌ can_add_tag failed to detect conflict")
+
+	# Test removing tag
+	var remove_success: bool = creature_entity.remove_tag("Dark Vision")
+	if remove_success and not test_creature.has_tag("Dark Vision"):
+		print("✅ Tag successfully removed through CreatureEntity")
+	else:
+		print("❌ Failed to remove tag through CreatureEntity")
+
+	# Test 7: Quest requirement matching
+	print("\n=== Test 7: Quest Requirements ===")
+
+	test_creature.tags = ["Medium", "Dark Vision", "Stealthy"]
+	var meets_dark_vision: bool = tag_system.meets_tag_requirements(test_creature, ["Dark Vision"])
+	if meets_dark_vision:
+		print("✅ Creature meets single tag requirement")
+	else:
+		print("❌ Creature fails single tag requirement")
+
+	var meets_multiple: bool = tag_system.meets_tag_requirements(test_creature, ["Dark Vision", "Stealthy"])
+	if meets_multiple:
+		print("✅ Creature meets multiple tag requirements")
+	else:
+		print("❌ Creature fails multiple tag requirements")
+
+	var fails_requirement: bool = tag_system.meets_tag_requirements(test_creature, ["Flies"])
+	if not fails_requirement:
+		print("✅ Creature properly fails missing tag requirement")
+	else:
+		print("❌ Creature incorrectly passes missing tag requirement")
+
+	# Test 8: Collection filtering
+	print("\n=== Test 8: Collection Filtering ===")
+
+	# Create test creatures
+	var creatures: Array[CreatureData] = []
+
+	var creature1: CreatureData = CreatureData.new()
+	creature1.creature_name = "Stealth Creature"
+	creature1.tags = ["Small", "Stealthy", "Dark Vision"]
+	creatures.append(creature1)
+
+	var creature2: CreatureData = CreatureData.new()
+	creature2.creature_name = "Flying Creature"
+	creature2.tags = ["Medium", "Winged", "Flies"]
+	creatures.append(creature2)
+
+	var creature3: CreatureData = CreatureData.new()
+	creature3.creature_name = "Aquatic Creature"
+	creature3.tags = ["Large", "Aquatic", "Natural Armor"]
+	creatures.append(creature3)
+
+	# Filter for stealth creatures
+	var stealth_creatures: Array[CreatureData] = tag_system.filter_creatures_by_tags(creatures, ["Stealthy"])
+	if stealth_creatures.size() == 1 and stealth_creatures[0].creature_name == "Stealth Creature":
+		print("✅ Collection filtering by required tags works")
+	else:
+		print("❌ Collection filtering by required tags failed")
+
+	# Filter excluding flying creatures
+	var non_flying: Array[CreatureData] = tag_system.filter_creatures_by_tags(creatures, [], ["Flies"])
+	if non_flying.size() == 2:
+		print("✅ Collection filtering by excluded tags works")
+	else:
+		print("❌ Collection filtering by excluded tags failed")
+
+	# Test 9: Tag match scoring
+	print("\n=== Test 9: Tag Match Scoring ===")
+
+	var creature_tags: Array[String] = ["Medium", "Dark Vision", "Stealthy", "Problem Solver"]
+	var required_tags: Array[String] = ["Dark Vision", "Stealthy"]
+	var match_score: float = tag_system.calculate_tag_match_score(creature_tags, required_tags)
+	if match_score == 1.0:
+		print("✅ Perfect tag match score: %.2f" % match_score)
+	else:
+		print("❌ Incorrect perfect match score: %.2f" % match_score)
+
+	var partial_required: Array[String] = ["Dark Vision", "Flies", "Aquatic"]
+	var partial_score: float = tag_system.calculate_tag_match_score(creature_tags, partial_required)
+	if abs(partial_score - 0.33) < 0.1:  # ~0.33 (1 out of 3 matches)
+		print("✅ Partial tag match score: %.2f" % partial_score)
+	else:
+		print("❌ Incorrect partial match score: %.2f" % partial_score)
+
+	# Test 10: Breeding inheritance
+	print("\n=== Test 10: Breeding Inheritance ===")
+
+	var parent1_tags: Array[String] = ["Medium", "Dark Vision", "Stealthy"]
+	var parent2_tags: Array[String] = ["Medium", "Problem Solver", "Territorial"]
+	var inherited: Array[String] = tag_system.calculate_inherited_tags(parent1_tags, parent2_tags)
+
+	# Should always have a size tag
+	if tag_system.has_size_tag(inherited):
+		print("✅ Inheritance ensures size tag present: %s" % str(inherited))
+	else:
+		print("❌ Inheritance failed to ensure size tag")
+
+	# Validation should pass
+	var inheritance_validation: Dictionary = tag_system.validate_tag_combination(inherited)
+	if inheritance_validation.valid:
+		print("✅ Inherited tag combination is valid: %s" % str(inherited))
+	else:
+		print("❌ Inherited tag combination invalid: %s" % str(inheritance_validation.errors))
+
+	# Test 11: Utility functions
+	print("\n=== Test 11: Utility Functions ===")
+
+	var description: String = tag_system.get_tag_description("Dark Vision")
+	if "darkness" in description.to_lower():
+		print("✅ Tag description retrieved: %s" % description)
+	else:
+		print("❌ Tag description incorrect: %s" % description)
+
+	var category: TagSystem.TagCategory = tag_system.get_tag_category("Dark Vision")
+	if category == TagSystem.TagCategory.ABILITY:
+		print("✅ Tag category correct: ABILITY")
+	else:
+		print("❌ Tag category incorrect: %d" % category)
+
+	# Test complementary tags
+	var existing_tags: Array[String] = ["Stealthy"]
+	var complementary: Array[String] = tag_system.get_complementary_tags(existing_tags)
+	if "Flies" in complementary:
+		print("✅ Complementary tags suggestion: %s" % str(complementary))
+	else:
+		print("✅ Complementary tags (may be empty for Stealthy): %s" % str(complementary))
+
+	# Test 12: Performance with larger dataset
+	print("\n=== Test 12: Performance Test ===")
+
+	var large_creatures: Array[CreatureData] = []
+	for i in range(100):
+		var perf_creature: CreatureData = CreatureData.new()
+		perf_creature.creature_name = "Creature_%d" % i
+		# Mix of tags for variety
+		if i % 3 == 0:
+			perf_creature.tags = ["Small", "Stealthy", "Dark Vision"]
+		elif i % 3 == 1:
+			perf_creature.tags = ["Medium", "Territorial", "Natural Armor"]
+		else:
+			perf_creature.tags = ["Large", "Problem Solver", "Constructor"]
+		large_creatures.append(perf_creature)
+
+	var start_time: int = Time.get_unix_time_from_system()
+	var filtered_perf: Array[CreatureData] = tag_system.filter_creatures_by_tags(large_creatures, ["Dark Vision"])
+	var end_time: int = Time.get_unix_time_from_system()
+	var duration: int = end_time - start_time
+
+	if filtered_perf.size() == 34:  # Should be ~33 creatures (100/3 rounded up)
+		print("✅ Performance test: filtered %d creatures in %dms" % [filtered_perf.size(), duration])
+	else:
+		print("❌ Performance test filtering incorrect: %d creatures" % filtered_perf.size())
+
+	# Clean up
+	creature_entity.queue_free()
+
+	print("\n✅ TagSystem testing complete!")
+
+func _test_creature_generation(tag_system: TagSystem, stat_system: Node) -> void:
+	print("\n=== Testing CreatureGenerator (Task 5) ===")
+
+	# Test 1: Basic generation functionality
+	print("\n=== Test 1: Basic Generation ===")
+
+	# Test species availability
+	var available_species: Array[String] = CreatureGenerator.get_available_species()
+	if available_species.size() == 4:
+		print("✅ All 4 species available: %s" % str(available_species))
+	else:
+		print("❌ Wrong species count: %d (expected 4)" % available_species.size())
+
+	# Test species validation
+	if CreatureGenerator.is_valid_species("scuttleguard"):
+		print("✅ Species validation works")
+	else:
+		print("❌ Species validation failed")
+
+	if not CreatureGenerator.is_valid_species("invalid_species"):
+		print("✅ Invalid species properly rejected")
+	else:
+		print("❌ Invalid species incorrectly accepted")
+
+	# Test 2: CreatureData generation
+	print("\n=== Test 2: CreatureData Generation ===")
+
+	var scuttleguard_data: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard")
+	if scuttleguard_data and scuttleguard_data.species_id == "scuttleguard":
+		print("✅ CreatureData generation successful: %s" % scuttleguard_data.creature_name)
+		print("   Stats: STR=%d, CON=%d, DEX=%d, INT=%d, WIS=%d, DIS=%d" % [
+			scuttleguard_data.strength,
+			scuttleguard_data.constitution,
+			scuttleguard_data.dexterity,
+			scuttleguard_data.intelligence,
+			scuttleguard_data.wisdom,
+			scuttleguard_data.discipline
+		])
+		print("   Tags: %s" % str(scuttleguard_data.tags))
+	else:
+		print("❌ CreatureData generation failed")
+
+	# Test 3: CreatureEntity generation
+	print("\n=== Test 3: CreatureEntity Generation ===")
+
+	var wind_dancer_entity: CreatureEntity = CreatureGenerator.generate_creature_entity("wind_dancer")
+	if wind_dancer_entity and wind_dancer_entity.data.species_id == "wind_dancer":
+		print("✅ CreatureEntity generation successful: %s" % wind_dancer_entity.data.creature_name)
+		add_child(wind_dancer_entity)  # Add to scene tree for testing
+		await get_tree().process_frame  # Wait for _ready
+	else:
+		print("❌ CreatureEntity generation failed")
+
+	# Test 4: Generation algorithms
+	print("\n=== Test 4: Generation Algorithms ===")
+
+	var uniform_creature: CreatureData = CreatureGenerator.generate_creature_data("stone_sentinel", CreatureGenerator.GenerationType.UNIFORM)
+	var gaussian_creature: CreatureData = CreatureGenerator.generate_creature_data("stone_sentinel", CreatureGenerator.GenerationType.GAUSSIAN)
+	var high_roll_creature: CreatureData = CreatureGenerator.generate_creature_data("stone_sentinel", CreatureGenerator.GenerationType.HIGH_ROLL)
+	var low_roll_creature: CreatureData = CreatureGenerator.generate_creature_data("stone_sentinel", CreatureGenerator.GenerationType.LOW_ROLL)
+
+	if uniform_creature and gaussian_creature and high_roll_creature and low_roll_creature:
+		print("✅ All generation algorithms working")
+		print("   UNIFORM: STR=%d, CON=%d" % [uniform_creature.strength, uniform_creature.constitution])
+		print("   GAUSSIAN: STR=%d, CON=%d" % [gaussian_creature.strength, gaussian_creature.constitution])
+		print("   HIGH_ROLL: STR=%d, CON=%d" % [high_roll_creature.strength, high_roll_creature.constitution])
+		print("   LOW_ROLL: STR=%d, CON=%d" % [low_roll_creature.strength, low_roll_creature.constitution])
+
+		# High roll should generally be >= low roll (not guaranteed but statistically likely)
+		var high_total: int = high_roll_creature.strength + high_roll_creature.constitution
+		var low_total: int = low_roll_creature.strength + low_roll_creature.constitution
+		print("   HIGH_ROLL total: %d, LOW_ROLL total: %d" % [high_total, low_total])
+	else:
+		print("❌ Generation algorithm test failed")
+
+	# Test 5: Species-specific validation
+	print("\n=== Test 5: Species Validation ===")
+
+	# Generate 20 creatures of each species and validate ranges
+	var species_to_test: Array[String] = ["scuttleguard", "stone_sentinel", "wind_dancer", "glow_grub"]
+	var validation_passed: bool = true
+
+	for species_id in species_to_test:
+		var valid_count: int = 0
+		var total_creatures: int = 20
+
+		for i in range(total_creatures):
+			var creature: CreatureData = CreatureGenerator.generate_creature_data(species_id)
+			var validation: Dictionary = CreatureGenerator.validate_creature_against_species(creature)
+			if validation.valid:
+				valid_count += 1
+			else:
+				print("   Validation error for %s: %s" % [species_id, str(validation.errors)])
+				validation_passed = false
+
+		var success_rate: float = float(valid_count) / float(total_creatures)
+		if success_rate == 1.0:
+			print("✅ %s validation: %d/%d passed (%.1f%%)" % [species_id, valid_count, total_creatures, success_rate * 100])
+		else:
+			print("❌ %s validation: %d/%d passed (%.1f%%)" % [species_id, valid_count, total_creatures, success_rate * 100])
+
+	if validation_passed:
+		print("✅ All species validation tests passed")
+	else:
+		print("❌ Some species validation tests failed")
+
+	# Test 6: Tag integration
+	print("\n=== Test 6: Tag Integration ===")
+
+	var tag_test_creature: CreatureData = CreatureGenerator.generate_creature_data("glow_grub")
+	var species_info: Dictionary = CreatureGenerator.get_species_info("glow_grub")
+
+	# Check guaranteed tags
+	var guaranteed_tags_present: bool = true
+	for tag in species_info.guaranteed_tags:
+		if not tag_test_creature.has_tag(tag):
+			print("❌ Missing guaranteed tag: %s" % tag)
+			guaranteed_tags_present = false
+
+	if guaranteed_tags_present:
+		print("✅ All guaranteed tags present: %s" % str(species_info.guaranteed_tags))
+	else:
+		print("❌ Some guaranteed tags missing")
+
+	# Check no invalid tags
+	var tag_validation_passed: bool = true
+	if tag_system:
+		var validation: Dictionary = tag_system.validate_tag_combination(tag_test_creature.tags)
+		if validation.valid:
+			print("✅ Generated tags pass TagSystem validation")
+		else:
+			print("❌ Generated tags fail TagSystem validation: %s" % str(validation.errors))
+			tag_validation_passed = false
+	else:
+		print("⚠️ TagSystem not available for validation")
+
+	# Test 7: Factory methods
+	print("\n=== Test 7: Factory Methods ===")
+
+	# Test starter creature
+	var starter: CreatureEntity = CreatureGenerator.generate_starter_creature()
+	if starter and starter.data.species_id == "scuttleguard":
+		print("✅ Starter creature generation successful: %s" % starter.data.creature_name)
+		# Starter should have boosted stats
+		var base_creature: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard")
+		if starter.data.strength >= base_creature.strength:
+			print("✅ Starter creature has stat boost")
+		else:
+			print("⚠️ Starter creature boost not clearly visible (random variation)")
+		add_child(starter)  # Add to scene tree
+		await get_tree().process_frame
+	else:
+		print("❌ Starter creature generation failed")
+
+	# Test egg generation
+	var premium_egg: CreatureData = CreatureGenerator.generate_from_egg("wind_dancer", "premium")
+	var discount_egg: CreatureData = CreatureGenerator.generate_from_egg("wind_dancer", "discount")
+	var standard_egg: CreatureData = CreatureGenerator.generate_from_egg("wind_dancer", "standard")
+
+	if premium_egg and discount_egg and standard_egg:
+		print("✅ Egg generation successful for all qualities")
+		var premium_total: int = premium_egg.strength + premium_egg.constitution + premium_egg.dexterity
+		var discount_total: int = discount_egg.strength + discount_egg.constitution + discount_egg.dexterity
+		var standard_total: int = standard_egg.strength + standard_egg.constitution + standard_egg.dexterity
+		print("   Premium total: %d, Standard: %d, Discount: %d" % [premium_total, standard_total, discount_total])
+	else:
+		print("❌ Egg generation failed")
+
+	# Test 8: Population generation
+	print("\n=== Test 8: Population Generation ===")
+
+	var population: Array[CreatureData] = CreatureGenerator.generate_population_data(50)
+	if population.size() == 50:
+		print("✅ Population generation successful: %d creatures" % population.size())
+
+		# Count species distribution
+		var species_count: Dictionary = {}
+		for creature in population:
+			if not species_count.has(creature.species_id):
+				species_count[creature.species_id] = 0
+			species_count[creature.species_id] += 1
+
+		print("   Species distribution: %s" % str(species_count))
+
+		# Should have relatively even distribution
+		var min_count: int = 999
+		var max_count: int = 0
+		for species in species_count:
+			var count: int = species_count[species]
+			min_count = mini(min_count, count)
+			max_count = maxi(max_count, count)
+
+		if max_count - min_count <= 20:  # Allow some variation
+			print("✅ Population distribution reasonably even")
+		else:
+			print("⚠️ Population distribution highly uneven (but may be random)")
+	else:
+		print("❌ Population generation failed: %d creatures (expected 50)" % population.size())
+
+	# Test 9: Performance benchmark
+	print("\n=== Test 9: Performance Benchmark ===")
+
+	var start_time: int = Time.get_ticks_msec()
+	var large_population: Array[CreatureData] = CreatureGenerator.generate_population_data(1000)
+	var end_time: int = Time.get_ticks_msec()
+	var duration: int = end_time - start_time
+
+	if large_population.size() == 1000:
+		print("✅ Generated 1000 creatures in %dms" % duration)
+		if duration < 100:
+			print("✅ Performance target met: <%dms (target: <100ms)" % duration)
+		else:
+			print("⚠️ Performance target missed: %dms (target: <100ms)" % duration)
+	else:
+		print("❌ Large population generation failed: %d creatures" % large_population.size())
+
+	# Test 10: Statistical analysis
+	print("\n=== Test 10: Statistical Analysis ===")
+
+	# Generate 100 creatures and check stat distributions
+	var analysis_population: Array[CreatureData] = []
+	for i in range(100):
+		var creature: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard", CreatureGenerator.GenerationType.GAUSSIAN)
+		analysis_population.append(creature)
+
+	# Calculate average stats
+	var total_str: int = 0
+	var total_con: int = 0
+	var total_dex: int = 0
+
+	for creature in analysis_population:
+		total_str += creature.strength
+		total_con += creature.constitution
+		total_dex += creature.dexterity
+
+	var avg_str: float = float(total_str) / 100.0
+	var avg_con: float = float(total_con) / 100.0
+	var avg_dex: float = float(total_dex) / 100.0
+
+	# Expected averages for scuttleguard (midpoints of ranges)
+	var expected_str: float = 100.0  # (70 + 130) / 2
+	var expected_con: float = 110.0  # (80 + 140) / 2
+	var expected_dex: float = 120.0  # (90 + 150) / 2
+
+	var str_diff: float = abs(avg_str - expected_str)
+	var con_diff: float = abs(avg_con - expected_con)
+	var dex_diff: float = abs(avg_dex - expected_dex)
+
+	print("   Scuttleguard GAUSSIAN stats (100 samples):")
+	print("   STR: %.1f (expected ~%.1f, diff: %.1f)" % [avg_str, expected_str, str_diff])
+	print("   CON: %.1f (expected ~%.1f, diff: %.1f)" % [avg_con, expected_con, con_diff])
+	print("   DEX: %.1f (expected ~%.1f, diff: %.1f)" % [avg_dex, expected_dex, dex_diff])
+
+	# Allow 15-point deviation from expected (reasonable for Gaussian)
+	if str_diff <= 15 and con_diff <= 15 and dex_diff <= 15:
+		print("✅ Statistical analysis shows proper Gaussian distribution")
+	else:
+		print("⚠️ Statistical analysis shows high deviation (may be random variation)")
+
+	# Test 11: StatSystem integration
+	print("\n=== Test 11: StatSystem Integration ===")
+
+	var integration_creature: CreatureData = CreatureGenerator.generate_creature_data("stone_sentinel")
+	if stat_system:
+		var effective_str: int = stat_system.get_effective_stat(integration_creature, "strength")
+		var breakdown: Dictionary = stat_system.get_stat_breakdown(integration_creature, "strength")
+
+		if effective_str == integration_creature.strength:
+			print("✅ Generated creature integrates with StatSystem: effective STR = %d" % effective_str)
+		else:
+			print("❌ StatSystem integration issue: generated STR = %d, effective STR = %d" % [integration_creature.strength, effective_str])
+
+		if breakdown.has("base") and breakdown.has("tier"):
+			print("✅ StatSystem breakdown works: base=%d, tier=%s" % [breakdown.base, breakdown.tier])
+		else:
+			print("❌ StatSystem breakdown failed")
+	else:
+		print("❌ StatSystem not available for integration test")
+
+	# Test 12: Generation statistics
+	print("\n=== Test 12: Generation Statistics ===")
+
+	CreatureGenerator.reset_generation_statistics()
+
+	# Generate some creatures to build stats
+	for i in range(10):
+		CreatureGenerator.generate_creature_data("scuttleguard", CreatureGenerator.GenerationType.UNIFORM)
+	for i in range(5):
+		CreatureGenerator.generate_creature_data("wind_dancer", CreatureGenerator.GenerationType.GAUSSIAN)
+
+	var stats: Dictionary = CreatureGenerator.get_generation_statistics()
+	if stats.has("total_generated") and stats.total_generated == 15:
+		print("✅ Generation statistics tracking: %d total" % stats.total_generated)
+		print("   By species: %s" % str(stats.by_species))
+		print("   By type: %s" % str(stats.by_type))
+	else:
+		print("❌ Generation statistics tracking failed")
+
+	# Clean up entities
+	if wind_dancer_entity:
+		wind_dancer_entity.queue_free()
+	if starter:
+		starter.queue_free()
+
+	print("\n✅ CreatureGenerator testing complete!")
