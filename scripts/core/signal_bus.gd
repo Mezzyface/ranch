@@ -17,6 +17,11 @@ signal creature_aged(data: CreatureData, new_age: int)
 signal creature_activated(data: CreatureData)
 signal creature_deactivated(data: CreatureData)
 
+# Age-related signals (Task 6)
+signal creature_category_changed(data: CreatureData, old_category: int, new_category: int)
+signal creature_expired(data: CreatureData)
+signal aging_batch_completed(creatures_aged: int, total_weeks: int)
+
 # Tag-related signals (Task 4)
 signal creature_tag_added(data: CreatureData, tag: String)
 signal creature_tag_removed(data: CreatureData, tag: String)
@@ -40,6 +45,14 @@ signal tag_validation_failed(tags: Array[String], errors: Array[String])
 # Time progression signals (will be used in later tasks)
 # signal week_advanced(new_week: int)
 # signal day_passed(current_week: int, current_day: int)
+
+# === SAVE/LOAD SIGNALS (Task 7) ===
+# Additional save-related signals for Task 7 implementation
+signal auto_save_triggered()
+signal save_progress(progress: float)
+signal data_corrupted(slot_name: String, error: String)
+signal backup_created(slot_name: String, backup_name: String)
+signal backup_restored(slot_name: String, backup_name: String)
 
 # === SIGNAL MANAGEMENT ===
 # Connection tracking for debugging and cleanup
@@ -186,6 +199,52 @@ func emit_creature_deactivated(data: CreatureData) -> void:
 
 	creature_deactivated.emit(data)
 
+# === AGE SIGNAL EMISSION ===
+func emit_creature_category_changed(data: CreatureData, old_category: int, new_category: int) -> void:
+	"""Emit creature_category_changed signal with validation."""
+	if data == null:
+		push_error("SignalBus: Cannot emit creature_category_changed with null data")
+		return
+
+	if old_category < 0 or old_category > 4:
+		push_error("SignalBus: Invalid old_category: %d" % old_category)
+		return
+
+	if new_category < 0 or new_category > 4:
+		push_error("SignalBus: Invalid new_category: %d" % new_category)
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting creature_category_changed for '%s': %d -> %d" % [data.creature_name, old_category, new_category])
+
+	creature_category_changed.emit(data, old_category, new_category)
+
+func emit_creature_expired(data: CreatureData) -> void:
+	"""Emit creature_expired signal with validation."""
+	if data == null:
+		push_error("SignalBus: Cannot emit creature_expired with null data")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting creature_expired for '%s' (age: %d, lifespan: %d)" % [data.creature_name, data.age_weeks, data.lifespan_weeks])
+
+	creature_expired.emit(data)
+
+func emit_aging_batch_completed(creatures_aged: int, total_weeks: int) -> void:
+	"""Emit aging_batch_completed signal with validation."""
+	if creatures_aged < 0:
+		push_error("SignalBus: Cannot emit aging_batch_completed with negative creatures_aged: %d" % creatures_aged)
+		return
+
+	if total_weeks < 0:
+		push_error("SignalBus: Cannot emit aging_batch_completed with negative total_weeks: %d" % total_weeks)
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting aging_batch_completed: %d creatures aged by %d weeks" % [creatures_aged, total_weeks])
+
+	aging_batch_completed.emit(creatures_aged, total_weeks)
+
 # === TAG SIGNAL EMISSION ===
 func emit_creature_tag_added(data: CreatureData, tag: String) -> void:
 	"""Emit creature_tag_added signal with validation."""
@@ -250,6 +309,70 @@ func emit_tag_validation_failed(tags: Array[String], errors: Array[String]) -> v
 		print("SignalBus: Emitting tag_validation_failed for tags %s: %s" % [str(tags), str(errors)])
 
 	tag_validation_failed.emit(tags, errors)
+
+# === SAVE/LOAD SIGNAL EMISSION (Task 7) ===
+func emit_auto_save_triggered() -> void:
+	"""Emit auto_save_triggered signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting auto_save_triggered")
+
+	auto_save_triggered.emit()
+
+func emit_save_progress(progress: float) -> void:
+	"""Emit save_progress signal with validation."""
+	if progress < 0.0 or progress > 1.0:
+		push_error("SignalBus: Invalid save progress: %.2f (must be 0.0-1.0)" % progress)
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting save_progress: %.1f%%" % (progress * 100.0))
+
+	save_progress.emit(progress)
+
+func emit_data_corrupted(slot_name: String, error: String) -> void:
+	"""Emit data_corrupted signal with validation."""
+	if slot_name.is_empty():
+		push_error("SignalBus: Cannot emit data_corrupted with empty slot_name")
+		return
+
+	if error.is_empty():
+		push_error("SignalBus: Cannot emit data_corrupted with empty error")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting data_corrupted for slot '%s': %s" % [slot_name, error])
+
+	data_corrupted.emit(slot_name, error)
+
+func emit_backup_created(slot_name: String, backup_name: String) -> void:
+	"""Emit backup_created signal with validation."""
+	if slot_name.is_empty():
+		push_error("SignalBus: Cannot emit backup_created with empty slot_name")
+		return
+
+	if backup_name.is_empty():
+		push_error("SignalBus: Cannot emit backup_created with empty backup_name")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting backup_created: '%s' -> '%s'" % [slot_name, backup_name])
+
+	backup_created.emit(slot_name, backup_name)
+
+func emit_backup_restored(slot_name: String, backup_name: String) -> void:
+	"""Emit backup_restored signal with validation."""
+	if slot_name.is_empty():
+		push_error("SignalBus: Cannot emit backup_restored with empty slot_name")
+		return
+
+	if backup_name.is_empty():
+		push_error("SignalBus: Cannot emit backup_restored with empty backup_name")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting backup_restored: '%s' from '%s'" % [slot_name, backup_name])
+
+	backup_restored.emit(slot_name, backup_name)
 
 # === DEBUG & UTILITY ===
 func get_connection_count(signal_name: String) -> int:
