@@ -7,30 +7,30 @@ This directory contains individual test scripts for each Stage 1 system, allowin
 ### Run All Tests
 ```bash
 # Sequential execution with summary
-godot --headless --scene tests/test_all.tscn
+godot --headless --scene res://tests/test_all.tscn
 
 # Show available tests
-godot --headless --scene tests/test_runner.tscn
+godot --headless --scene res://tests/test_runner.tscn
 
 # Original comprehensive test (may timeout)
-godot --headless --scene test_setup.tscn
+godot --headless --scene res://tests/test_setup.tscn
 ```
 
 ### Run Individual Tests
 ```bash
 # Core systems
-godot --headless --scene tests/individual/test_signalbus.tscn
-godot --headless --scene tests/individual/test_creature.tscn
-godot --headless --scene tests/individual/test_stats.tscn
+godot --headless --scene res://tests/individual/test_signalbus.tscn
+godot --headless --scene res://tests/individual/test_creature.tscn
+godot --headless --scene res://tests/individual/test_stats.tscn
 
 # Feature systems
-godot --headless --scene tests/individual/test_tags.tscn
-godot --headless --scene tests/individual/test_generator.tscn
-godot --headless --scene tests/individual/test_age.tscn
+godot --headless --scene res://tests/individual/test_tags.tscn
+godot --headless --scene res://tests/individual/test_generator.tscn
+godot --headless --scene res://tests/individual/test_age.tscn
 
 # Integration systems
-godot --headless --scene tests/individual/test_save.tscn
-godot --headless --scene tests/individual/test_collection.tscn
+godot --headless --scene res://tests/individual/test_save.tscn
+godot --headless --scene res://tests/individual/test_collection.tscn
 ```
 
 ## 📋 Test Coverage

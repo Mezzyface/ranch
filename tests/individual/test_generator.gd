@@ -1,86 +1,100 @@
 extends Node
 
+signal test_completed(success: bool, details: Array)
+
 func _ready() -> void:
+	var details: Array = []
+	var success := true
 	print("=== CreatureGenerator Test ===")
 	await get_tree().process_frame
 
-	# Test basic generation
+	# Test 1: Basic Creature Generation
 	var creature: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard")
 	if not creature:
-		print("❌ FAILED: Creature generation failed")
-		get_tree().quit(1)
+		print("❌ Basic creature generation failed")
+		details.append("Basic generation failed")
+		success = false
+		_finalize(success, details)
 		return
+	print("✅ Basic creature generation works")
 
-	print("✅ Basic creature generation working")
-	print("   Generated: %s (%s)" % [creature.creature_name, creature.species_id])
-
-	# Test species validation
-	if CreatureGenerator.is_valid_species("scuttleguard"):
-		print("✅ Species validation working")
+	# Test 2: Species Validation
+	if not CreatureGenerator.is_valid_species("scuttleguard"):
+		print("❌ Valid species validation failed")
+		details.append("Species validation failed")
+		success = false
 	else:
-		print("❌ Species validation failed")
+		print("✅ Valid species validation works")
 
-	if not CreatureGenerator.is_valid_species("invalid_species"):
-		print("✅ Invalid species rejection working")
+	if CreatureGenerator.is_valid_species("invalid_species"):
+		print("❌ Invalid species incorrectly accepted")
+		details.append("Invalid species accepted")
+		success = false
 	else:
-		print("❌ Invalid species rejection failed")
+		print("✅ Invalid species correctly rejected")
 
-	# Test all species
-	var species_list: Array[String] = ["scuttleguard", "stone_sentinel", "wind_dancer", "glow_grub"]
-	var species_created: int = 0
+	# Test 3: All Species Generation
+	var species_list: Array[String] = ["scuttleguard","stone_sentinel","wind_dancer","glow_grub"]
+	var all_species_valid := true
+	for s in species_list:
+		var tc: CreatureData = CreatureGenerator.generate_creature_data(s)
+		if not (tc and tc.species_id == s):
+			details.append("Failed to generate %s" % s)
+			success = false
+			all_species_valid = false
+	if all_species_valid:
+		print("✅ All 4 species generate correctly")
+	else:
+		print("❌ Some species failed to generate")
 
-	for species in species_list:
-		var test_creature: CreatureData = CreatureGenerator.generate_creature_data(species)
-		if test_creature and test_creature.species_id == species:
-			species_created += 1
-		else:
-			print("❌ Failed to generate %s" % species)
-
-	print("✅ Generated %d/%d species successfully" % [species_created, species_list.size()])
-
-	# Test generation algorithms
+	# Test 4: Generation Algorithm Variants
 	var uniform_creature: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard", CreatureGenerator.GenerationType.UNIFORM)
 	var gaussian_creature: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard", CreatureGenerator.GenerationType.GAUSSIAN)
-
-	if uniform_creature and gaussian_creature:
-		print("✅ Generation algorithms working")
-		print("   UNIFORM stats: STR=%d, CON=%d" % [uniform_creature.strength, uniform_creature.constitution])
-		print("   GAUSSIAN stats: STR=%d, CON=%d" % [gaussian_creature.strength, gaussian_creature.constitution])
+	if not (uniform_creature and gaussian_creature):
+		print("❌ Algorithm generation variants failed")
+		details.append("Algorithm generation failed")
+		success = false
 	else:
-		print("❌ Generation algorithms failed")
+		print("✅ Generation algorithm variants work (UNIFORM, GAUSSIAN)")
 
-	# Test performance
+	# Test 5: Performance Measurement
 	var start_time: int = Time.get_ticks_msec()
 	var batch: Array[CreatureData] = []
-
 	for i in range(100):
-		var perf_creature: CreatureData = CreatureGenerator.generate_creature_data("glow_grub")
-		if perf_creature:
-			batch.append(perf_creature)
+		var perf: CreatureData = CreatureGenerator.generate_creature_data("glow_grub")
+		if perf:
+			batch.append(perf)
+	var duration: int = Time.get_ticks_msec() - start_time
 
-	var end_time: int = Time.get_ticks_msec()
-	var duration: int = end_time - start_time
-
-	if batch.size() == 100 and duration < 100:
-		print("✅ Performance target met: %d creatures in %dms" % [batch.size(), duration])
+	if batch.size() != 100:
+		print("❌ Performance test failed - only generated %d/100 creatures" % batch.size())
+		details.append("Performance: %d in %dms" % [batch.size(), duration])
+		success = false
+	elif duration < 100:
+		print("✅ Performance target met (100 creatures in %dms < 100ms)" % duration)
 	else:
-		print("⚠️ Performance: %d creatures in %dms (target: 100 in <100ms)" % [batch.size(), duration])
+		print("⚠️  Performance target exceeded (100 creatures in %dms >= 100ms)" % duration)
+		details.append("Performance: %d in %dms" % [batch.size(), duration])
+		# Not marking as failure for performance, just noting
 
-	# Test population generation
+	# Test 6: Population Generation
 	var population: Array[CreatureData] = CreatureGenerator.generate_population_data(20)
-	if population.size() == 20:
-		print("✅ Population generation working: %d creatures" % population.size())
-
-		# Check species distribution
-		var species_counts: Dictionary = {}
-		for pop_creature in population:
-			if not species_counts.has(pop_creature.species_id):
-				species_counts[pop_creature.species_id] = 0
-			species_counts[pop_creature.species_id] += 1
-
-		print("   Species distribution: %s" % str(species_counts))
+	if population.size() != 20:
+		print("❌ Population generation failed - expected 20 got %d" % population.size())
+		details.append("Population size mismatch %d" % population.size())
+		success = false
 	else:
-		print("❌ Population generation failed: got %d, expected 20" % population.size())
+		print("✅ Population generation works (20 random creatures)")
 
-	print("\n✅ CreatureGenerator test complete!")
+	# Final summary
+	if success:
+		print("\n✅ All CreatureGenerator tests passed!")
+	else:
+		print("\n❌ Some CreatureGenerator tests failed")
+	_finalize(success, details)
+
+func _finalize(success: bool, details: Array) -> void:
+	emit_signal("test_completed", success, details)
+	# Wait one frame then quit to ensure clean exit
+	await get_tree().process_frame
 	get_tree().quit()

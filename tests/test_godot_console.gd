@@ -1,4 +1,6 @@
 extends Node
+# LEGACY: This monolithic console runner has been archived. Prefer per-system tests
+# under tests/individual/ or the manual_test_runner.tscn for quick probes.
 
 ## Console Test Runner for Godot Engine
 ## Runs automated tests without GUI for CI/CD and development

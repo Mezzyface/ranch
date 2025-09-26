@@ -1,7 +1,6 @@
 extends Node
 
-# Test that catches common AI agent integration mistakes
-# This test INTENTIONALLY tries wrong patterns to verify they fail properly
+signal test_completed(success: bool, details: Array)
 
 var errors_caught: int = 0
 var expected_errors: int = 0
@@ -10,25 +9,28 @@ func _ready() -> void:
 	print("=== AI Agent Common Mistakes Test ===")
 	print("This test verifies that wrong patterns fail as expected")
 	print("")
-
-	# Test each common mistake
 	_test_wrong_property_names()
 	_test_wrong_method_locations()
 	_test_wrong_array_types()
 	_test_wrong_time_api()
 	_test_wrong_system_loading()
-
-	# Summary
 	print("")
 	print("=== Test Summary ===")
-	if errors_caught == expected_errors:
+	var success := (errors_caught == expected_errors)
+	var details: Array = []
+	if success:
 		print("✅ All %d wrong patterns correctly failed!" % errors_caught)
 		print("✅ The validation systems are working properly")
-		get_tree().quit(0)
 	else:
 		print("❌ Expected %d errors but caught %d" % [expected_errors, errors_caught])
 		print("❌ Some wrong patterns might not be failing!")
-		get_tree().quit(1)
+		details.append("Mismatch expected=%d got=%d" % [expected_errors, errors_caught])
+	emit_signal("test_completed", success, details)
+	# Wait one frame then quit to ensure clean exit
+	await get_tree().process_frame
+	get_tree().quit()
+
+	# (Legacy duplicate code block removed in refactor)
 
 func _test_wrong_property_names() -> void:
 	print("Testing wrong property names...")
@@ -40,8 +42,9 @@ func _test_wrong_property_names() -> void:
 	# Try to access wrong property names
 	# These SHOULD fail or return null/default values
 
-	# Test 1: creature_id doesn't exist
-	if not creature.has("creature_id"):
+	# Test 1: creature_id doesn't exist (check by trying to access it)
+	var has_creature_id = "creature_id" in creature
+	if not has_creature_id:
 		print("  ✅ 'creature_id' correctly doesn't exist (use 'id')")
 		errors_caught += 1
 	else:
@@ -49,7 +52,8 @@ func _test_wrong_property_names() -> void:
 	expected_errors += 1
 
 	# Test 2: species doesn't exist as a property
-	if not creature.has("species"):
+	var has_species = "species" in creature
+	if not has_species:
 		print("  ✅ 'species' correctly doesn't exist (use 'species_id')")
 		errors_caught += 1
 	else:

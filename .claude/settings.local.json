@@ -45,7 +45,19 @@
       "Bash(set AI_MODE=1)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_resource.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_species.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_enums.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_enums.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_stats.tscn)",
+      "Bash(run_tests.bat 30)",
+      "Bash(testsrun_tests.bat 30)",
+      "Bash(.run_tests.bat 30)",
+      "Bash(powershell:*)",
+      "Bash(timeout:*)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_age.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_generator.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_tags.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_save.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_ai_mistakes.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/test_setup.tscn)"
     ],
     "deny": [],
     "ask": []

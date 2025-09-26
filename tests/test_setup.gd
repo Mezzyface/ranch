@@ -1,4 +1,6 @@
 extends Node
+# LEGACY: This mega integration script is retained temporarily. New coverage should
+# be expressed as focused scenes in tests/individual/ or future tests/integration/.
 
 # Class variables for signal testing
 var signal_test_save_received: bool = false

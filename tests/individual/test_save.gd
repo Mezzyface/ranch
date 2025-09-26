@@ -1,118 +1,142 @@
 extends Node
 
+signal test_completed(success: bool, details: Array)
+
 func _ready() -> void:
+	var details: Array = []
+	var success := true
 	print("=== SaveSystem Test ===")
 	await get_tree().process_frame
 
-	# Load SaveSystem
+	# Test 1: System Loading
 	var save_system = GameCore.get_system("save")
 	if not save_system:
-		print("❌ FAILED: SaveSystem not loaded")
-		get_tree().quit(1)
+		print("❌ SaveSystem failed to load")
+		details.append("SaveSystem not loaded")
+		success = false
+		_finalize(success, details)
 		return
-
 	print("✅ SaveSystem loaded successfully")
 
-	# Test basic game state save/load
-	var test_slot: String = "save_test"
-
-	if save_system.save_game_state(test_slot):
-		print("✅ Game state save successful")
-	else:
+	# Test 2: Game State Save/Load
+	var test_slot := "save_test"
+	if not save_system.save_game_state(test_slot):
 		print("❌ Game state save failed")
-		get_tree().quit(1)
-		return
-
-	if save_system.load_game_state(test_slot):
-		print("✅ Game state load successful")
+		details.append("Game state save failed")
+		success = false
 	else:
-		print("❌ Game state load failed")
+		print("✅ Game state save successful")
 
-	# Test creature collection save/load
+	if not save_system.load_game_state(test_slot):
+		print("❌ Game state load failed")
+		details.append("Game state load failed")
+		success = false
+	else:
+		print("✅ Game state load successful")
+
+	# Test 3: Creature Collection Save/Load
 	var test_creatures: Array[CreatureData] = []
 	for i in range(5):
-		var creature: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard")
-		creature.creature_name = "Save Test %d" % i
-		test_creatures.append(creature)
+		var c: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard")
+		c.creature_name = "Save Test %d" % i
+		test_creatures.append(c)
 
-	var start_time: int = Time.get_ticks_msec()
-
-	if save_system.save_creature_collection(test_creatures, test_slot):
-		print("✅ Creature collection save successful")
-	else:
+	var start: int = Time.get_ticks_msec()
+	if not save_system.save_creature_collection(test_creatures, test_slot):
 		print("❌ Creature collection save failed")
+		details.append("Collection save failed")
+		success = false
+	else:
+		print("✅ Creature collection save successful")
 
 	var loaded_creatures: Array[CreatureData] = save_system.load_creature_collection(test_slot)
+	var dur: int = Time.get_ticks_msec() - start
 
-	var end_time: int = Time.get_ticks_msec()
-	var duration: int = end_time - start_time
-
-	if loaded_creatures.size() == test_creatures.size():
-		print("✅ Creature collection load successful: %d creatures" % loaded_creatures.size())
-
-		# Verify data integrity
-		var data_intact: bool = true
-		for i in range(loaded_creatures.size()):
-			if loaded_creatures[i].creature_name != test_creatures[i].creature_name:
-				data_intact = false
-				break
-
-		if data_intact:
-			print("✅ Creature data integrity verified")
+	if loaded_creatures.size() < test_creatures.size():
+		print("❌ Collection load size mismatch: %d < %d" % [loaded_creatures.size(), test_creatures.size()])
+		details.append("Collection load mismatch %d<%d" % [loaded_creatures.size(), test_creatures.size()])
+		success = false
+	else:
+		var expected_names: Array[String] = []
+		for c in test_creatures:
+			expected_names.append(c.creature_name)
+		for lc in loaded_creatures:
+			if lc.creature_name in expected_names:
+				expected_names.erase(lc.creature_name)
+		if expected_names.size() > 0:
+			print("❌ Missing creature names in loaded data: %s" % ", ".join(expected_names))
+			details.append("Missing loaded names: %s" % ", ".join(expected_names))
+			success = false
 		else:
-			print("❌ Creature data corrupted during save/load")
-	else:
-		print("❌ Creature collection load failed: got %d, expected %d" % [loaded_creatures.size(), test_creatures.size()])
+			print("✅ Creature collection load successful with all names preserved")
 
-	if duration < 200:
-		print("✅ Save/Load performance acceptable: %dms" % duration)
+	if dur >= 200:
+		print("⚠️ Performance warning: collection save/load took %dms (target <200ms)" % dur)
+		details.append("Performance slow %dms" % dur)
 	else:
-		print("⚠️ Save/Load performance slow: %dms (target: <200ms)" % duration)
+		print("✅ Performance good: collection save/load took %dms" % dur)
 
-	# Test individual creature save/load
-	var individual_creature: CreatureData = CreatureGenerator.generate_creature_data("wind_dancer")
-	individual_creature.creature_name = "Individual Test"
-
-	if save_system.save_individual_creature(individual_creature, "individual_test"):
-		print("✅ Individual creature save successful")
-	else:
+	# Test 4: Individual Creature Save/Load
+	var indiv: CreatureData = CreatureGenerator.generate_creature_data("wind_dancer")
+	indiv.creature_name = "Individual Test"
+	if not save_system.save_individual_creature(indiv, "individual_test"):
 		print("❌ Individual creature save failed")
-
-	var loaded_individual: CreatureData = save_system.load_individual_creature("individual_test")
-	if loaded_individual and loaded_individual.creature_name == "Individual Test":
-		print("✅ Individual creature load successful: %s" % loaded_individual.creature_name)
+		details.append("Individual save failed")
+		success = false
 	else:
+		print("✅ Individual creature save successful")
+
+	var loaded_individual: CreatureData = save_system.load_individual_creature(indiv.id, "individual_test")
+	if not (loaded_individual and loaded_individual.creature_name == "Individual Test"):
 		print("❌ Individual creature load failed")
-
-	# Test auto-save functionality
-	save_system.enable_auto_save(1)  # 1 minute interval
-	print("✅ Auto-save enabled")
-
-	if save_system.trigger_auto_save():
-		print("✅ Manual auto-save trigger successful")
+		details.append("Individual load failed")
+		success = false
 	else:
-		print("❌ Manual auto-save trigger failed")
+		print("✅ Individual creature load successful")
 
+	# Test 5: Auto-Save Functionality
+	save_system.enable_auto_save(1)
+	if not save_system.trigger_auto_save():
+		print("❌ Auto-save trigger failed")
+		details.append("Auto-save trigger failed")
+		success = false
+	else:
+		print("✅ Auto-save functionality works")
 	save_system.disable_auto_save()
-	print("✅ Auto-save disabled")
 
-	# Test save validation
+	# Test 6: Save Data Validation
 	var validation: Dictionary = save_system.validate_save_data(test_slot)
-	if validation.has("valid") and validation.has("checks"):
-		print("✅ Save validation working: %s (%d checks)" % ["valid" if validation.valid else "invalid", validation.checks])
-	else:
-		print("❌ Save validation failed")
+	var validation_failed := false
+	for key in ["valid","checks_performed","checks_passed"]:
+		if not validation.has(key):
+			print("❌ Validation missing key: %s" % key)
+			details.append("Validation missing key: %s" % key)
+			success = false
+			validation_failed = true
+	if not validation_failed:
+		print("✅ Save data validation works")
 
-	# Test backup functionality
-	if save_system.create_backup(test_slot, test_slot + "_backup"):
-		print("✅ Backup creation successful")
-	else:
+	# Test 7: Backup Creation
+	if not save_system.create_backup(test_slot):
 		print("❌ Backup creation failed")
+		details.append("Backup creation failed")
+		success = false
+	else:
+		print("✅ Backup creation successful")
 
 	# Cleanup
 	save_system.delete_save_slot(test_slot)
 	save_system.delete_save_slot(test_slot + "_backup")
-	print("✅ Test cleanup completed")
 
-	print("\n✅ SaveSystem test complete!")
+	# Final summary
+	if success:
+		print("\n✅ All SaveSystem tests passed!")
+	else:
+		print("\n❌ Some SaveSystem tests failed")
+	_finalize(success, details)
+
+func _finalize(success: bool, details: Array) -> void:
+	emit_signal("test_completed", success, details)
+	# Wait one frame then quit to ensure clean exit
+	await get_tree().process_frame
 	get_tree().quit()

@@ -1,80 +1,105 @@
 extends Node
 
+signal test_completed(success: bool, details: Array)
+
 func _ready() -> void:
+	var details: Array = []
+	var success: bool = true
 	print("=== CreatureData/Entity System Test ===")
 	await get_tree().process_frame
 
-	# Test CreatureData
+	# Test 1: CreatureData Creation
 	var creature_data: CreatureData = CreatureData.new()
 	if not creature_data:
-		print("❌ FAILED: CreatureData creation failed")
-		get_tree().quit(1)
+		print("❌ CreatureData creation failed")
+		details.append("CreatureData creation failed")
+		success = false
+		_finalize(success, details)
 		return
+	print("✅ CreatureData creation successful")
 
-	print("✅ CreatureData created successfully")
-
-	# Test property access
+	# Test 2: Property Assignment
 	creature_data.creature_name = "Test Creature"
 	creature_data.strength = 150
 	creature_data.age_weeks = 20
-
-	if creature_data.creature_name == "Test Creature":
-		print("✅ String property assignment working")
+	if creature_data.creature_name != "Test Creature":
+		print("❌ Name assignment failed")
+		details.append("Name assignment failed")
+		success = false
 	else:
-		print("❌ String property assignment failed")
+		print("✅ Name assignment works")
 
-	if creature_data.strength == 150:
-		print("✅ Stat property assignment working")
+	if creature_data.strength != 150:
+		print("❌ Initial strength assignment failed")
+		details.append("Initial strength assignment failed")
+		success = false
 	else:
-		print("❌ Stat property assignment failed")
+		print("✅ Strength assignment works")
 
-	# Test stat clamping
-	creature_data.strength = 2000  # Should clamp to 1000
-	if creature_data.strength == 1000:
-		print("✅ Stat clamping working")
+	# Test 3: Stat Clamping
+	creature_data.strength = 2000
+	if creature_data.strength != 1000:
+		print("❌ Clamping failed: %d" % creature_data.strength)
+		details.append("Clamping failed: %d" % creature_data.strength)
+		success = false
 	else:
-		print("❌ Stat clamping failed: got %d" % creature_data.strength)
+		print("✅ Stat clamping works (2000 → 1000)")
 
-	# Test stat accessors
+	# Test 4: Stat Accessors
 	var str_value: int = creature_data.get_stat("STR")
-	if str_value == 1000:
-		print("✅ Stat accessor working")
+	if str_value != 1000:
+		print("❌ Accessor mismatch: %d" % str_value)
+		details.append("Accessor mismatch: %d" % str_value)
+		success = false
 	else:
-		print("❌ Stat accessor failed: got %d" % str_value)
+		print("✅ Stat accessor works correctly")
 
-	# Test age category calculation
+	# Test 5: Age Category
 	creature_data.lifespan_weeks = 100
-	creature_data.age_weeks = 20  # Should be 20% = juvenile
-	var age_category: int = creature_data.get_age_category()
-	if age_category == 1:  # Juvenile
-		print("✅ Age category calculation working")
+	creature_data.age_weeks = 20
+	if creature_data.get_age_category() != 1:
+		print("❌ Age category expected 1 got %d" % creature_data.get_age_category())
+		details.append("Age category expected 1 got %d" % creature_data.get_age_category())
+		success = false
 	else:
-		print("❌ Age category calculation failed: got %d" % age_category)
+		print("✅ Age category calculation works")
 
-	# Test serialization
+	# Test 6: Serialization
 	var dict: Dictionary = creature_data.to_dict()
-	if dict.has("id") and dict.has("creature_name"):
-		print("✅ Serialization to dictionary working")
+	if not (dict.has("id") and dict.has("creature_name")):
+		print("❌ Serialization missing keys")
+		details.append("Serialization missing keys")
+		success = false
 	else:
-		print("❌ Serialization failed")
+		print("✅ Serialization works")
 
+	# Test 7: Deserialization
 	var restored: CreatureData = CreatureData.from_dict(dict)
-	if restored.creature_name == "Test Creature":
-		print("✅ Deserialization working")
+	if restored.creature_name != "Test Creature":
+		print("❌ Deserialization name mismatch")
+		details.append("Deserialization name mismatch")
+		success = false
 	else:
-		print("❌ Deserialization failed")
+		print("✅ Deserialization works")
 
-	# Test CreatureEntity
+	# Test 8: CreatureEntity Integration
 	var creature_entity: CreatureEntity = CreatureEntity.new()
 	creature_entity.data = creature_data
-
-	if creature_entity.data.creature_name == "Test Creature":
-		print("✅ CreatureEntity data assignment working")
+	if creature_entity.data.creature_name != "Test Creature":
+		print("❌ CreatureEntity assignment failed")
+		details.append("CreatureEntity assignment failed")
+		success = false
 	else:
-		print("❌ CreatureEntity data assignment failed")
+		print("✅ CreatureEntity integration works")
 
-	print("ℹ️ CreatureData has NO signals (correct!)")
-	print("ℹ️ CreatureEntity handles signals through SignalBus")
+	if success:
+		print("\n✅ All CreatureData/Entity tests passed!")
+	else:
+		print("\n❌ Some CreatureData/Entity tests failed")
+	_finalize(success, details)
 
-	print("\n✅ Creature system test complete!")
+func _finalize(success: bool, details: Array) -> void:
+	emit_signal("test_completed", success, details)
+	# Wait one frame then quit to ensure clean exit
+	await get_tree().process_frame
 	get_tree().quit()
