@@ -17,6 +17,12 @@ signal creature_aged(data: CreatureData, new_age: int)
 signal creature_activated(data: CreatureData)
 signal creature_deactivated(data: CreatureData)
 
+# Tag-related signals (Task 4)
+signal creature_tag_added(data: CreatureData, tag: String)
+signal creature_tag_removed(data: CreatureData, tag: String)
+signal tag_add_failed(data: CreatureData, tag: String, reason: String)
+signal tag_validation_failed(tags: Array[String], errors: Array[String])
+
 # === QUEST SIGNALS ===
 # Quest management signals (will be used in later tasks)
 # signal quest_started(quest: QuestData)
@@ -179,6 +185,71 @@ func emit_creature_deactivated(data: CreatureData) -> void:
 		print("SignalBus: Emitting creature_deactivated for '%s'" % data.creature_name)
 
 	creature_deactivated.emit(data)
+
+# === TAG SIGNAL EMISSION ===
+func emit_creature_tag_added(data: CreatureData, tag: String) -> void:
+	"""Emit creature_tag_added signal with validation."""
+	if data == null:
+		push_error("SignalBus: Cannot emit creature_tag_added with null data")
+		return
+
+	if tag.is_empty():
+		push_error("SignalBus: Cannot emit creature_tag_added with empty tag")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting creature_tag_added for '%s': tag '%s'" % [data.creature_name, tag])
+
+	creature_tag_added.emit(data, tag)
+
+func emit_creature_tag_removed(data: CreatureData, tag: String) -> void:
+	"""Emit creature_tag_removed signal with validation."""
+	if data == null:
+		push_error("SignalBus: Cannot emit creature_tag_removed with null data")
+		return
+
+	if tag.is_empty():
+		push_error("SignalBus: Cannot emit creature_tag_removed with empty tag")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting creature_tag_removed for '%s': tag '%s'" % [data.creature_name, tag])
+
+	creature_tag_removed.emit(data, tag)
+
+func emit_tag_add_failed(data: CreatureData, tag: String, reason: String) -> void:
+	"""Emit tag_add_failed signal with validation."""
+	if data == null:
+		push_error("SignalBus: Cannot emit tag_add_failed with null data")
+		return
+
+	if tag.is_empty():
+		push_error("SignalBus: Cannot emit tag_add_failed with empty tag")
+		return
+
+	if reason.is_empty():
+		push_error("SignalBus: Cannot emit tag_add_failed with empty reason")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting tag_add_failed for '%s': tag '%s' - %s" % [data.creature_name, tag, reason])
+
+	tag_add_failed.emit(data, tag, reason)
+
+func emit_tag_validation_failed(tags: Array[String], errors: Array[String]) -> void:
+	"""Emit tag_validation_failed signal with validation."""
+	if tags.is_empty():
+		push_error("SignalBus: Cannot emit tag_validation_failed with empty tags array")
+		return
+
+	if errors.is_empty():
+		push_error("SignalBus: Cannot emit tag_validation_failed with empty errors array")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting tag_validation_failed for tags %s: %s" % [str(tags), str(errors)])
+
+	tag_validation_failed.emit(tags, errors)
 
 # === DEBUG & UTILITY ===
 func get_connection_count(signal_name: String) -> int:

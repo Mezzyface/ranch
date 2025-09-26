@@ -4,6 +4,7 @@ extends Node
 var data: CreatureData
 var signal_bus: SignalBus
 var stat_system: Node # StatSystem reference
+var tag_system: Node # TagSystem reference
 
 func _init(creature_data: CreatureData = null) -> void:
 	if creature_data:
@@ -14,6 +15,7 @@ func _init(creature_data: CreatureData = null) -> void:
 func _ready() -> void:
 	signal_bus = GameCore.get_signal_bus()
 	stat_system = GameCore.get_system("stat")
+	tag_system = GameCore.get_system("tag")
 	if signal_bus and _debug_mode():
 		print("CreatureEntity ready for: %s" % data.creature_name)
 
@@ -35,22 +37,56 @@ func decrease_stat(stat_name: String, amount: int) -> void:
 	var current: int = data.get_stat(stat_name)
 	modify_stat(stat_name, current - amount)
 
-# Tag management with validation
+# Tag management through TagSystem
 func add_tag(tag: String) -> bool:
-	if not data.has_tag(tag) and _is_valid_tag(tag):
-		data.tags.append(tag)
-		if signal_bus and _debug_mode():
-			print("CreatureEntity: Added tag '%s' to %s" % [tag, data.creature_name])
-		return true
-	return false
+	"""Add a tag to this creature, validated through TagSystem."""
+	if tag_system:
+		return tag_system.add_tag_to_creature(self, tag)
+	else:
+		# Fallback if TagSystem not loaded
+		if not data.has_tag(tag) and _is_valid_tag(tag):
+			data.tags.append(tag)
+			if signal_bus and _debug_mode():
+				print("CreatureEntity: Added tag '%s' to %s (fallback)" % [tag, data.creature_name])
+			return true
+		return false
 
 func remove_tag(tag: String) -> bool:
-	if data.has_tag(tag):
-		data.tags.erase(tag)
-		if signal_bus and _debug_mode():
-			print("CreatureEntity: Removed tag '%s' from %s" % [tag, data.creature_name])
-		return true
-	return false
+	"""Remove a tag from this creature, through TagSystem."""
+	if tag_system:
+		return tag_system.remove_tag_from_creature(self, tag)
+	else:
+		# Fallback if TagSystem not loaded
+		if data.has_tag(tag):
+			data.tags.erase(tag)
+			if signal_bus and _debug_mode():
+				print("CreatureEntity: Removed tag '%s' from %s (fallback)" % [tag, data.creature_name])
+			return true
+		return false
+
+func can_add_tag(tag: String) -> Dictionary:
+	"""Check if a tag can be added to this creature."""
+	if tag_system:
+		return tag_system.can_add_tag_to_creature(data, tag)
+	else:
+		# Fallback validation
+		if not _is_valid_tag(tag):
+			return {"can_add": false, "reason": "Invalid tag"}
+		if data.has_tag(tag):
+			return {"can_add": false, "reason": "Creature already has this tag"}
+		return {"can_add": true, "reason": ""}
+
+func get_tags_by_category(category: int) -> Array[String]:
+	"""Get all tags this creature has in a specific category."""
+	if tag_system:
+		var creature_tags: Array[String] = data.tags
+		var category_tags: Array[String] = tag_system.get_tags_by_category(category)
+		var result: Array[String] = []
+		for tag in creature_tags:
+			if tag in category_tags:
+				result.append(tag)
+		return result
+	return []
 
 # Age management with signals
 func age_one_week() -> void:
@@ -128,14 +164,21 @@ func _is_valid_tag(tag: String) -> bool:
 	]
 	return tag in VALID_TAGS
 
-# Quest requirement matching using StatSystem
+# Quest requirement matching using StatSystem and TagSystem
 func matches_requirements(req_stats: Dictionary, req_tags: Array[String]) -> bool:
 	# Use StatSystem for accurate stat calculations
 	if stat_system and not stat_system.meets_requirements(data, req_stats):
 		return false
 
-	# Check tags
-	return data.has_all_tags(req_tags)
+	# Use TagSystem for accurate tag checking
+	if tag_system and not tag_system.meets_tag_requirements(data, req_tags):
+		return false
+
+	# Fallback to data methods if systems not loaded
+	if not tag_system:
+		return data.has_all_tags(req_tags)
+
+	return true
 
 # Performance calculations using StatSystem (includes age modifier)
 func get_performance_score() -> float:

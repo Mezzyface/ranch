@@ -140,9 +140,9 @@ func _apply_all_modifiers(creature_id: String, stat_name: String, base_value: in
 
 # Apply modifier to creature
 func apply_modifier(creature_id: String, stat_name: String, value: int,
-                   modifier_type: ModifierType = ModifierType.TEMPORARY,
-                   stacking_mode: StackingMode = StackingMode.ADDITIVE,
-                   duration_weeks: int = 1, modifier_id: String = "") -> void:
+				   modifier_type: ModifierType = ModifierType.TEMPORARY,
+				   stacking_mode: StackingMode = StackingMode.ADDITIVE,
+				   duration_weeks: int = 1, modifier_id: String = "") -> void:
 
 	var normalized_name := _normalize_stat_name(stat_name)
 
@@ -220,11 +220,11 @@ func clear_creature_modifiers(creature_id: String) -> void:
 			signal_bus.emit_creature_modifiers_changed(creature_id, "all")
 
 # Validate stat value
-func validate_stat_value(stat_name: String, value: int) -> int:
+func validate_stat_value(_stat_name: String, value: int) -> int:
 	return clampi(value, STAT_MIN, STAT_MAX)
 
 # Get stat cap
-func get_stat_cap(stat_name: String) -> int:
+func get_stat_cap(_stat_name: String) -> int:
 	return STAT_MAX
 
 # Calculate stat difference between two creatures
@@ -359,7 +359,7 @@ func _generate_modifier_id() -> String:
 	return "mod_" + str(Time.get_unix_time_from_system()) + "_" + str(randi_range(1000, 9999))
 
 # Schedule modifier removal (placeholder for time system integration)
-func _schedule_modifier_removal(creature_id: String, stat_name: String, modifier_id: String, duration_weeks: int) -> void:
+func _schedule_modifier_removal(_creature_id: String, _stat_name: String, _modifier_id: String, _duration_weeks: int) -> void:
 	# Will connect to time system in later task
 	pass
 

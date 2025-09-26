@@ -36,7 +36,7 @@ extends Resource
 
 # Age System
 @export_range(0, 1000) var age_weeks: int = 0
-@export_range(100, 1000) var lifespan: int = 520  # 10 years default
+@export_range(100, 1000) var lifespan_weeks: int = 520  # 10 years default
 
 # State Management
 @export var is_active: bool = false
@@ -57,7 +57,7 @@ func _init() -> void:
 
 # Utility functions (pure calculations, no state changes)
 func get_age_category() -> int:
-	var life_percentage: float = (age_weeks / float(lifespan)) * 100
+	var life_percentage: float = (age_weeks / float(lifespan_weeks)) * 100
 	if life_percentage < 10:
 		return 0  # BABY
 	elif life_percentage < 25:
@@ -134,7 +134,7 @@ func to_dict() -> Dictionary:
 		},
 		"tags": tags,
 		"age_weeks": age_weeks,
-		"lifespan": lifespan,
+		"lifespan_weeks": lifespan_weeks,
 		"is_active": is_active,
 		"stamina_current": stamina_current,
 		"stamina_max": stamina_max,
@@ -159,7 +159,7 @@ static func from_dict(data: Dictionary) -> CreatureData:
 
 	creature.tags = Array(data.get("tags", []), TYPE_STRING, "", null)
 	creature.age_weeks = data.get("age_weeks", 0)
-	creature.lifespan = data.get("lifespan", 520)
+	creature.lifespan_weeks = data.get("lifespan_weeks", 520)
 	creature.is_active = data.get("is_active", false)
 	creature.stamina_current = data.get("stamina_current", 100)
 	creature.stamina_max = data.get("stamina_max", 100)
