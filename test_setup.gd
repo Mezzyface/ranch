@@ -6,6 +6,13 @@ var signal_test_load_received: bool = false
 var category_change_test_received: bool = false
 var test_quiet_mode_global: bool = false
 
+# PlayerCollection signal tracking (must be class-level for lambda scope)
+var signal_received_acquired: bool = false
+var signal_received_released: bool = false
+var signal_received_roster_changed: bool = false
+var signal_received_stable_updated: bool = false
+var signal_received_milestone: bool = false
+
 # Quiet mode for AI agents and CI/CD
 # SET TO TRUE FOR AI AGENTS TO AVOID OUTPUT OVERFLOW
 var quiet_mode: bool = true  # Default to quiet for AI safety
@@ -1926,12 +1933,12 @@ func _test_save_system() -> void:
 func _test_player_collection_system(collection_system: Node, signal_bus: SignalBus, save_system: Node) -> void:
 	print("\n--- Testing PlayerCollection System (Task 8) ---")
 
-	# Signal tracking variables
-	var signal_received_acquired: bool = false
-	var signal_received_released: bool = false
-	var signal_received_roster_changed: bool = false
-	var signal_received_stable_updated: bool = false
-	var signal_received_milestone: bool = false
+	# Reset signal tracking variables (use class-level vars for lambda scope)
+	signal_received_acquired = false
+	signal_received_released = false
+	signal_received_roster_changed = false
+	signal_received_stable_updated = false
+	signal_received_milestone = false
 
 	# Connect signals for testing
 	var acquisition_handler = func(creature_data: CreatureData, source: String):
