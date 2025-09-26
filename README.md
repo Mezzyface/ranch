@@ -8,6 +8,8 @@ A comprehensive creature collection, breeding, and training game built with Godo
 ranch/
 ├── README.md                   # This file - project navigation
 ├── CLAUDE.md                   # AI assistant guidance
+├── SYSTEM_ARCHITECTURE.md     # 🏗️ How systems work together
+├── QUICK_REFERENCE.md          # 🚀 Developer quick reference
 ├── docs/                       # All documentation
 │   ├── design/                 # Game design documents
 │   │   ├── systems/           # Core system designs
@@ -17,7 +19,13 @@ ranch/
 │   │   ├── stages/            # Development stages
 │   │   └── enum.md            # Global enumerations
 │   └── project/               # Project management
-└── [future: src/]             # Game source code (Godot project)
+├── scripts/                    # Game source code (Godot 4.5)
+│   ├── core/                  # GameCore, SignalBus
+│   ├── systems/               # StatSystem, SaveSystem, etc.
+│   ├── entities/              # CreatureEntity, etc.
+│   ├── data/                  # CreatureData, QuestData
+│   └── controllers/           # MainController, etc.
+└── test_setup.gd              # Comprehensive test suite
 ```
 
 ## 🎮 Game Overview
