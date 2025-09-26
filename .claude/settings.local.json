@@ -16,7 +16,13 @@
       "Bash(git pull:*)",
       "Bash(git reset:*)",
       "Bash(git push:*)",
-      "Bash(dir)"
+      "Bash(dir)",
+      "Bash(git checkout:*)",
+      "Bash(where godot)",
+      "Bash(findstr:*)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --help)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot_console.exe\" --headless --script test_godot_console.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot_console.exe\" --headless --scene test_console_scene.tscn)"
     ],
     "deny": [],
     "ask": []
