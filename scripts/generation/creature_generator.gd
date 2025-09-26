@@ -479,7 +479,11 @@ static func _track_generation_stats(species_id: String, generation_type: Generat
 
 static func get_available_species() -> Array[String]:
 	"""Get list of available species IDs."""
-	# Cache species keys for performance
+	var species_system = GameCore.get_system("species")
+	if species_system:
+		return species_system.get_all_species()
+
+	# Fallback to hardcoded data if SpeciesSystem not available
 	if _cached_species_keys.is_empty():
 		var keys = SPECIES_DATA.keys()
 		_cached_species_keys.clear()
@@ -489,10 +493,20 @@ static func get_available_species() -> Array[String]:
 
 static func get_species_info(species_id: String) -> Dictionary:
 	"""Get complete species information."""
+	var species_system = GameCore.get_system("species")
+	if species_system:
+		return species_system.get_species_info(species_id)
+
+	# Fallback to hardcoded data if SpeciesSystem not available
 	return SPECIES_DATA.get(species_id, {})
 
 static func is_valid_species(species_id: String) -> bool:
 	"""Check if species ID is valid."""
+	var species_system = GameCore.get_system("species")
+	if species_system:
+		return species_system.is_valid_species(species_id)
+
+	# Fallback to hardcoded data if SpeciesSystem not available
 	return SPECIES_DATA.has(species_id)
 
 # TODO: Task 10 - Migrate to SpeciesSystem

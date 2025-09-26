@@ -215,6 +215,69 @@ var population: Array[CreatureData] = CreatureGenerator.generate_population_data
 
 ---
 
+## 🧬 SpeciesSystem Usage (Task 10)
+
+### ✅ Correct Method Calls
+```gdscript
+# Get the species system
+var species_system = GameCore.get_system("species")
+
+# Basic species queries
+var all_species: Array[String] = species_system.get_all_species()
+var starters: Array[String] = species_system.get_species_by_category("starter")
+var rare_species: Array[String] = species_system.get_species_by_rarity("rare")
+
+# Species validation
+if species_system.is_valid_species("scuttleguard"):
+    var info: Dictionary = species_system.get_species_info("scuttleguard")
+
+# Random selection
+var random_species: String = species_system.get_random_species()
+var random_starter: String = species_system.get_random_species("starter", "")
+```
+
+### ✅ Species Information Format
+```gdscript
+# get_species_info() returns Dictionary with:
+{
+    "display_name": "Scuttleguard",
+    "category": "starter",
+    "rarity": "common",
+    "price": 200,
+    "lifespan_weeks": 520,
+    "guaranteed_tags": ["Small", "Territorial", "Dark Vision"],
+    "optional_tags": ["Stealthy", "Enhanced Hearing", "Nocturnal"],
+    "stat_ranges": {
+        "strength": {"min": 70, "max": 130},
+        "constitution": {"min": 80, "max": 140},
+        # ... other stats
+    },
+    "name_pool": ["Skitter", "Dash", "Scout", "Guard", ...]
+}
+```
+
+### ✅ CreatureGenerator Integration (Automatic)
+```gdscript
+# CreatureGenerator automatically uses SpeciesSystem with fallback
+var creature: CreatureData = CreatureGenerator.generate_creature_data("scuttleguard")
+# This now uses SpeciesSystem.get_species_info() internally
+
+# Still works the same way, but now backed by SpeciesSystem
+var valid: bool = CreatureGenerator.is_valid_species("wind_dancer")
+var species_list: Array[String] = CreatureGenerator.get_available_species()
+```
+
+### ✅ Available Species (Default Fallback)
+```gdscript
+# Current species (when no .tres files exist):
+"scuttleguard"    # Starter species - Small, territorial guardian
+"stone_sentinel"  # Premium species - Large, armored defender
+"wind_dancer"     # Premium species - Medium, flying, fast
+"glow_grub"       # Utility species - Small, bioluminescent, docile
+```
+
+---
+
 ## 📡 SignalBus Integration
 
 ### ✅ Signal Names and Emission Methods
@@ -234,6 +297,11 @@ signal_bus.emit_aging_batch_completed(aged_count, total_weeks)
 # Tag signals (Task 4)
 signal_bus.emit_creature_tag_added(creature_data, tag)
 signal_bus.emit_creature_tag_removed(creature_data, tag)
+
+# Species signals (Task 10)
+signal_bus.emit_species_loaded(species_id)
+signal_bus.emit_species_registered(species_id, category)
+signal_bus.emit_species_validation_failed(species_id, errors)
 ```
 
 ### ✅ Signal Connection Pattern

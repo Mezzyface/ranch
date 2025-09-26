@@ -41,6 +41,11 @@ signal tag_validation_failed(tags: Array[String], errors: Array[String])
 # signal item_purchased(item_id: String, quantity: int)
 # signal item_consumed(item_id: String, quantity: int)
 
+# === SPECIES SIGNALS (Task 10) ===
+signal species_loaded(species_id: String)
+signal species_registered(species_id: String, category: String)
+signal species_validation_failed(species_id: String, errors: Array[String])
+
 # === COLLECTION SIGNALS (Task 8) ===
 # Creature collection events
 signal creature_acquired(creature_data: CreatureData, source: String)
@@ -63,6 +68,13 @@ signal save_progress(progress: float)
 signal data_corrupted(slot_name: String, error: String)
 signal backup_created(slot_name: String, backup_name: String)
 signal backup_restored(slot_name: String, backup_name: String)
+
+# Task 9: Resource tracking signals
+signal gold_changed(old_amount: int, new_amount: int, change: int)
+signal item_added(item_id: String, quantity: int, total: int)
+signal item_removed(item_id: String, quantity: int, remaining: int)
+signal transaction_failed(reason: String, amount: int)
+signal creature_fed(creature_id: String, food_id: String, food_data: Dictionary)
 
 # === SIGNAL MANAGEMENT ===
 # Connection tracking for debugging and cleanup
@@ -480,6 +492,117 @@ func emit_collection_milestone_reached(milestone: String, count: int) -> void:
 		print("SignalBus: Emitting collection_milestone_reached: '%s' at count %d" % [milestone, count])
 
 	collection_milestone_reached.emit(milestone, count)
+
+# Task 10: Species signal emission helpers
+func emit_species_loaded(species_id: String) -> void:
+	"""Emit species_loaded signal with validation."""
+	if species_id.is_empty():
+		push_error("SignalBus: Cannot emit species_loaded with empty species_id")
+		return
+
+	species_loaded.emit(species_id)
+	if _debug_mode:
+		print("SignalBus: Species loaded: %s" % species_id)
+
+func emit_species_registered(species_id: String, category: String) -> void:
+	"""Emit species_registered signal with validation."""
+	if species_id.is_empty():
+		push_error("SignalBus: Cannot emit species_registered with empty species_id")
+		return
+
+	if category.is_empty():
+		push_error("SignalBus: Cannot emit species_registered with empty category")
+		return
+
+	species_registered.emit(species_id, category)
+	if _debug_mode:
+		print("SignalBus: Species registered: %s (category: %s)" % [species_id, category])
+
+func emit_species_validation_failed(species_id: String, errors: Array[String]) -> void:
+	"""Emit species_validation_failed signal with validation."""
+	if species_id.is_empty():
+		push_error("SignalBus: Cannot emit species_validation_failed with empty species_id")
+		return
+
+	species_validation_failed.emit(species_id, errors)
+	if _debug_mode:
+		print("SignalBus: Species validation failed: %s - %s" % [species_id, str(errors)])
+
+# Task 9: Resource signal emission helpers
+func emit_gold_changed(old_amount: int, new_amount: int, change: int) -> void:
+	"""Emit gold_changed signal with validation."""
+	if old_amount < 0 or new_amount < 0:
+		push_error("SignalBus: Cannot emit gold_changed with negative amounts")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Gold changed from %d to %d (change: %d)" % [old_amount, new_amount, change])
+
+	gold_changed.emit(old_amount, new_amount, change)
+
+func emit_item_added(item_id: String, quantity: int, total: int) -> void:
+	"""Emit item_added signal with validation."""
+	if item_id.is_empty():
+		push_error("SignalBus: Cannot emit item_added with empty item_id")
+		return
+
+	if quantity <= 0 or total <= 0:
+		push_error("SignalBus: Cannot emit item_added with non-positive quantities")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Item added: %s x%d (total: %d)" % [item_id, quantity, total])
+
+	item_added.emit(item_id, quantity, total)
+
+func emit_item_removed(item_id: String, quantity: int, remaining: int) -> void:
+	"""Emit item_removed signal with validation."""
+	if item_id.is_empty():
+		push_error("SignalBus: Cannot emit item_removed with empty item_id")
+		return
+
+	if quantity <= 0:
+		push_error("SignalBus: Cannot emit item_removed with non-positive quantity")
+		return
+
+	if remaining < 0:
+		push_error("SignalBus: Cannot emit item_removed with negative remaining")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Item removed: %s x%d (remaining: %d)" % [item_id, quantity, remaining])
+
+	item_removed.emit(item_id, quantity, remaining)
+
+func emit_transaction_failed(reason: String, amount: int) -> void:
+	"""Emit transaction_failed signal with validation."""
+	if reason.is_empty():
+		push_error("SignalBus: Cannot emit transaction_failed with empty reason")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Transaction failed: %s (amount: %d)" % [reason, amount])
+
+	transaction_failed.emit(reason, amount)
+
+func emit_creature_fed(creature_id: String, food_id: String, food_data: Dictionary) -> void:
+	"""Emit creature_fed signal with validation."""
+	if creature_id.is_empty():
+		push_error("SignalBus: Cannot emit creature_fed with empty creature_id")
+		return
+
+	if food_id.is_empty():
+		push_error("SignalBus: Cannot emit creature_fed with empty food_id")
+		return
+
+	if food_data.is_empty():
+		push_error("SignalBus: Cannot emit creature_fed with empty food_data")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Creature fed: %s consumed %s" % [creature_id, food_id])
+
+	creature_fed.emit(creature_id, food_id, food_data)
 
 func _setup_signal_validation() -> void:
 	"""Set up internal signal validation and logging."""

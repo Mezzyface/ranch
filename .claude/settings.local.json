@@ -42,7 +42,10 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/test_runner.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/test_all.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/preflight_check.tscn)",
-      "Bash(set AI_MODE=1)"
+      "Bash(set AI_MODE=1)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_resource.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_species.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_enums.tscn)"
     ],
     "deny": [],
     "ask": []

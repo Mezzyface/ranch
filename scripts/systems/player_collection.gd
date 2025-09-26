@@ -93,6 +93,9 @@ func add_to_active(creature_data: CreatureData) -> bool:
 	_active_lookup[creature_data.id] = active_roster.size() - 1
 	_invalidate_stats_cache()
 
+	# Update species tracking
+	_update_species_count(creature_data.species_id, 1)
+
 	# Emit signals
 	if signal_bus:
 		signal_bus.emit_creature_activated(creature_data)
@@ -193,6 +196,9 @@ func add_to_stable(creature_data: CreatureData) -> bool:
 	stable_collection[creature_data.id] = creature_data
 	_stable_lookup[creature_data.id] = creature_data
 	_invalidate_stats_cache()
+
+	# Update species tracking
+	_update_species_count(creature_data.species_id, 1)
 
 	# Emit signals
 	if signal_bus:
@@ -316,10 +322,7 @@ func acquire_creature(creature_data: CreatureData, source: String) -> bool:
 	}
 	collection_metadata.acquisition_history.append(acquisition_record)
 
-	# Update species counts
-	if not collection_metadata.species_counts.has(creature_data.species_id):
-		collection_metadata.species_counts[creature_data.species_id] = 0
-	collection_metadata.species_counts[creature_data.species_id] += 1
+	# Species counts are now tracked in add_to_active/add_to_stable methods
 
 	# Add to active roster if space, otherwise to stable
 	var success: bool = false
@@ -368,10 +371,7 @@ func release_creature(creature_id: String, reason: String) -> bool:
 		collection_metadata.total_released += 1
 
 		# Update species counts
-		if collection_metadata.species_counts.has(creature_data.species_id):
-			collection_metadata.species_counts[creature_data.species_id] -= 1
-			if collection_metadata.species_counts[creature_data.species_id] <= 0:
-				collection_metadata.species_counts.erase(creature_data.species_id)
+		_update_species_count(creature_data.species_id, -1)
 
 		# Emit release signal
 		if signal_bus:
@@ -483,6 +483,20 @@ func _rebuild_active_lookup() -> void:
 func _invalidate_stats_cache() -> void:
 	"""Mark statistics cache as dirty."""
 	_stats_cache_dirty = true
+
+func _update_species_count(species_id: String, delta: int) -> void:
+	"""Update species count in metadata (delta can be positive or negative)."""
+	if species_id.is_empty():
+		return
+
+	if not collection_metadata.species_counts.has(species_id):
+		collection_metadata.species_counts[species_id] = 0
+
+	collection_metadata.species_counts[species_id] += delta
+
+	# Remove species entry if count drops to zero or below
+	if collection_metadata.species_counts[species_id] <= 0:
+		collection_metadata.species_counts.erase(species_id)
 
 func _check_milestones() -> void:
 	"""Check and emit milestone achievement signals."""

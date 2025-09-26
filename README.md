@@ -28,7 +28,7 @@ ranch/
 │   ├── data/                  # CreatureData, QuestData
 │   └── controllers/           # MainController, etc.
 ├── tests/                      # Test infrastructure
-│   ├── individual/            # 8 focused test suites
+│   ├── individual/            # 10 focused test suites
 │   ├── test_all.gd           # Run all tests sequentially
 │   └── test_runner.gd        # List available tests
 └── test_setup.gd              # Comprehensive integration test
@@ -236,11 +236,11 @@ var qualified: Array[CreatureData] = tag_system.filter_creatures_by_tags(all_cre
 - [x] Task 6: Age System (Lifecycle progression and time-based mechanics)
 - [x] Task 7: Save/Load System (Hybrid persistence, auto-save, comprehensive validation)
 - [x] Task 8: Player Collection (Active/stable roster management with advanced search)
-- [ ] Task 9: Resource Tracking (Gold/item economy)
-- [ ] Task 10: Species Resources (Template formalization)
+- [x] Task 9: Resource Tracking (Gold/item economy and feeding mechanics)
+- [x] Task 10: Species Resources (Template formalization and resource-based architecture)
 - [ ] Task 11: Global Enums (Type-safe enumerations)
 
-**Progress: 8/11 Stage 1 tasks complete (~73%)**
+**Progress: 10/11 Stage 1 tasks complete (~91%)**
 
 ### Upcoming Stages
 - **Stage 2**: Time Management & Basic UI (2 weeks)
