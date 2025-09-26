@@ -159,7 +159,7 @@ Rules:
 | AI_AGENT_GUIDE.md | Expanded examples & templates | New common pattern emerges |
 | README.md | Human overview & milestones | Milestone / scope shift |
 | ARCHIVE_STAGE1_TASK_DETAILS.md | Historical narrative | New stage archive only |
-| INTERFACES.md (planned) | Interface contracts index | First interface introduced |
+| INTERFACES.md | Interface contracts index | Append-only when adding or extending contracts |
 
 ## 16. DEPRECATED ARTIFACTS
 - Deprecated Hardcoded Species Map: constant `SPECIES_DATA` in `scripts/generation/creature_generator.gd` (read‑only; do NOT extend; removal scheduled post-migration validation)
