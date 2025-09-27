@@ -63,11 +63,12 @@ func check_stage_1_systems():
 			else:
 				fail_check("System '%s' not found" % system_name)
 
-	# Check CreatureGenerator
-	if CreatureGenerator.SPECIES_DATA.size() >= 4:
-		pass_check("CreatureGenerator has 4+ species")
+	# Check SpeciesSystem (replaced hardcoded SPECIES_DATA)
+	var species_system = GameCore.get_system("species")
+	if species_system and species_system.get_all_species().size() >= 4:
+		pass_check("SpeciesSystem has 4+ species")
 	else:
-		fail_check("CreatureGenerator missing species")
+		fail_check("SpeciesSystem missing species")
 
 	print("")
 
