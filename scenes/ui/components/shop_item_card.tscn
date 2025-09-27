@@ -1,0 +1,69 @@
+[gd_scene load_steps=4 format=3 uid="uid://cq4n8v0q1m3by"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" uid="uid://bmjlt2bw7cv1g" path="res://scripts/ui/shop_item_card.gd" id="2_script"]
+[ext_resource type="Texture2D" uid="uid://cfbwf5dli7knm" path="res://assets/sprites/creatures/wind_dancer/.all-svgs_wasp-sting.svg" id="3_na46u"]
+
+[node name="ShopItemCard" type="Control"]
+custom_minimum_size = Vector2(120, 160)
+layout_mode = 3
+anchors_preset = 0
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ItemIcon" type="TextureRect" parent="Background/VBoxContainer"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+texture = ExtResource("3_na46u")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemName" type="Label" parent="Background/VBoxContainer"]
+clip_contents = true
+layout_mode = 2
+text = "Item Name"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="ItemPrice" type="Label" parent="Background/VBoxContainer"]
+layout_mode = 2
+text = "0 g"
+horizontal_alignment = 1
+
+[node name="ItemStock" type="Label" parent="Background/VBoxContainer"]
+layout_mode = 2
+text = "Stock: 0"
+horizontal_alignment = 1
+
+[node name="PurchaseButton" type="Button" parent="Background/VBoxContainer"]
+layout_mode = 2
+text = "Buy"
+
+[node name="HoverArea" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true

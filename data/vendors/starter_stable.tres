@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="VendorResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/vendor_resource.gd" id="1_wvba3"]
+
+[resource]
+script = ExtResource("1_wvba3")
+vendor_id = "starter_stable"
+display_name = "Starter Stable"
+description = "A friendly stable specializing in beginner-friendly creatures and basic supplies. Perfect for new tamers!"
+location = "Town Center"
+is_unlocked_by_default = true
+base_inventory = ["berries", "grain", "hay", "water"]
+specialization_tags = ["Small", "Territorial", "Bioluminescent"]
+specialization_creature_types = ["scuttleguard", "glow_grub"]
+reputation_bonuses = {
+10: 5,
+25: 10,
+50: 15
+}
+inventory_size_multiplier = 1.2
+greeting_text = "Welcome to the Starter Stable! Perfect place for new tamers to begin their journey."
+purchase_success_text = "Excellent choice! This will serve you well on your adventures."
+insufficient_funds_text = "Don't worry, we all start somewhere. Come back when you have enough gold!"
+out_of_stock_text = "Sorry, that creature is being prepared. Check back next week!"
+reputation_unlock_text = "I'm impressed with your dedication to creature care!"
+theme_color = Color(0.8, 0.9, 0.7, 1)
+has_special_deals = true
+deal_rotation_days = 7
+exclusive_items = ["starter_care_package"]

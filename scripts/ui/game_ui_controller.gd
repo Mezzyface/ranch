@@ -12,6 +12,8 @@ extends Control
 @onready var content_switcher: Control = $HUD/MainContent/ContentSwitcher
 @onready var default_view: Control = $HUD/MainContent/ContentSwitcher/DefaultView
 @onready var collection_view: Control = $HUD/MainContent/ContentSwitcher/CollectionView
+@onready var shop_view: Control = $HUD/MainContent/ContentSwitcher/ShopView
+@onready var shop_panel: Control = $HUD/MainContent/ContentSwitcher/ShopView/ShopPanel
 
 var _ui_manager: UIManager
 var game_controller
@@ -50,6 +52,7 @@ func _connect_signals() -> void:
 	if signal_bus:
 		signal_bus.week_advanced.connect(_on_week_advanced_ui)
 		signal_bus.aging_batch_completed.connect(_on_aging_completed)
+		signal_bus.gold_spent.connect(_on_gold_spent)
 
 func _update_ui() -> void:
 	_update_time_display()
@@ -93,9 +96,8 @@ func _on_collect_pressed() -> void:
 	_toggle_collection_view()
 
 func _on_shop_pressed() -> void:
-	print("🟠 GameUI: Shop button pressed - opening shop")
-	if _ui_manager:
-		_ui_manager.show_window("shop")
+	print("🟠 GameUI: Shop button pressed - toggling shop view")
+	_toggle_shop_view()
 
 func _on_quest_pressed() -> void:
 	print("🟢 GameUI: Quest button pressed - opening quests")
@@ -122,22 +124,46 @@ func _on_creatures_updated() -> void:
 	_update_creature_list()
 
 func _toggle_collection_view() -> void:
-	if _current_view == "default":
-		_show_collection_view()
-	else:
+	if _current_view == "collection":
 		_show_default_view()
+	else:
+		_show_collection_view()
+
+func _toggle_shop_view() -> void:
+	if _current_view == "shop":
+		_show_default_view()
+	else:
+		_show_shop_view()
 
 func _show_collection_view() -> void:
+	_hide_all_views()
 	_current_view = "collection"
-	default_view.hide()
 	collection_view.show()
 	collect_button.text = "Close Collection"
+	shop_button.text = "Shop"
+
+func _show_shop_view() -> void:
+	_hide_all_views()
+	_current_view = "shop"
+	shop_view.show()
+	collect_button.text = "Collect"
+	shop_button.text = "Close Shop"
+
+	# Initialize shop panel if needed
+	if shop_panel and shop_panel.has_method("_initialize_shop_panel"):
+		shop_panel._initialize_shop_panel()
 
 func _show_default_view() -> void:
+	_hide_all_views()
 	_current_view = "default"
-	collection_view.hide()
 	default_view.show()
 	collect_button.text = "Collect"
+	shop_button.text = "Shop"
+
+func _hide_all_views() -> void:
+	default_view.hide()
+	collection_view.hide()
+	shop_view.hide()
 
 func _on_week_advanced_ui(new_week: int, total_weeks: int) -> void:
 	print("GameUI: Week advanced to %d - updating time display" % new_week)
@@ -146,3 +172,7 @@ func _on_week_advanced_ui(new_week: int, total_weeks: int) -> void:
 func _on_aging_completed(creatures_aged: int, total_weeks: int) -> void:
 	print("GameUI: Aging completed for %d creatures - updating creature list" % creatures_aged)
 	_update_creature_list()
+
+func _on_gold_spent(amount: int, reason: String) -> void:
+	print("GameUI: Gold spent (%d for %s) - updating resources display" % [amount, reason])
+	_update_resources_display()

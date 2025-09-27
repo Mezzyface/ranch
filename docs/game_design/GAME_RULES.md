@@ -211,19 +211,22 @@ Offspring inherit:
 ### 8.1 Primary Resources
 - **Gold**: Primary currency
   - Earned from quests and competitions
-  - Used for items, upgrades, fees
-- **Food**: Stamina restoration
-  - Purchased or quest rewards
-  - Different tiers for different needs
+  - Used for purchasing items from vendors
+  - No automatic deductions or upkeep costs
+- **Food**: Activity-based consumption
+  - Purchased from vendors or earned through quests
+  - Consumed when assigned to creature activities
+  - Different tiers provide different stamina restoration
 - **Items**: Various consumables and equipment
   - Stat boosters
   - Breeding items
   - Quest items
 
 ### 8.2 Resource Strategy
-- Balance food supply with active roster size
+- Purchase food items from vendors as needed
+- Assign appropriate food to creature activities
 - Save rare items for crucial moments
-- Invest in long-term upgrades vs immediate needs
+- No passive resource drain - full player control
 
 ---
 

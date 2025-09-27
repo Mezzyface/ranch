@@ -22,6 +22,13 @@ enum FoodType {
 func _init() -> void:
 	print("ResourceTracker initialized with %d starting gold" % gold)
 
+func _ready() -> void:
+	# Connect to purchase signals
+	var signal_bus = GameCore.get_signal_bus()
+	if signal_bus:
+		if signal_bus.has_signal("item_purchased"):
+			signal_bus.item_purchased.connect(_on_item_purchased)
+
 # Currency management
 func add_gold(amount: int, source: String = "unknown") -> bool:
 	if amount <= 0:
@@ -73,10 +80,11 @@ func spend_gold(amount: int, purpose: String = "unknown") -> bool:
 		"balance": gold
 	})
 
-	# Emit signal
+	# Emit signals
 	var signal_bus = GameCore.get_signal_bus()
 	if signal_bus:
 		signal_bus.emit_gold_changed(old_gold, gold, -amount)
+		signal_bus.gold_spent.emit(amount, purpose)
 
 	return true
 
@@ -85,6 +93,20 @@ func can_afford(cost: int) -> bool:
 
 func get_balance() -> int:
 	return gold
+
+# Signal handlers
+func _on_item_purchased(item_id: String, quantity: int, vendor_id: String, cost: int) -> void:
+	print("ResourceTracker: Processing purchase of %d x %s for %d gold" % [quantity, item_id, cost])
+
+	# Deduct gold first
+	if not spend_gold(cost, "shop_purchase"):
+		push_error("Failed to deduct gold for purchase of %s" % item_id)
+		return
+
+	# Add item to inventory
+	var success = add_item(item_id, quantity)
+	if not success:
+		push_error("Failed to add purchased item %s to inventory" % item_id)
 
 # Inventory management
 func add_item(item_id: String, quantity: int = 1) -> bool:

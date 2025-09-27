@@ -1,0 +1,252 @@
+[gd_scene load_steps=3 format=3 uid="uid://bx5d0leh0v4xd"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/shop_panel_controller.gd" id="2_script"]
+
+[node name="ShopPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.15, 1)
+
+[node name="HSplitContainer" type="HSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+split_offset = 200
+
+[node name="VendorSidebar" type="Panel" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+custom_minimum_size = Vector2(200, 0)
+
+[node name="SidebarBackground" type="ColorRect" parent="HSplitContainer/VendorSidebar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.15, 0.2, 0.9)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer/VendorSidebar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VendorLabel" type="Label" parent="HSplitContainer/VendorSidebar/VBoxContainer"]
+layout_mode = 2
+text = "Vendors"
+horizontal_alignment = 1
+
+[node name="VScrollContainer" type="ScrollContainer" parent="HSplitContainer/VendorSidebar/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VendorList" type="ItemList" parent="HSplitContainer/VendorSidebar/VBoxContainer/VScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MainContent" type="Panel" parent="HSplitContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MainBackground" type="ColorRect" parent="HSplitContainer/MainContent"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.12, 0.12, 0.17, 0.9)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer/MainContent"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VendorHeader" type="HBoxContainer" parent="HSplitContainer/MainContent/VBoxContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer/MainContent/VBoxContainer/VendorHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VendorName" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/VendorHeader/VBoxContainer"]
+layout_mode = 2
+text = "Select a Vendor"
+theme_type_variation = &"HeaderLarge"
+
+[node name="VendorDescription" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/VendorHeader/VBoxContainer"]
+layout_mode = 2
+text = "Choose a vendor from the sidebar to browse their inventory"
+autowrap_mode = 2
+clip_contents = true
+
+[node name="GoldLabel" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/VendorHeader"]
+layout_mode = 2
+text = "Gold: 0"
+horizontal_alignment = 2
+
+[node name="FilterBar" type="HBoxContainer" parent="HSplitContainer/MainContent/VBoxContainer"]
+layout_mode = 2
+
+[node name="FilterLabel" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/FilterBar"]
+layout_mode = 2
+text = "Filter:"
+
+[node name="FilterType" type="OptionButton" parent="HSplitContainer/MainContent/VBoxContainer/FilterBar"]
+layout_mode = 2
+size_flags_horizontal = 0
+custom_minimum_size = Vector2(120, 0)
+
+[node name="SortLabel" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/FilterBar"]
+layout_mode = 2
+text = "Sort:"
+
+[node name="SortBy" type="OptionButton" parent="HSplitContainer/MainContent/VBoxContainer/FilterBar"]
+layout_mode = 2
+size_flags_horizontal = 0
+custom_minimum_size = Vector2(140, 0)
+
+[node name="SearchLabel" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/FilterBar"]
+layout_mode = 2
+text = "Search:"
+
+[node name="SearchBox" type="LineEdit" parent="HSplitContainer/MainContent/VBoxContainer/FilterBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Search items..."
+
+[node name="HSplitContainer2" type="HSplitContainer" parent="HSplitContainer/MainContent/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemArea" type="Panel" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ItemAreaBackground" type="ColorRect" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.08, 0.08, 0.12, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 15.0
+offset_top = 15.0
+offset_right = -15.0
+offset_bottom = -15.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ItemGrid" type="GridContainer" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemArea/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+columns = 4
+theme_override_constants/h_separation = 10
+theme_override_constants/v_separation = 10
+
+[node name="ItemDetailPanel" type="Panel" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2"]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 0
+custom_minimum_size = Vector2(250, 0)
+
+[node name="DetailBackground" type="ColorRect" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.18, 0.18, 0.25, 0.95)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ItemName" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel/VBoxContainer"]
+layout_mode = 2
+text = "Item Name"
+theme_type_variation = &"HeaderMedium"
+autowrap_mode = 2
+
+[node name="ItemIcon" type="TextureRect" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel/VBoxContainer"]
+layout_mode = 2
+custom_minimum_size = Vector2(100, 100)
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemDescription" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel/VBoxContainer"]
+layout_mode = 2
+text = "Item description goes here..."
+autowrap_mode = 2
+clip_contents = true
+
+[node name="Spacer" type="Control" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ItemPrice" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel/VBoxContainer"]
+layout_mode = 2
+text = "Price: 0 gold"
+theme_type_variation = &"HeaderSmall"
+
+[node name="ItemStock" type="Label" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel/VBoxContainer"]
+layout_mode = 2
+text = "Stock: 0"
+
+[node name="PurchaseButton" type="Button" parent="HSplitContainer/MainContent/VBoxContainer/HSplitContainer2/ItemDetailPanel/VBoxContainer"]
+layout_mode = 2
+text = "Purchase"

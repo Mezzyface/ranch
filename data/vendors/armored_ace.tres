@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="VendorResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/vendor_resource.gd" id="1_uplx5"]
+
+[resource]
+script = ExtResource("1_uplx5")
+vendor_id = "armored_ace"
+display_name = "Armored Ace"
+description = "Military surplus and heavily armored creatures. Specializes in defensive and strength-focused companions."
+location = "Military District"
+unlock_requirements = {
+"quest_completed": "TIM-02"
+}
+base_inventory = ["protein_mix", "endurance_blend", "vitality_elixir"]
+specialization_tags = ["Dark Vision", "Sure-Footed", "Constructor"]
+specialization_creature_types = ["armored_beetle", "stone_guardian", "tunnel_worm"]
+reputation_bonuses = {
+15: 8,
+35: 15,
+60: 25
+}
+markup_modifier = 1.15
+inventory_size_multiplier = 0.8
+greeting_text = "Soldier! Looking for some real defensive power? You've come to the right place."
+purchase_success_text = "That creature will serve you well in battle. Stay strong!"
+insufficient_funds_text = "Quality armor costs quality coin. Come back when you're prepared."
+out_of_stock_text = "My best stock is reserved for proven warriors. Check back later."
+reputation_unlock_text = "You've earned my respect through your actions, warrior."
+theme_color = Color(0.6, 0.6, 0.7, 1)
+exclusive_items = ["tactical_armor", "fortress_plans"]

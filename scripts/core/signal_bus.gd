@@ -38,8 +38,14 @@ signal tag_validation_failed(tags: Array[String], errors: Array[String])
 # === ECONOMY SIGNALS ===
 # Resource management signals (will be used in later tasks)
 # signal gold_changed(old_amount: int, new_amount: int)
-# signal item_purchased(item_id: String, quantity: int)
+signal item_purchased(item_id: String, quantity: int, vendor_id: String, cost: int)
 # signal item_consumed(item_id: String, quantity: int)
+
+# === SHOP SIGNALS ===
+# Shop system signals (Stage 3)
+signal shop_refreshed(weeks_passed: int)
+signal vendor_unlocked(vendor_id: String)
+signal gold_spent(amount: int, reason: String)
 
 # === SPECIES SIGNALS (Task 10) ===
 signal species_loaded(species_id: String)

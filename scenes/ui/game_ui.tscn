@@ -1,8 +1,9 @@
-[gd_scene load_steps=4 format=3 uid="uid://cc8p0eswhr2yi"]
+[gd_scene load_steps=5 format=3 uid="uid://cc8p0eswhr2yi"]
 
 [ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_mxp7l"]
 [ext_resource type="Script" uid="uid://cslrpvvy3w1vf" path="res://scripts/ui/game_ui_controller.gd" id="2_5w82k"]
 [ext_resource type="PackedScene" uid="uid://k2mp7y30jqcb" path="res://scenes/ui/panels/collection_panel.tscn" id="3_k2mp7"]
+[ext_resource type="PackedScene" uid="uid://bx5d0leh0v4xd" path="res://scenes/ui/panels/shop_panel.tscn" id="4_shop"]
 
 [node name="GameUI" type="Control"]
 layout_mode = 3
@@ -171,6 +172,20 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="CollectionPanel" parent="HUD/MainContent/ContentSwitcher/CollectionView" instance=ExtResource("3_k2mp7")]
+layout_mode = 1
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ShopView" type="Control" parent="HUD/MainContent/ContentSwitcher"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ShopPanel" parent="HUD/MainContent/ContentSwitcher/ShopView" instance=ExtResource("4_shop")]
 layout_mode = 1
 grow_horizontal = 2
 grow_vertical = 2

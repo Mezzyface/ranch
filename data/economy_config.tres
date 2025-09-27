@@ -1,0 +1,63 @@
+[gd_resource type="EconomyConfig" script_class="EconomyConfig" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/economy_config.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+creature_egg_base_price = 200
+food_base_price = 25
+training_item_base_price = 100
+special_item_base_price = 500
+reputation_discount_per_10_points = 0.01
+bulk_discount_3_items = 0.1
+bulk_discount_5_items = 0.2
+market_variance_range = 0.15
+starter_vendor_markup = 0.8
+premium_vendor_markup = 1.5
+specialty_vendor_markup = 1.2
+weekly_restock_multiplier = 1.0
+basic_item_restock_rate = 5
+rare_item_restock_rate = 1
+legendary_item_restock_rate = 1
+basic_max_stock = 20
+rare_max_stock = 5
+legendary_max_stock = 2
+scuttleguard_price = 200
+wind_dancer_price = 500
+stone_sentinel_price = 800
+shadow_cat_price = 450
+sage_owl_price = 1500
+crystal_thinker_price = 2000
+grain_rations_price = 5
+fresh_hay_price = 8
+wild_berries_price = 10
+protein_mix_price = 25
+golden_nectar_price = 100
+shadow_market_unlock_quest = "TIM-01"
+savage_supplies_unlock_quest = "TIM-03"
+mystical_menagerie_unlock_quest = "TIM-05"
+purchase_reputation_gain = 1
+expensive_purchase_reputation_gain = 3
+max_vendor_reputation = 100
+reputation_unlock_thresholds = Array[int]([25, 50, 75])
+tim_01_reward = 300
+tim_02_reward = 400
+tim_03_reward = 1500
+tim_04_reward = 1800
+tim_05_reward = 2500
+tim_06_reward = 7500
+early_game_gold_target = 1000
+mid_game_gold_target = 5000
+late_game_gold_target = 15000
+tim_01_cost_budget = 250
+tim_02_cost_budget = 300
+tim_03_cost_budget = 1400
+tim_04_cost_budget = 1600
+tim_05_cost_budget = 2000
+tim_06_cost_budget = 5000
+enable_market_fluctuations = true
+fluctuation_period_weeks = 4
+seasonal_modifier_amplitude = 0.1
+weekly_featured_discount = 0.25
+bundle_deal_threshold = 3
+loyalty_discount_threshold = 50

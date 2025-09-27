@@ -37,7 +37,11 @@ func get_time_display() -> String:
 	return "Week %d" % get_current_week()
 
 func get_resources_display() -> String:
-	return "Gold: 100"
+	var resource_tracker = GameCore.get_system("resource")
+	if resource_tracker:
+		var gold = resource_tracker.get_balance()
+		return "Gold: %d" % gold
+	return "Gold: 0"
 
 func get_active_creatures() -> Array[String]:
 	var creature_names: Array[String] = []

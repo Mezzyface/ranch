@@ -1,0 +1,30 @@
+[gd_resource type="Resource" script_class="VendorResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/vendor_resource.gd" id="1_76j41"]
+
+[resource]
+script = ExtResource("1_76j41")
+vendor_id = "savage_supplies"
+display_name = "Savage Supplies"
+description = "Brutal trader specializing in combat creatures and raw power. Strength above all else!"
+location = "Arena District"
+unlock_requirements = {
+"quest_completed": "TIM-03"
+}
+base_inventory = ["protein_mix", "endurance_blend"]
+specialization_tags = ["Constructor", "Sure-Footed", "Territorial"]
+specialization_creature_types = ["rage_beast", "iron_claw", "battle_rhino"]
+reputation_bonuses = {
+18: 8,
+40: 16,
+65: 25
+}
+markup_modifier = 1.1
+greeting_text = "HAH! Another weakling looking for REAL power? You've found it!"
+purchase_success_text = "EXCELLENT! That beast will crush your enemies!"
+insufficient_funds_text = "Pathetic! Come back when you have REAL gold!"
+out_of_stock_text = "My strongest beasts are in training! They'll be ready soon!"
+reputation_unlock_text = "NOW you're worthy of my respect! STRENGTH RECOGNIZES STRENGTH!"
+theme_color = Color(0.8, 0.3, 0.2, 1)
+deal_rotation_days = 7
+exclusive_items = ["gladiator_collar", "arena_pass"]

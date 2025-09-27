@@ -87,7 +87,15 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_layout_debug.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_portrait_debug.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_portrait_simple.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_final_portrait.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_final_portrait.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_stamina.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_weekly_updates.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_shop.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script generate_vendor_resources.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script test_shop_basic.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script test_aging_fix.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_aging_fix.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_gold_fix.tscn)"
     ],
     "deny": [],
     "ask": []

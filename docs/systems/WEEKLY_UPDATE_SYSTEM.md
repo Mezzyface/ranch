@@ -85,10 +85,10 @@ var activity_results = stamina_system.process_weekly_activities()
 
 ### Resource Consumption
 ```gdscript
-# Food and gold are automatically consumed
-# 1 food unit per creature per week
-# 10 gold weekly upkeep
-# Handled automatically by orchestrator
+# Food consumption is activity-based (no automatic deductions)
+# Players choose food items from inventory when assigning activities
+# No automatic gold costs - player manages resources directly
+# Food consumption handled by activity assignment system
 ```
 
 ## Error Handling

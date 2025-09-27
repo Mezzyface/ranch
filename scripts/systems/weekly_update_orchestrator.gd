@@ -117,8 +117,9 @@ func _handle_aging() -> bool:
 	var category_changes: Array[Dictionary] = []
 	var expired: Array[String] = []
 
-	var all_creatures = collection.get_active_creatures() + collection.get_stable_creatures()
-	for creature in all_creatures:
+	# Only age active creatures - stable creatures remain in stasis
+	var active_creatures = collection.get_active_creatures()
+	for creature in active_creatures:
 		var old_category = creature.get_age_category()
 		creature.age_weeks += 1
 
@@ -183,27 +184,32 @@ func _handle_stamina() -> bool:
 	return true
 
 func _handle_food() -> bool:
-	if not GameCore.has_system("resource"):
+	if not GameCore.has_system("resource") or not GameCore.has_system("stamina"):
 		return true
 
 	var resource_system = GameCore.get_system("resource")
+	var stamina_system = GameCore.get_system("stamina")
 	var collection = GameCore.get_system("collection")
 
-	var total_creatures = collection.get_active_creatures().size() + collection.get_stable_creatures().size()
-	var food_needed = total_creatures * 10
-	var gold_available = resource_system.get_balance()
+	# Food consumption is now handled by activity system
+	# Only active creatures performing activities consume food
+	# Food is consumed from inventory based on assigned activities
+	var active_creatures = collection.get_active_creatures()
+	var food_items_consumed = []
+	var total_food_value = 0
 
-	if gold_available < food_needed:
-		push_warning("Insufficient gold for food: %d needed, %d available" % [food_needed, gold_available])
-
-	var food_consumed = min(food_needed, gold_available)
-	if food_consumed > 0:
-		resource_system.spend_gold(food_consumed, "weekly_food")
+	for creature in active_creatures:
+		var activity = stamina_system.get_assigned_activity(creature)
+		# Only creatures performing activities need food
+		if activity != stamina_system.Activity.IDLE:
+			# Food consumption will be handled by activity system
+			# This is just tracking for the summary
+			total_food_value += 1  # 1 food item per active creature doing activities
 
 	update_results["food"] = {
-		"consumed": food_consumed,
-		"remaining": resource_system.get_balance(),
-		"shortage": max(0, food_needed - gold_available)
+		"items_consumed": food_items_consumed,
+		"active_creatures_fed": active_creatures.size(),
+		"total_food_value": total_food_value
 	}
 
 	return true
@@ -227,23 +233,14 @@ func _handle_economy() -> bool:
 		return true
 
 	var resource_system = GameCore.get_system("resource")
-	var weekly_upkeep = 10
 
-	var gold_available = resource_system.get_balance()
-	if gold_available >= weekly_upkeep:
-		resource_system.spend_gold(weekly_upkeep, "weekly_upkeep")
-		update_results["economy"] = {
-			"spent": weekly_upkeep,
-			"earned": 0,
-			"balance": resource_system.get_balance()
-		}
-	else:
-		push_warning("Insufficient gold for weekly upkeep")
-		update_results["economy"] = {
-			"spent": 0,
-			"earned": 0,
-			"balance": gold_available
-		}
+	# No automatic costs - player manages resources directly
+	# Economy phase reserved for future features (market fluctuations, etc.)
+	update_results["economy"] = {
+		"spent": 0,
+		"earned": 0,
+		"balance": resource_system.get_balance()
+	}
 
 	return true
 

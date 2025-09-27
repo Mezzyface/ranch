@@ -1,0 +1,32 @@
+[gd_resource type="Resource" script_class="VendorResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/vendor_resource.gd" id="1_susm5"]
+
+[resource]
+script = ExtResource("1_susm5")
+vendor_id = "sky_sailor"
+display_name = "Sky Sailor"
+description = "Aerial specialist trading in flying creatures and agility enhancers. Master of the skies and wind!"
+location = "Sky Harbor"
+unlock_requirements = {
+"quest_completed": "TIM-02"
+}
+base_inventory = ["agility_treats", "berries"]
+specialization_tags = ["Flies", "Stealthy", "Camouflage"]
+specialization_creature_types = ["wind_dancer", "sky_wisp", "storm_bird"]
+reputation_bonuses = {
+12: 7,
+30: 12,
+55: 20
+}
+markup_modifier = 1.2
+inventory_size_multiplier = 0.9
+greeting_text = "Greetings, ground-walker! Ready to take to the skies with a proper flying companion?"
+purchase_success_text = "May the winds carry you safely on your journeys!"
+insufficient_funds_text = "The sky has no charity, friend. Return with proper payment."
+out_of_stock_text = "My finest flyers are already soaring. They'll return next week."
+reputation_unlock_text = "You've proven yourself worthy of the sky's secrets!"
+theme_color = Color(0.7, 0.9, 1, 1)
+has_special_deals = true
+deal_rotation_days = 10
+exclusive_items = ["wind_compass", "sky_map"]

@@ -205,6 +205,7 @@ Notes:
 | 2025-09-26 | Updated GlobalEnums with fail-fast validation patterns | Replaced silent fallbacks with explicit error logging |
 | 2025-09-27 | Updated aging behavior documentation | Only active creatures age during weekly updates; stable creatures remain in stasis |
 | 2025-09-27 | Fixed double aging issue in TimeSystem | Removed redundant aging events; WeeklyUpdateOrchestrator now handles all aging |
+| 2025-09-27 | Added Shop & Economy Systems (Stage 3) | ShopSystem, ResourceTracker shop integration, EconomyConfig, VendorResource, Shop UI architecture with signal-based purchase flow |
 
 ---
 ## 5. Maintenance Rules
@@ -686,5 +687,155 @@ Extension Guidance:
 1. Adding a new property: export var with sensible default, update `validate()` if required, append row to property table (do not reorder existing rows).
 2. Adding new stat: must extend `GlobalEnums.StatType`, update default stat range construction, ensure generator algorithms include new stat.
 3. When introducing hybrid logic, keep `compatible_species` symmetrical unless explicit asymmetry intended (document here if so).
+
+---
+
+## 10. Shop & Economy Systems (Stage 3)
+
+### 9.1 ShopSystem
+Path: `scripts/systems/shop_system.gd`
+Purpose: Vendor management, inventory tracking, and transaction processing
+Dependencies: ItemManager, SignalBus
+
+Public Methods:
+| Method | Signature | Side Effects | Notes |
+|--------|----------|--------------|-------|
+| get_all_vendors | `func get_all_vendors() -> Array[VendorResource]` | None | Returns all vendors (locked + unlocked) |
+| get_unlocked_vendors | `func get_unlocked_vendors() -> Array[VendorResource]` | None | Only accessible vendors |
+| get_vendor | `func get_vendor(vendor_id: String) -> VendorResource` | None | Single vendor lookup |
+| is_vendor_unlocked | `func is_vendor_unlocked(vendor_id: String) -> bool` | None | Unlock status check |
+| get_vendor_inventory | `func get_vendor_inventory(vendor_id: String) -> Array[Dictionary]` | None | Item list for vendor |
+| can_purchase_item | `func can_purchase_item(vendor_id: String, item_id: String, player_gold: int) -> Dictionary` | None | Purchase validation |
+| purchase_item | `func purchase_item(vendor_id: String, item_id: String, player_gold: int) -> Dictionary` | Mutates stock + emits signals | Core transaction |
+| calculate_item_price | `func calculate_item_price(vendor_id: String, item_id: String) -> int` | None | Final price with discounts |
+| restock_vendor | `func restock_vendor(vendor_id: String) -> void` | Mutates inventory | Single vendor restock |
+| restock_all_vendors | `func restock_all_vendors() -> void` | Mutates all inventories | Weekly restock |
+
+Purchase Flow Return Types:
+```gdscript
+# can_purchase_item() returns:
+{
+    "can_purchase": bool,
+    "reason": String  # If can_purchase is false
+}
+
+# purchase_item() returns:
+{
+    "success": bool,
+    "gold_spent": int,
+    "item_received": {"item_id": String, "quantity": int},
+    "message": String
+}
+```
+
+Signals Emitted:
+- `item_purchased(item_id: String, quantity: int, vendor_id: String, cost: int)` - When purchase succeeds
+
+Invariants:
+- ShopSystem ONLY handles vendor-side logic (stock, pricing, validation)
+- Does NOT directly modify player resources (gold/inventory)
+- All resource changes handled by ResourceTracker via signals
+- Vendor inventory cached for performance; invalidated on purchases/restocks
+
+### 9.2 ResourceTracker (Extended for Shop Integration)
+Path: `scripts/systems/resource_tracker.gd`
+Purpose: Player gold and inventory management
+Signal Integration: Listens for shop purchases, handles resource changes
+
+Additional Shop-Related Methods:
+| Method | Signature | Side Effects | Notes |
+|--------|----------|--------------|-------|
+| _on_item_purchased | `func _on_item_purchased(item_id: String, quantity: int, vendor_id: String, cost: int) -> void` | Deducts gold + adds item | Signal handler |
+
+Signal Flow for Purchases:
+```
+1. ShopSystem.purchase_item() validates & updates vendor stock
+2. ShopSystem emits item_purchased(item_id, quantity, vendor_id, cost)
+3. ResourceTracker._on_item_purchased() receives signal
+4. ResourceTracker.spend_gold() deducts cost
+5. ResourceTracker.add_item() adds to player inventory
+6. ResourceTracker emits gold_spent signal for UI updates
+```
+
+### 9.3 EconomyConfig (Resource)
+Path: `scripts/resources/economy_config.gd`
+Purpose: Configurable economic parameters
+
+Properties:
+| Name | Type | Default | Notes |
+|------|------|---------|-------|
+| creature_egg_base_price | int | 200 | Base price for creature eggs |
+| food_base_price_per_week | int | 5 | Weekly food cost baseline |
+| training_item_base_price | int | 50 | Training item cost |
+| reputation_discount_per_10_points | float | 0.01 | 1% discount per 10 reputation |
+| vendor_markup_range | Vector2 | (0.8, 1.2) | Price variation 80%-120% |
+| weekly_restock_percentage | float | 0.3 | 30% of max stock restored |
+| max_stock_per_item | int | 20 | Maximum vendor stock |
+| min_stock_per_item | int | 5 | Minimum vendor stock |
+
+### 9.4 VendorResource (Resource)
+Path: Auto-loaded from `data/vendors/*.tres`
+Purpose: Vendor configuration and properties
+
+Properties:
+| Name | Type | Notes |
+|------|------|-------|
+| vendor_id | String | Unique identifier |
+| display_name | String | UI display name |
+| description | String | Vendor description |
+| unlock_requirements | Dictionary | Conditions for unlocking |
+| base_reputation | int | Starting reputation |
+| items_sold | Array[String] | Item IDs this vendor sells |
+| markup_modifier | float | Price adjustment factor |
+
+Invariants:
+- All vendors loaded from .tres files in data/vendors/
+- vendor_id must be unique across all vendors
+- items_sold references valid ItemManager items
+
+### 9.5 Shop UI Architecture
+
+#### ShopPanelController
+Path: `scripts/ui/shop_panel_controller.gd`
+Purpose: Main shop interface controller
+Dependencies: ShopSystem (read-only), ResourceTracker (read-only for display)
+
+Signal-Based Updates:
+| Signal Listened | Handler | Purpose |
+|----------------|---------|---------|
+| gold_spent | _on_gold_spent | Update gold display |
+| item_purchased | _on_item_purchased | Update vendor inventory cache |
+
+UI Access Pattern:
+```gdscript
+# ✅ CORRECT: Read-only queries for display
+var gold = resource_tracker.get_balance()
+var vendors = shop_system.get_unlocked_vendors()
+var inventory = shop_system.get_vendor_inventory(vendor_id)
+
+# ✅ CORRECT: Purchase through shop system
+var result = shop_system.purchase_item(vendor_id, item_id, player_gold)
+
+# ❌ WRONG: Direct resource manipulation
+resource_tracker.spend_gold(amount)  # Should use signals
+resource_tracker.add_item(item_id)   # Should use signals
+```
+
+#### ShopItemCard
+Path: `scripts/ui/shop_item_card.gd` + `scenes/ui/components/shop_item_card.tscn`
+Purpose: Individual item display component
+
+Features:
+- Icon loading from ItemResource via ItemManager
+- Fallback colored textures by item type
+- Stock display with visual feedback
+- Purchase button state management
+- Hover effects and selection signals
+
+Performance Optimizations:
+- Item grid updates: <16ms target (60 FPS)
+- Vendor inventory caching with smart invalidation
+- Icon texture caching to prevent repeated loads
+- Component pooling for large inventories
 
 ---

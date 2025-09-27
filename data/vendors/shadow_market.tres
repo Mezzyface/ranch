@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="VendorResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/vendor_resource.gd" id="1_vckgv"]
+
+[resource]
+script = ExtResource("1_vckgv")
+vendor_id = "shadow_market"
+display_name = "Shadow Market"
+description = "Mysterious trader dealing in rare and exotic creatures. Deals in shadows and whispers."
+location = "Underground Bazaar"
+unlock_requirements = {
+"quest_completed": "TIM-02",
+"reputation": 10
+}
+base_inventory = ["golden_nectar", "quest_gem"]
+specialization_tags = ["Stealthy", "Dark Vision", "Sentient"]
+specialization_creature_types = ["shadow_cat", "void_crawler", "mind_spider"]
+reputation_bonuses = {
+20: 10,
+40: 18,
+70: 30
+}
+markup_modifier = 1.3
+restock_frequency_days = 10
+inventory_size_multiplier = 0.7
+greeting_text = "Welcome to the shadows, traveler. I have what others cannot offer..."
+purchase_success_text = "An excellent choice. Guard its secrets well."
+insufficient_funds_text = "The shadows accept only proper payment. No exceptions."
+out_of_stock_text = "That particular specimen has vanished. Perhaps it will return."
+reputation_unlock_text = "You have earned my trust. Darker secrets await..."
+theme_color = Color(0.3, 0.2, 0.4, 1)
+has_special_deals = true
+exclusive_items = ["shadow_essence", "void_crystal"]

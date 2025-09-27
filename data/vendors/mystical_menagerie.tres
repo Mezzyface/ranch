@@ -1,0 +1,33 @@
+[gd_resource type="Resource" script_class="VendorResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/vendor_resource.gd" id="1_tracx"]
+
+[resource]
+script = ExtResource("1_tracx")
+vendor_id = "mystical_menagerie"
+display_name = "Mystical Menagerie"
+description = "Sage vendor of magical and intelligent creatures. Wisdom and wonder beyond the mundane world."
+location = "Enchanted Grove"
+unlock_requirements = {
+"quest_completed": "TIM-04"
+}
+base_inventory = ["golden_nectar", "vitality_elixir"]
+specialization_tags = ["Bioluminescent", "Sentient", "Cleanser"]
+specialization_creature_types = ["crystal_moth", "wisdom_owl", "dream_weaver"]
+reputation_bonuses = {
+25: 12,
+50: 20,
+80: 35
+}
+markup_modifier = 1.25
+restock_frequency_days = 14
+inventory_size_multiplier = 0.6
+greeting_text = "Welcome, seeker of wisdom. The mystical energies have foretold your arrival..."
+purchase_success_text = "May this creature bring enlightenment to your path."
+insufficient_funds_text = "The cosmic balance requires proper exchange, dear seeker."
+out_of_stock_text = "That being is communing with higher realms. It shall return when ready."
+reputation_unlock_text = "Your spirit resonates with ancient wisdom. Deeper mysteries await..."
+theme_color = Color(0.9, 0.7, 1, 1)
+has_special_deals = true
+deal_rotation_days = 21
+exclusive_items = ["astral_crystal", "wisdom_tome"]
