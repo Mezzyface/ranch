@@ -1,0 +1,269 @@
+[gd_scene load_steps=22 format=3 uid="uid://bogljy3jfmkjl"]
+
+[ext_resource type="Texture2D" uid="uid://rusd7p60s00o" path="res://assets/sprites/creatures/scuttleguard/Ant_Idle.png" id="1_0wkdl"]
+[ext_resource type="Theme" uid="uid://daax7m1iera0u" path="res://assets/modern.tres" id="1_4xmer"]
+[ext_resource type="Texture2D" uid="uid://dg8p7tnrm2fgf" path="res://assets/sprites/creatures/glow_grub/.all-svgs_maggot.svg" id="3_yxe1v"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kqwpp"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4xmer"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_yxe1v"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4c3js"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kmthj"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(0, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_36tp6"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(128, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6288e"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(256, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_rch13"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(384, 128, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_2jm5j"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(0, 256, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_555q8"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(128, 256, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_uomee"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(256, 256, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_tcnal"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(384, 256, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_gh615"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(0, 384, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_wr7gu"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(128, 384, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_24ucu"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(256, 384, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_twmdm"]
+atlas = ExtResource("1_0wkdl")
+region = Rect2(384, 384, 128, 128)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_yp7lw"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kqwpp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4xmer")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_yxe1v")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4c3js")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kmthj")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_36tp6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6288e")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_rch13")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_2jm5j")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_555q8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_uomee")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_tcnal")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_gh615")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_wr7gu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_24ucu")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_twmdm")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}]
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_4xmer"]
+
+[node name="ActiveDetailCard" type="PanelContainer"]
+offset_right = 40.0
+offset_bottom = 40.0
+theme = ExtResource("1_4xmer")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(128, 128)
+layout_mode = 2
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="MarginContainer/VBoxContainer"]
+position = Vector2(65, 64)
+sprite_frames = SubResource("SpriteFrames_yp7lw")
+animation = &"idle"
+autoplay = "idle"
+frame_progress = 0.8942508
+
+[node name="Name" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Name"
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Age"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_4xmer")
+
+[node name="GridContainer" type="GridContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/h_separation = 12
+theme_override_constants/v_separation = 12
+columns = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer"]
+custom_minimum_size = Vector2(25, 25)
+layout_mode = 2
+texture = ExtResource("3_yxe1v")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer"]
+layout_mode = 2
+text = "23"
+horizontal_alignment = 1
+
+[node name="VBoxContainer2" type="VBoxContainer" parent="MarginContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer2"]
+custom_minimum_size = Vector2(25, 25)
+layout_mode = 2
+texture = ExtResource("3_yxe1v")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer2"]
+layout_mode = 2
+text = "23"
+horizontal_alignment = 1
+
+[node name="VBoxContainer3" type="VBoxContainer" parent="MarginContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer3"]
+custom_minimum_size = Vector2(25, 25)
+layout_mode = 2
+texture = ExtResource("3_yxe1v")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer3"]
+layout_mode = 2
+text = "23"
+horizontal_alignment = 1
+
+[node name="VBoxContainer4" type="VBoxContainer" parent="MarginContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer4"]
+custom_minimum_size = Vector2(25, 25)
+layout_mode = 2
+texture = ExtResource("3_yxe1v")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer4"]
+layout_mode = 2
+text = "23"
+horizontal_alignment = 1
+
+[node name="VBoxContainer5" type="VBoxContainer" parent="MarginContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer5"]
+custom_minimum_size = Vector2(25, 25)
+layout_mode = 2
+texture = ExtResource("3_yxe1v")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer5"]
+layout_mode = 2
+text = "23"
+horizontal_alignment = 1
+
+[node name="VBoxContainer6" type="VBoxContainer" parent="MarginContainer/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer6"]
+custom_minimum_size = Vector2(25, 25)
+layout_mode = 2
+texture = ExtResource("3_yxe1v")
+expand_mode = 1
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/GridContainer/VBoxContainer6"]
+layout_mode = 2
+text = "23"
+horizontal_alignment = 1
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_styles/separator = SubResource("StyleBoxLine_4xmer")
+
+[node name="Label2" type="Label" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+text = "Current Training"
+
+[node name="OptionButton" type="OptionButton" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2

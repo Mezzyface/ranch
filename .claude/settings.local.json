@@ -97,7 +97,8 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_aging_fix.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_gold_fix.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_training.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --scene scenes/main/main.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --scene scenes/main/main.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_training_stat_gains.tscn)"
     ],
     "deny": [],
     "ask": []

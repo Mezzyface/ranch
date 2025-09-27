@@ -1,13 +1,15 @@
 [gd_scene load_steps=3 format=3 uid="uid://k2mp7y30jqcb"]
 
-[ext_resource type="Script" path="res://scripts/ui/collection_panel.gd" id="1_h5p1w"]
-[ext_resource type="Theme" uid="uid://bfvxqkp6lm5r3" path="res://resources/themes/default_theme.tres" id="2_mxp7l"]
+[ext_resource type="Script" uid="uid://c0mvo7p1lj2lr" path="res://scripts/ui/collection_panel.gd" id="1_h5p1w"]
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="2_mxp7l"]
 
 [node name="CollectionPanel" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme = ExtResource("2_mxp7l")
 script = ExtResource("1_h5p1w")
 
@@ -20,6 +22,8 @@ offset_left = 10.0
 offset_top = 10.0
 offset_right = -10.0
 offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="ActiveSection" type="VBoxContainer" parent="VBox"]
 layout_mode = 2

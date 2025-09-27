@@ -1,19 +1,33 @@
 [gd_scene load_steps=4 format=3 uid="uid://b4xq5vfh8nyw1"]
 
 [ext_resource type="Script" uid="uid://ch4kstoaf6xlw" path="res://scripts/ui/creature_card.gd" id="1_r5p1w"]
-[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="2_mxp7l"]
+[ext_resource type="Theme" uid="uid://daax7m1iera0u" path="res://assets/modern.tres" id="1_rivws"]
 [ext_resource type="Texture2D" uid="uid://b33wvug6lmi3n" path="res://assets/sprites/items/all-svgs_burn.svg" id="3_rivws"]
 
 [node name="CreatureCard" type="PanelContainer"]
 offset_right = 100.0
-offset_bottom = 227.0
-theme = ExtResource("2_mxp7l")
+offset_bottom = 179.0
+theme = ExtResource("1_rivws")
 script = ExtResource("1_r5p1w")
 
-[node name="VBox" type="VBoxContainer" parent="."]
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 4
+
+[node name="VBox" type="VBoxContainer" parent="MarginContainer"]
 layout_mode = 2
 
-[node name="Portrait" type="TextureRect" parent="VBox"]
+[node name="NameLabel" type="Label" parent="MarginContainer/VBox"]
+clip_contents = true
+layout_mode = 2
+text = "Creature Name"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="MarginContainer/VBox"]
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 2
 size_flags_horizontal = 4
@@ -22,38 +36,33 @@ texture = ExtResource("3_rivws")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="NameLabel" type="Label" parent="VBox"]
-clip_contents = true
+[node name="Stats" type="VBoxContainer" parent="MarginContainer/VBox"]
 layout_mode = 2
-text = "Creature Name"
-horizontal_alignment = 1
-autowrap_mode = 2
 
-[node name="SpeciesLabel" type="Label" parent="VBox"]
+[node name="StaminaLabel" type="Label" parent="MarginContainer/VBox/Stats"]
+layout_mode = 2
+text = "100"
+horizontal_alignment = 1
+
+[node name="StaminaBar" type="ProgressBar" parent="MarginContainer/VBox/Stats"]
+layout_mode = 2
+value = 100.0
+show_percentage = false
+
+[node name="SpeciesLabel" type="Label" parent="MarginContainer/VBox"]
+visible = false
 layout_mode = 2
 text = "Species"
 horizontal_alignment = 1
 autowrap_mode = 2
 
-[node name="LevelLabel" type="Label" parent="VBox"]
+[node name="LevelLabel" type="Label" parent="MarginContainer/VBox"]
+visible = false
 layout_mode = 2
 text = "Age: 0 weeks"
 horizontal_alignment = 1
 
-[node name="Stats" type="VBoxContainer" parent="VBox"]
-layout_mode = 2
-
-[node name="StaminaLabel" type="Label" parent="VBox/Stats"]
-layout_mode = 2
-text = "Stamina"
-horizontal_alignment = 1
-
-[node name="StaminaBar" type="ProgressBar" parent="VBox/Stats"]
-layout_mode = 2
-value = 100.0
-show_percentage = false
-
-[node name="EmptySlotLabel" type="Label" parent="VBox"]
+[node name="EmptySlotLabel" type="Label" parent="MarginContainer/VBox"]
 visible = false
 layout_mode = 2
 size_flags_vertical = 3
