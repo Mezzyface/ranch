@@ -61,15 +61,24 @@ func _input(event: InputEvent) -> void:
 			print("Load result: ", success)
 	elif event.is_action_pressed("ui_open_shop"):
 		print("Shop input detected (S key)!")
-		if ui_manager:
+		# Use the same method as the shop button
+		if current_ui_scene and current_ui_scene.has_method("_on_shop_pressed"):
+			current_ui_scene._on_shop_pressed()
+		elif ui_manager:
 			ui_manager.show_window("shop")
 	elif event.is_action_pressed("ui_open_creatures"):
 		print("Creatures input detected (C key)!")
-		if ui_manager:
-			ui_manager.show_window("creatures")
+		# Use the same method as the collect button
+		if current_ui_scene and current_ui_scene.has_method("_on_collect_pressed"):
+			current_ui_scene._on_collect_pressed()
+		else:
+			# If not on game UI, switch to it first
+			change_ui_scene("res://scenes/ui/game_ui.tscn")
 	elif event.is_action_pressed("ui_open_quests"):
 		print("Quests input detected (Q key)!")
-		if ui_manager:
+		if current_ui_scene and current_ui_scene.has_method("_on_quest_pressed"):
+			current_ui_scene._on_quest_pressed()
+		elif ui_manager:
 			ui_manager.show_window("quests")
 	elif event.is_action_pressed("ui_advance_time"):
 		print("Advance time input detected (Space key)!")

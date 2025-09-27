@@ -8,9 +8,14 @@ extends Control
 @onready var collect_button: Button = $HUD/BottomBar/ActionButtons/CollectButton
 @onready var shop_button: Button = $HUD/BottomBar/ActionButtons/ShopButton
 @onready var quest_button: Button = $HUD/BottomBar/ActionButtons/QuestButton
+@onready var next_week_button: Button = $HUD/BottomBar/ActionButtons/NextWeekButton
+@onready var content_switcher: Control = $HUD/MainContent/ContentSwitcher
+@onready var default_view: Control = $HUD/MainContent/ContentSwitcher/DefaultView
+@onready var collection_view: Control = $HUD/MainContent/ContentSwitcher/CollectionView
 
 var _ui_manager: UIManager
 var game_controller
+var _current_view: String = "default"
 
 func _ready() -> void:
 	if not Engine.is_editor_hint():
@@ -20,6 +25,17 @@ func _initialize_ui() -> void:
 	_setup_controllers()
 	_connect_signals()
 	_update_ui()
+	create_creatures()
+
+func create_creatures() -> void:
+	var collection = GameCore.get_system("collection")
+	var species = GameCore.get_system("species").get_all_species()
+
+	for i in range(8):
+		var creature = CreatureGenerator.generate_creature_data(species[i % species.size()])
+		creature.creature_name = "Test %s %d" % [creature.species_id.capitalize(), i+1]
+		collection.acquire_creature(creature, "test")
+
 
 func _setup_controllers() -> void:
 	_ui_manager = GameCore.get_system("ui")
@@ -29,14 +45,26 @@ func _connect_signals() -> void:
 		game_controller.time_updated.connect(_on_time_updated)
 		game_controller.creatures_updated.connect(_on_creatures_updated)
 
+	# Connect to time and aging signals directly
+	var signal_bus = GameCore.get_signal_bus()
+	if signal_bus:
+		signal_bus.week_advanced.connect(_on_week_advanced_ui)
+		signal_bus.aging_batch_completed.connect(_on_aging_completed)
+
 func _update_ui() -> void:
 	_update_time_display()
 	_update_resources_display()
 	_update_creature_list()
 
 func _update_time_display() -> void:
-	if game_controller and time_label:
-		time_label.text = game_controller.get_time_display()
+	if time_label:
+		var time_system = GameCore.get_system("time")
+		if time_system:
+			time_label.text = "Week %d" % time_system.current_week
+		elif game_controller:
+			time_label.text = game_controller.get_time_display()
+		else:
+			time_label.text = "Week 1"
 
 func _update_resources_display() -> void:
 	if game_controller and resources_label:
@@ -61,20 +89,60 @@ func _on_creature_selected(index: int) -> void:
 	print("GameUI: Selected creature at index %d" % index)
 
 func _on_collect_pressed() -> void:
-	print("GameUI: Collect button pressed")
+	print("🔵 GameUI: Collect button pressed - toggling collection view")
+	_toggle_collection_view()
 
 func _on_shop_pressed() -> void:
-	print("GameUI: Shop button pressed")
+	print("🟠 GameUI: Shop button pressed - opening shop")
 	if _ui_manager:
 		_ui_manager.show_window("shop")
 
 func _on_quest_pressed() -> void:
-	print("GameUI: Quest button pressed")
+	print("🟢 GameUI: Quest button pressed - opening quests")
 	if _ui_manager:
 		_ui_manager.show_window("quests")
+
+func _on_next_week_pressed() -> void:
+	print("⏰ GameUI: Next Week button pressed - advancing time")
+	var time_system = GameCore.get_system("time")
+	if time_system:
+		var success = time_system.advance_week()
+		if success:
+			print("  ✅ Week advanced successfully")
+			_update_ui()  # Refresh the UI to show updated creature ages
+		else:
+			print("  ❌ Failed to advance week")
+	else:
+		print("  ❌ Time system not available")
 
 func _on_time_updated() -> void:
 	_update_time_display()
 
 func _on_creatures_updated() -> void:
+	_update_creature_list()
+
+func _toggle_collection_view() -> void:
+	if _current_view == "default":
+		_show_collection_view()
+	else:
+		_show_default_view()
+
+func _show_collection_view() -> void:
+	_current_view = "collection"
+	default_view.hide()
+	collection_view.show()
+	collect_button.text = "Close Collection"
+
+func _show_default_view() -> void:
+	_current_view = "default"
+	collection_view.hide()
+	default_view.show()
+	collect_button.text = "Collect"
+
+func _on_week_advanced_ui(new_week: int, total_weeks: int) -> void:
+	print("GameUI: Week advanced to %d - updating time display" % new_week)
+	_update_time_display()
+
+func _on_aging_completed(creatures_aged: int, total_weeks: int) -> void:
+	print("GameUI: Aging completed for %d creatures - updating creature list" % creatures_aged)
 	_update_creature_list()

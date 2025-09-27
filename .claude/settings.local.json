@@ -77,7 +77,17 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/ui/game_ui.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/main/main.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_load_game.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_main_menu_load.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_main_menu_load.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_filter_and_keys.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_filter_connection.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_collection_updates.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_search_filtering.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_ui_filtering.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_visual_debug.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_layout_debug.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_portrait_debug.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_portrait_simple.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_final_portrait.tscn)"
     ],
     "deny": [],
     "ask": []

@@ -53,6 +53,10 @@ text = "New Game"
 layout_mode = 2
 text = "Load Game"
 
+[node name="CollectionButton" type="Button" parent="CenterContainer/MainPanel/ButtonContainer"]
+layout_mode = 2
+text = "View Collection"
+
 [node name="SettingsButton" type="Button" parent="CenterContainer/MainPanel/ButtonContainer"]
 layout_mode = 2
 text = "Settings"
@@ -63,5 +67,6 @@ text = "Quit"
 
 [connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/NewGameButton" to="." method="_on_new_game_pressed"]
 [connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/LoadGameButton" to="." method="_on_load_game_pressed"]
+[connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/CollectionButton" to="." method="_on_collection_pressed"]
 [connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/SettingsButton" to="." method="_on_settings_pressed"]
 [connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/QuitButton" to="." method="_on_quit_pressed"]

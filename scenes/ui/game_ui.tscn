@@ -1,13 +1,16 @@
-[gd_scene load_steps=3 format=3 uid="uid://cc8p0eswhr2yi"]
+[gd_scene load_steps=4 format=3 uid="uid://cc8p0eswhr2yi"]
 
-[ext_resource type="Theme" uid="uid://bfvxqkp6lm5r3" path="res://resources/themes/default_theme.tres" id="1_mxp7l"]
-[ext_resource type="Script" path="res://scripts/ui/game_ui_controller.gd" id="2_5w82k"]
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_mxp7l"]
+[ext_resource type="Script" uid="uid://cslrpvvy3w1vf" path="res://scripts/ui/game_ui_controller.gd" id="2_5w82k"]
+[ext_resource type="PackedScene" uid="uid://k2mp7y30jqcb" path="res://scenes/ui/panels/collection_panel.tscn" id="3_k2mp7"]
 
 [node name="GameUI" type="Control"]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 theme = ExtResource("1_mxp7l")
 script = ExtResource("2_5w82k")
 
@@ -16,12 +19,17 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 0
 
 [node name="TopBar" type="HBoxContainer" parent="HUD"]
+clip_contents = true
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
 offset_bottom = 60.0
+grow_horizontal = 2
 
 [node name="Background" type="ColorRect" parent="HUD/TopBar"]
 layout_mode = 2
@@ -49,6 +57,7 @@ anchor_bottom = 1.0
 offset_top = 60.0
 offset_right = 200.0
 offset_bottom = -60.0
+grow_vertical = 2
 
 [node name="Background" type="ColorRect" parent="HUD/SidePanel"]
 layout_mode = 2
@@ -72,6 +81,9 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 offset_left = 200.0
 offset_top = -60.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 0
 
 [node name="Background" type="ColorRect" parent="HUD/BottomBar"]
 layout_mode = 2
@@ -93,6 +105,10 @@ text = "Shop"
 layout_mode = 2
 text = "Quests"
 
+[node name="NextWeekButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
+layout_mode = 2
+text = "Next Week"
+
 [node name="MainContent" type="Control" parent="HUD"]
 layout_mode = 1
 anchors_preset = 15
@@ -101,15 +117,35 @@ anchor_bottom = 1.0
 offset_left = 200.0
 offset_top = 60.0
 offset_bottom = -60.0
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Background" type="ColorRect" parent="HUD/MainContent"]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 color = Color(0.1, 0.1, 0.15, 1)
 
-[node name="ContentLabel" type="Label" parent="HUD/MainContent"]
+[node name="ContentSwitcher" type="Control" parent="HUD/MainContent"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DefaultView" type="Control" parent="HUD/MainContent/ContentSwitcher"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ContentLabel" type="Label" parent="HUD/MainContent/ContentSwitcher/DefaultView"]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -120,23 +156,46 @@ offset_left = -50.0
 offset_top = -11.5
 offset_right = 50.0
 offset_bottom = 11.5
+grow_horizontal = 2
+grow_vertical = 2
 text = "Game Content"
 horizontal_alignment = 1
+
+[node name="CollectionView" type="Control" parent="HUD/MainContent/ContentSwitcher"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CollectionPanel" parent="HUD/MainContent/ContentSwitcher/CollectionView" instance=ExtResource("3_k2mp7")]
+layout_mode = 1
+grow_horizontal = 2
+grow_vertical = 2
 
 [node name="Windows" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [node name="Dialogs" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
 [connection signal="pressed" from="HUD/TopBar/MenuButton" to="." method="_on_menu_pressed"]
 [connection signal="item_selected" from="HUD/SidePanel/CreatureList" to="." method="_on_creature_selected"]
 [connection signal="pressed" from="HUD/BottomBar/ActionButtons/CollectButton" to="." method="_on_collect_pressed"]
 [connection signal="pressed" from="HUD/BottomBar/ActionButtons/ShopButton" to="." method="_on_shop_pressed"]
 [connection signal="pressed" from="HUD/BottomBar/ActionButtons/QuestButton" to="." method="_on_quest_pressed"]
+[connection signal="pressed" from="HUD/BottomBar/ActionButtons/NextWeekButton" to="." method="_on_next_week_pressed"]

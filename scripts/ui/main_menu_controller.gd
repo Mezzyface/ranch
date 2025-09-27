@@ -3,6 +3,7 @@ extends Control
 
 @onready var new_game_button: Button = $CenterContainer/MainPanel/ButtonContainer/NewGameButton
 @onready var load_game_button: Button = $CenterContainer/MainPanel/ButtonContainer/LoadGameButton
+@onready var collection_button: Button = $CenterContainer/MainPanel/ButtonContainer/CollectionButton
 @onready var settings_button: Button = $CenterContainer/MainPanel/ButtonContainer/SettingsButton
 @onready var quit_button: Button = $CenterContainer/MainPanel/ButtonContainer/QuitButton
 
@@ -29,6 +30,12 @@ func _on_load_game_pressed() -> void:
 		var success = game_controller.load_game("default")
 		if success and _ui_manager:
 			_ui_manager.change_scene("res://scenes/ui/game_ui.tscn")
+
+func _on_collection_pressed() -> void:
+	print("MainMenu: Opening collection view")
+	if _ui_manager:
+		_ui_manager.change_scene("res://scenes/ui/game_ui.tscn")
+		# The GameUI will auto-show collection since we're coming from menu
 
 func _on_settings_pressed() -> void:
 	print("MainMenu: Opening settings")
