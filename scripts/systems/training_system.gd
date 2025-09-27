@@ -99,9 +99,10 @@ func _ready() -> void:
 	for tier in FacilityTier.values():
 		_stats.by_facility[tier] = 0
 
-	# Connect to stamina system for training activity events
+	# Connect to signals for system coordination
 	if _signal_bus:
 		_signal_bus.stamina_activity_performed.connect(_on_training_activity_performed)
+		_signal_bus.creature_cleanup_required.connect(_on_creature_cleanup_required)
 
 # === CORE TRAINING METHODS ===
 
@@ -142,9 +143,8 @@ func schedule_training(creature: CreatureData, activity: TrainingActivity, facil
 		creature_training_assignments.erase(creature.id)
 		return {"success": false, "reason": "Failed to assign training activity"}
 
-	# Consume training food immediately when training is assigned
-	if food_type >= 0:
-		_consume_training_food(creature.id, food_type)
+	# Food consumption moved to weekly update when training actually happens
+	# Food type is stored in the assignment for later consumption
 
 	used_facilities[facility_tier] += 1
 
@@ -362,9 +362,16 @@ func _get_current_week() -> int:
 	# Fallback - assume week 1 if time system not available
 	return 1
 
-func _on_training_activity_performed(creature_data: CreatureData, activity: String, cost: int) -> void:
+func _on_training_activity_performed(creature_data: CreatureData, activity: int, cost: int) -> void:
 	"""Handle when a creature performs training activity (called by StaminaSystem)"""
-	if activity != "TRAINING":
+	# Null safety check
+	if not creature_data:
+		push_error("TrainingSystem: Received null creature_data in training activity")
+		return
+
+	# Check if this is a training activity (activity is now StaminaSystem.Activity enum)
+	var stamina_system = GameCore.get_system("stamina")
+	if not stamina_system or activity != stamina_system.Activity.TRAINING:
 		return  # Not a training activity
 
 	if not creature_training_assignments.has(creature_data.id):
@@ -374,6 +381,13 @@ func _on_training_activity_performed(creature_data: CreatureData, activity: Stri
 	var assignment = creature_training_assignments[creature_data.id]
 	var training_activity = assignment.activity
 	var facility_tier = assignment.facility_tier
+	var food_type = assignment.get("food_type", -1)
+
+	# Consume training food now that training is actually happening
+	if food_type >= 0:
+		if not _consume_training_food(creature_data.id, food_type):
+			print("Warning: Failed to consume training food for %s" % creature_data.creature_name)
+			# Continue with training even if food consumption fails
 
 	# Apply training gains immediately
 	var gains = _apply_training_gains(creature_data, training_activity, facility_tier)
@@ -486,3 +500,19 @@ func load_state(data: Dictionary) -> void:
 	for tier in FacilityTier.values():
 		if not _stats.by_facility.has(tier):
 			_stats.by_facility[tier] = 0
+
+func _on_creature_cleanup_required(creature_id: String) -> void:
+	"""Handle creature cleanup signal from collection system"""
+	if creature_id.is_empty():
+		return
+
+	# Clean up training assignments for this creature
+	if creature_training_assignments.has(creature_id):
+		# If creature had a training assignment, free up the facility slot
+		var assignment = creature_training_assignments[creature_id]
+		if assignment.has("facility_tier"):
+			var tier = assignment.facility_tier
+			if used_facilities.has(tier) and used_facilities[tier] > 0:
+				used_facilities[tier] -= 1
+
+		creature_training_assignments.erase(creature_id)

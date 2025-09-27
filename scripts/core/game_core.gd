@@ -15,16 +15,35 @@ func _ready() -> void:
 func get_signal_bus() -> SignalBus:
 	return signal_bus
 
-func get_system(system_name: String) -> Node:
+func get_system(system_key) -> Node:
+	var system_name: String = _resolve_system_key(system_key)
+	if system_name.is_empty():
+		return null
+
 	if not _systems.has(system_name):
 		_load_system(system_name)
 	return _systems.get(system_name)
 
-func has_system(system_name: String) -> bool:
+func has_system(system_key) -> bool:
+	var system_name: String = _resolve_system_key(system_key)
+	if system_name.is_empty():
+		return false
 	return _systems.has(system_name) or _is_valid_system_name(system_name)
 
+func _resolve_system_key(system_key) -> String:
+	# Support both string and enum
+	if system_key is String:
+		# Legacy string access - will be deprecated
+		return system_key
+	elif system_key is GlobalEnums.SystemKey:
+		# New enum access - preferred
+		return GlobalEnums.system_key_to_string(system_key)
+	else:
+		push_error("GameCore.get_system: Invalid system key type: %s" % type_string(typeof(system_key)))
+		return ""
+
 func _is_valid_system_name(system_name: String) -> bool:
-	var valid_systems = ["creature", "save", "quest", "stat", "tag", "age", "collection", "resource", "resources", "species", "item_manager", "items", "time", "ui", "stamina", "shop", "training", "food"]
+	var valid_systems = ["creature", "save", "quest", "stat", "tag", "age", "collection", "resource", "resources", "species", "item_manager", "items", "time", "ui", "stamina", "shop", "training", "food", "weekly_update", "weekly_orchestrator"]
 	return system_name in valid_systems
 
 func _load_system(system_name: String) -> void:
@@ -63,6 +82,8 @@ func _load_system(system_name: String) -> void:
 			system = preload("res://scripts/systems/training_system.gd").new()
 		"food":
 			system = preload("res://scripts/systems/food_system.gd").new()
+		"weekly_update", "weekly_orchestrator":
+			system = preload("res://scripts/systems/weekly_update_orchestrator.gd").new()
 		_:
 			push_error("Unknown system: " + system_name)
 			return

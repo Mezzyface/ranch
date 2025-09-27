@@ -57,20 +57,23 @@ func _ready() -> void:
 
 func set_game_controller(controller: GameController) -> void:
 	"""Set the game controller reference and connect signals"""
-	# Disconnect existing signals if we have a previous controller
-	if game_controller:
-		if game_controller.training_data_updated.is_connected(_on_training_data_updated):
-			game_controller.training_data_updated.disconnect(_on_training_data_updated)
-		if game_controller.food_inventory_updated.is_connected(_on_food_inventory_updated):
-			game_controller.food_inventory_updated.disconnect(_on_food_inventory_updated)
-		if game_controller.creatures_updated.is_connected(_on_creatures_updated):
-			game_controller.creatures_updated.disconnect(_on_creatures_updated)
+	# Get SignalBus for connections (signals migrated from GameController)
+	var signal_bus = GameCore.get_signal_bus()
+
+	# Disconnect existing signals if connected
+	if signal_bus:
+		if signal_bus.training_data_updated.is_connected(_on_training_data_updated):
+			signal_bus.training_data_updated.disconnect(_on_training_data_updated)
+		if signal_bus.food_inventory_updated.is_connected(_on_food_inventory_updated):
+			signal_bus.food_inventory_updated.disconnect(_on_food_inventory_updated)
+		if signal_bus.creatures_updated.is_connected(_on_creatures_updated):
+			signal_bus.creatures_updated.disconnect(_on_creatures_updated)
 
 	game_controller = controller
-	if game_controller:
-		game_controller.training_data_updated.connect(_on_training_data_updated)
-		game_controller.food_inventory_updated.connect(_on_food_inventory_updated)
-		game_controller.creatures_updated.connect(_on_creatures_updated)
+	if game_controller and signal_bus:
+		signal_bus.training_data_updated.connect(_on_training_data_updated)
+		signal_bus.food_inventory_updated.connect(_on_food_inventory_updated)
+		signal_bus.creatures_updated.connect(_on_creatures_updated)
 	_refresh_display()
 
 func _connect_ui_signals() -> void:

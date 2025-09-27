@@ -4,6 +4,8 @@ Authoritative lightweight interface/contract index for AI agents.
 Do NOT bloat with narrative or implementation notes—pure structure + invariants.
 If a new data Resource or formal interface is added, append a new section (append-only, no edits that break prior contracts).
 
+**Last Updated**: 2025-01-27 - Signal type safety improvements, food consumption timing fix
+
 ---
 ## 1. CreatureData (Resource)
 Path: `scripts/data/creature_data.gd`
@@ -206,6 +208,11 @@ Notes:
 | 2025-09-27 | Updated aging behavior documentation | Only active creatures age during weekly updates; stable creatures remain in stasis |
 | 2025-09-27 | Fixed double aging issue in TimeSystem | Removed redundant aging events; WeeklyUpdateOrchestrator now handles all aging |
 | 2025-09-27 | Added Shop & Economy Systems (Stage 3) | ShopSystem, ResourceTracker shop integration, EconomyConfig, VendorResource, Shop UI architecture with signal-based purchase flow |
+| 2025-09-27 | Added SystemKey enum for type-safe system access | GlobalEnums.SystemKey replaces magic strings throughout codebase; GameCore supports both string and enum access |
+| 2025-09-27 | Migrated controller signals to SignalBus | GameController (6 signals) and UIManager (5 signals) now use centralized SignalBus with validated emission helpers |
+| 2025-09-27 | Added creature cleanup signal system | creature_cleanup_required signal ensures proper memory cleanup when creatures are removed from collection |
+| 2025-09-27 | Fixed expired creatures processing bug | WeeklyUpdateOrchestrator now tracks expired_creature_ids and prevents dead creatures from gaining stats |
+| 2025-09-27 | Enhanced system initialization with fail-fast patterns | StaminaSystem and dependent systems now explicitly report initialization failures instead of silent fallbacks |
 
 ---
 ## 5. Maintenance Rules
@@ -905,7 +912,7 @@ Facility Tiers & Multipliers:
 
 Food Enhancement:
 - Training foods provide 50% effectiveness boost for stat gains
-- Food consumed when training is assigned (immediate consumption)
+- Food consumed during weekly update when training actually executes (deferred consumption)
 - Food types: power_bar (0), speed_snack (1), brain_food (2), focus_tea (3)
 
 Activity-Based Flow:
@@ -917,7 +924,7 @@ Activity-Based Flow:
 Signals Emitted:
 - `training_scheduled` - When training assignment is made
 - `training_completed` - When training finishes with stat gains
-- Listens to: `stamina_activity_performed` - Triggers training execution
+- Listens to: `stamina_activity_performed(creature: CreatureData, activity: int, cost: int)` - activity is Activity enum value
 
 Performance Targets:
 - batch_schedule_training: 100 trainings in <100ms
@@ -928,8 +935,9 @@ Invariants:
 - Training duration: immediate completion upon activity execution
 - Stamina cost: 10 per training session (Activity.TRAINING)
 - Only one training assignment per creature at a time
-- Food consumption atomic with training assignment
+- Food consumption atomic with training execution (during weekly update)
 - Activity cleared after training completion
+- Activity signals use enum values (int) not strings for type safety
 
 ### 10.2 FoodSystem
 Path: `scripts/systems/food_system.gd`

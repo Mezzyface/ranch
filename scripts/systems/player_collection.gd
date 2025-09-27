@@ -376,6 +376,8 @@ func release_creature(creature_id: String, reason: String) -> bool:
 		# Emit release signal
 		if signal_bus:
 			signal_bus.emit_creature_released(creature_data, reason)
+			# Also emit cleanup signal for all systems to remove references
+			signal_bus.creature_cleanup_required.emit(creature_id)
 
 		print("PlayerCollection: Released '%s' (reason: %s)" % [creature_data.creature_name, reason])
 

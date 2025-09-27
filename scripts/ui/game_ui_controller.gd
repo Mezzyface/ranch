@@ -55,14 +55,15 @@ func _setup_controllers() -> void:
 	_ui_manager = GameCore.get_system("ui")
 
 func _connect_signals() -> void:
-	if game_controller:
-		game_controller.time_updated.connect(_on_time_updated)
-		game_controller.creatures_updated.connect(_on_creatures_updated)
-		game_controller.training_data_updated.connect(_on_training_data_updated)
-		game_controller.food_inventory_updated.connect(_on_food_inventory_updated)
-
-	# Connect to time and aging signals directly
+	# Connect to SignalBus since GameController signals have been migrated
 	var signal_bus = GameCore.get_signal_bus()
+	if signal_bus:
+		signal_bus.time_updated.connect(_on_time_updated)
+		signal_bus.creatures_updated.connect(_on_creatures_updated)
+		signal_bus.training_data_updated.connect(_on_training_data_updated)
+		signal_bus.food_inventory_updated.connect(_on_food_inventory_updated)
+
+	# Connect to time and aging signals directly (signal_bus already obtained above)
 	if signal_bus:
 		signal_bus.week_advanced.connect(_on_week_advanced_ui)
 		signal_bus.aging_batch_completed.connect(_on_aging_completed)

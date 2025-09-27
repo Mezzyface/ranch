@@ -159,37 +159,41 @@ func test_training_processing() -> void:
 	var initial_constitution = creature.constitution
 	var initial_stamina = creature.stamina_current
 
-	# Process training
-	var process_result = training_system.process_weekly_training()
+	# Get stamina system to simulate weekly processing
+	var stamina_system = GameCore.get_system("stamina")
+	if not stamina_system:
+		print("  ❌ Stamina system not available")
+		return
 
-	print("  📊 Processing results:")
-	print("    - Trainings started: %d" % process_result.trainings_started)
-	print("    - Trainings completed: %d" % process_result.trainings_completed)
+	# Simulate the weekly update by calling the stamina activity processing
+	# This will trigger the training through the signal
+	var signal_bus = GameCore.get_signal_bus()
+	signal_bus.stamina_activity_performed.emit(creature, stamina_system.Activity.TRAINING, 10)
 
-	# Check stat gains (training should be active but not complete yet)
-	if process_result.trainings_started > 0:
-		print("  ✅ Training correctly moved to active")
+	print("  📊 Processing training activity signal...")
 
-	# Process again to complete training
-	var complete_result = training_system.process_weekly_training()
-
-	if complete_result.trainings_completed > 0:
-		print("  ✅ Training completed on second process")
+	# Check if training was processed
+	var assignments = training_system.get_training_assignments()
+	if not assignments.has(creature.id):
+		print("  ✅ Training assignment cleared after processing")
 
 		# Check stat gains
 		var strength_gained = creature.strength - initial_strength
 		var constitution_gained = creature.constitution - initial_constitution
-		var stamina_lost = initial_stamina - creature.stamina_current
 
 		if strength_gained > 0 and constitution_gained > 0:
 			print("  ✅ Stat gains applied: STR +%d, CON +%d" % [strength_gained, constitution_gained])
 		else:
 			print("  ❌ No stat gains detected")
 
-		if stamina_lost == 10:
-			print("  ✅ Stamina correctly depleted by 10")
+		# Check completed trainings list
+		var completed = training_system.get_completed_trainings()
+		if completed.size() > 0:
+			print("  ✅ Training recorded in completed list")
 		else:
-			print("  ❌ Incorrect stamina depletion: %d (expected 10)" % stamina_lost)
+			print("  ❌ Training not recorded as completed")
+	else:
+		print("  ❌ Training assignment not cleared after processing")
 
 func test_batch_training() -> void:
 	print("\n📦 Testing Batch Training...")
@@ -350,7 +354,7 @@ func test_save_load() -> void:
 	var save_data = training_system.save_state()
 
 	# Verify save data structure
-	var expected_keys = ["training_queue", "active_trainings", "completed_trainings", "used_facilities", "statistics"]
+	var expected_keys = ["creature_training_assignments", "completed_trainings", "used_facilities", "statistics"]
 	var has_all_keys = true
 	for key in expected_keys:
 		if not save_data.has(key):
@@ -360,22 +364,22 @@ func test_save_load() -> void:
 	if has_all_keys:
 		print("  ✅ Save data contains all expected keys")
 
-	# Check that training queue was saved
-	if save_data.training_queue.size() > 0:
-		print("  ✅ Training queue saved (%d entries)" % save_data.training_queue.size())
+	# Check that training assignments were saved
+	if save_data.has("creature_training_assignments") and save_data.creature_training_assignments.size() > 0:
+		print("  ✅ Training assignments saved (%d entries)" % save_data.creature_training_assignments.size())
 	else:
-		print("  ❌ Training queue not saved")
+		print("  ❌ Training assignments not saved")
 
 	# Clear system and load
 	training_system.load_state({})  # Reset
-	var empty_queue = training_system.get_training_queue()
-	if empty_queue.size() == 0:
+	var empty_assignments = training_system.get_training_assignments()
+	if empty_assignments.size() == 0:
 		print("  ✅ System correctly reset")
 
 	# Load saved data
 	training_system.load_state(save_data)
-	var restored_queue = training_system.get_training_queue()
-	if restored_queue.size() > 0:
-		print("  ✅ Training queue restored (%d entries)" % restored_queue.size())
+	var restored_assignments = training_system.get_training_assignments()
+	if restored_assignments.size() > 0:
+		print("  ✅ Training assignments restored (%d entries)" % restored_assignments.size())
 	else:
-		print("  ❌ Training queue not restored")
+		print("  ❌ Training assignments not restored")

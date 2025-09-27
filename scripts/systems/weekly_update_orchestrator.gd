@@ -17,6 +17,7 @@ var phase_handlers: Dictionary = {}
 var update_results: Dictionary = {}
 var rollback_data: Dictionary = {}
 var is_updating: bool = false
+var expired_creature_ids: Array[String] = []  # Track expired creatures during update
 
 func _ready() -> void:
 	_initialize_pipeline()
@@ -117,6 +118,9 @@ func _handle_aging() -> bool:
 	var category_changes: Array[Dictionary] = []
 	var expired: Array[String] = []
 
+	# Clear expired list for this update
+	expired_creature_ids.clear()
+
 	# Only age active creatures - stable creatures remain in stasis
 	var active_creatures = collection.get_active_creatures()
 	for creature in active_creatures:
@@ -125,6 +129,7 @@ func _handle_aging() -> bool:
 
 		if creature.age_weeks >= creature.lifespan_weeks:
 			expired.append(creature.creature_name)
+			expired_creature_ids.append(creature.id)  # Track ID for skipping in later phases
 			continue
 
 		aged_count += 1
@@ -150,8 +155,8 @@ func _handle_stamina() -> bool:
 
 	var stamina_system = GameCore.get_system("stamina")
 
-	# Process assigned activities for the week
-	var activity_results = stamina_system.process_weekly_activities()
+	# Process assigned activities for the week, skipping expired creatures
+	var activity_results = stamina_system.process_weekly_activities(expired_creature_ids)
 
 	# Organize results for summary
 	var depleted = []

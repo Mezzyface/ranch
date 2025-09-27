@@ -16,12 +16,12 @@ signal clicked(creature: CreatureData)
 @export var is_active_slot: bool = true
 @export var is_empty_slot: bool = false
 
-@onready var portrait: TextureRect = $VBox/Portrait
-@onready var name_label: Label = $VBox/NameLabel
-@onready var level_label: Label = $VBox/LevelLabel
-@onready var species_label: Label = $VBox/SpeciesLabel
-@onready var stamina_bar: ProgressBar = $VBox/Stats/StaminaBar
-@onready var empty_slot_label: Label = $VBox/EmptySlotLabel
+@onready var portrait: TextureRect = $MarginContainer/VBox/Portrait
+@onready var name_label: Label = $MarginContainer/VBox/NameLabel
+@onready var level_label: Label = $MarginContainer/VBox/LevelLabel
+@onready var species_label: Label = $MarginContainer/VBox/SpeciesLabel
+@onready var stamina_bar: ProgressBar = $MarginContainer/VBox/Stats/StaminaBar
+@onready var empty_slot_label: Label = $MarginContainer/VBox/EmptySlotLabel
 
 var _is_dragging: bool = false
 var _mouse_in: bool = false

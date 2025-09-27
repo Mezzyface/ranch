@@ -172,8 +172,8 @@ signal creature_exhausted(creature: CreatureData)
 signal creature_recovered(creature: CreatureData)
 
 # Activity events
-signal activity_assigned(creature: CreatureData, activity: String)
-signal stamina_activity_performed(creature: CreatureData, activity_name: String, cost: int)
+signal activity_assigned(creature: CreatureData, activity: int)  # activity is Activity enum value
+signal stamina_activity_performed(creature: CreatureData, activity: int, cost: int)  # activity is Activity enum value
 
 # Food consumption
 signal food_consumed(creature: CreatureData, food_type: String)

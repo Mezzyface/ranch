@@ -1,11 +1,8 @@
 @tool
 class_name UIManager extends Node
 
-signal scene_changed(new_scene: String)
-signal window_opened(window_name: String)
-signal window_closed(window_name: String)
-signal transition_started()
-signal transition_completed()
+# Signals moved to SignalBus for centralized management
+# Use _signal_bus.emit_*() methods instead
 
 var current_scene: Control = null
 var scene_stack: Array[String] = []
@@ -40,7 +37,7 @@ func change_scene(scene_path: String) -> void:
 		scene_stack.clear()
 		scene_stack.push_back(scene_path)
 		_fade_in_scene(new_scene)
-		scene_changed.emit(scene_path)
+		_signal_bus.emit_scene_changed(scene_path)
 
 	_end_transition()
 
@@ -77,7 +74,7 @@ func show_window(window_name: String) -> void:
 	var window = windows[window_name] as Window
 	if window and not window.visible:
 		window.show()
-		window_opened.emit(window_name)
+		_signal_bus.emit_window_opened(window_name)
 
 func hide_window(window_name: String) -> void:
 	if window_name.is_empty():
@@ -91,7 +88,7 @@ func hide_window(window_name: String) -> void:
 	var window = windows[window_name] as Window
 	if window and window.visible:
 		window.hide()
-		window_closed.emit(window_name)
+		_signal_bus.emit_window_closed(window_name)
 
 func register_window(window_name: String, window: Window) -> void:
 	if window_name.is_empty():
@@ -158,11 +155,11 @@ func _load_scene(scene_path: String) -> Control:
 
 func _start_transition() -> void:
 	is_transitioning = true
-	transition_started.emit()
+	_signal_bus.emit_transition_started()
 
 func _end_transition() -> void:
 	is_transitioning = false
-	transition_completed.emit()
+	_signal_bus.emit_transition_completed()
 
 func _fade_out_scene(scene: Control) -> void:
 	if not scene:

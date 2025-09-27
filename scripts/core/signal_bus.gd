@@ -56,6 +56,7 @@ signal species_validation_failed(species_id: String, errors: Array[String])
 # Creature collection events
 signal creature_acquired(creature_data: CreatureData, source: String)
 signal creature_released(creature_data: CreatureData, reason: String)
+signal creature_cleanup_required(creature_id: String)  # For memory cleanup across systems
 signal active_roster_changed(new_roster: Array[CreatureData])
 signal stable_collection_updated(operation: String, creature_id: String)
 
@@ -94,10 +95,10 @@ signal stamina_depleted(creature_data: CreatureData, amount: int)
 signal stamina_restored(creature_data: CreatureData, amount: int)
 signal creature_exhausted(creature_data: CreatureData)
 signal creature_recovered(creature_data: CreatureData)
-signal stamina_activity_performed(creature_data: CreatureData, activity: String, cost: int)
+signal stamina_activity_performed(creature_data: CreatureData, activity: int, cost: int)  # activity is StaminaSystem.Activity enum
 signal stamina_weekly_processed(active_count: int, stable_count: int)
 signal food_consumed(creature_data: CreatureData, food_type: String)
-signal activity_assigned(creature_data: CreatureData, activity: String)
+signal activity_assigned(creature_data: CreatureData, activity: int)  # activity is StaminaSystem.Activity enum
 
 # === TRAINING SIGNALS ===
 # Training system signals (Stage 4)
@@ -105,6 +106,23 @@ signal training_scheduled(creature_data: CreatureData, activity: String, facilit
 signal training_cancelled(creature_id: String, status: String)
 signal training_completed(creature_data: CreatureData, activity: String, stat_gains: Dictionary)
 signal training_food_consumed(creature_id: String, food_name: String, expires_week: int)
+
+# === GAME STATE SIGNALS ===
+# GameController state signals (migrated from GameController)
+signal game_state_changed()
+signal creatures_updated()
+signal resources_updated()
+signal time_updated()
+signal training_data_updated()
+signal food_inventory_updated()
+
+# === UI SIGNALS ===
+# UIManager state signals (migrated from UIManager)
+signal scene_changed(new_scene: String)
+signal window_opened(window_name: String)
+signal window_closed(window_name: String)
+signal transition_started()
+signal transition_completed()
 
 # === SIGNAL MANAGEMENT ===
 # Connection tracking for debugging and cleanup
@@ -725,3 +743,80 @@ func _setup_signal_validation() -> void:
 	# Connect to our own signals for validation/logging if needed
 	# This allows us to track signal flow for debugging
 	pass
+
+# === GAME STATE SIGNAL EMISSION ===
+func emit_game_state_changed() -> void:
+	"""Emit game_state_changed signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting game_state_changed")
+	game_state_changed.emit()
+
+func emit_creatures_updated() -> void:
+	"""Emit creatures_updated signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting creatures_updated")
+	creatures_updated.emit()
+
+func emit_resources_updated() -> void:
+	"""Emit resources_updated signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting resources_updated")
+	resources_updated.emit()
+
+func emit_time_updated() -> void:
+	"""Emit time_updated signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting time_updated")
+	time_updated.emit()
+
+func emit_training_data_updated() -> void:
+	"""Emit training_data_updated signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting training_data_updated")
+	training_data_updated.emit()
+
+func emit_food_inventory_updated() -> void:
+	"""Emit food_inventory_updated signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting food_inventory_updated")
+	food_inventory_updated.emit()
+
+# === UI SIGNAL EMISSION ===
+func emit_scene_changed(new_scene: String) -> void:
+	"""Emit scene_changed signal with validation."""
+	if new_scene.is_empty():
+		push_error("SignalBus: Cannot emit scene_changed with empty scene path")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting scene_changed: %s" % new_scene)
+	scene_changed.emit(new_scene)
+
+func emit_window_opened(window_name: String) -> void:
+	"""Emit window_opened signal with validation."""
+	if window_name.is_empty():
+		push_error("SignalBus: Cannot emit window_opened with empty window name")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting window_opened: %s" % window_name)
+	window_opened.emit(window_name)
+
+func emit_window_closed(window_name: String) -> void:
+	"""Emit window_closed signal with validation."""
+	if window_name.is_empty():
+		push_error("SignalBus: Cannot emit window_closed with empty window name")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting window_closed: %s" % window_name)
+	window_closed.emit(window_name)
+
+func emit_transition_started() -> void:
+	"""Emit transition_started signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting transition_started")
+	transition_started.emit()
+
+func emit_transition_completed() -> void:
+	"""Emit transition_completed signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting transition_completed")
+	transition_completed.emit()

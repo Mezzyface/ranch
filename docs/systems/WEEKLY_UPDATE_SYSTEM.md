@@ -14,12 +14,17 @@ The Weekly Update System orchestrates all game systems during weekly time progre
 Updates are processed in the following order:
 1. **PRE_UPDATE**: Validation and preparation
 2. **AGING**: Process creature aging (active creatures only; stable creatures remain in stasis)
+   - Expired creatures are tracked in `expired_creature_ids` array
+   - Expired creatures are excluded from all subsequent update phases
 3. **STAMINA**: Update stamina values through activity system
+   - Skips expired creatures to prevent post-death activities
 4. **FOOD**: Consume food resources
 5. **QUESTS**: Update quest progress
 6. **COMPETITIONS**: Process competition results
 7. **ECONOMY**: Handle gold/resource changes
 8. **POST_UPDATE**: Cleanup and finalization
+   - Emits `creature_cleanup_required` signal for each expired creature
+   - Connected systems clean up their internal state
 9. **SAVE**: Auto-save game state
 
 ## Basic Usage

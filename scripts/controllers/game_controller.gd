@@ -1,12 +1,8 @@
 @tool
 class_name GameController extends Node
 
-signal game_state_changed()
-signal creatures_updated()
-signal resources_updated()
-signal time_updated()
-signal training_data_updated()
-signal food_inventory_updated()
+# Signals moved to SignalBus for centralized management
+# Use _signal_bus.emit_*() methods instead
 
 var _collection_system
 var _time_system
@@ -122,12 +118,12 @@ func load_game(save_name: String = "default") -> bool:
 	return false
 
 func _on_week_advanced(new_week: int, total_weeks: int) -> void:
-	time_updated.emit()
-	game_state_changed.emit()
+	_signal_bus.emit_time_updated()
+	_signal_bus.emit_game_state_changed()
 
 func _on_roster_changed(new_roster: Array) -> void:
-	creatures_updated.emit()
-	game_state_changed.emit()
+	_signal_bus.emit_creatures_updated()
+	_signal_bus.emit_game_state_changed()
 
 # === TRAINING SYSTEM METHODS ===
 
@@ -223,17 +219,17 @@ func _find_creature_by_id(creature_id: String) -> CreatureData:
 # === SIGNAL HANDLERS ===
 
 func _on_training_scheduled(_creature_data: CreatureData, _activity: String, _facility: String) -> void:
-	training_data_updated.emit()
-	creatures_updated.emit()
+	_signal_bus.emit_training_data_updated()
+	_signal_bus.emit_creatures_updated()
 
 func _on_training_completed(_creature_data: CreatureData, _activity: String, _stat_gains: Dictionary) -> void:
-	training_data_updated.emit()
-	creatures_updated.emit()
+	_signal_bus.emit_training_data_updated()
+	_signal_bus.emit_creatures_updated()
 
 func _on_food_consumed(_creature_id: String, _food_name: String, _expires_week: int) -> void:
-	food_inventory_updated.emit()
-	creatures_updated.emit()
+	_signal_bus.emit_food_inventory_updated()
+	_signal_bus.emit_creatures_updated()
 
 func _on_item_changed(_item_id: String, _quantity: int, _total: int) -> void:
-	resources_updated.emit()
-	food_inventory_updated.emit()
+	_signal_bus.emit_resources_updated()
+	_signal_bus.emit_food_inventory_updated()

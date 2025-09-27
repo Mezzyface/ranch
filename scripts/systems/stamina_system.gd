@@ -42,9 +42,16 @@ func _ready() -> void:
 	print("StaminaSystem initialized")
 	_signal_bus = GameCore.get_signal_bus()
 
-	# Connect to time system for weekly updates
+	# Initialize required dependencies (fail-fast)
+	_collection_system = GameCore.get_system("collection")
+	if not _collection_system:
+		push_error("StaminaSystem: CRITICAL - Collection system not available. Cannot initialize.")
+		# Don't set_process(false) as system might load later, but log the error
+
+	# Connect to signals for system coordination
 	if _signal_bus:
 		_signal_bus.week_advanced.connect(_on_week_advanced)
+		_signal_bus.creature_cleanup_required.connect(_on_creature_cleanup_required)
 
 func get_stamina(creature: CreatureData) -> int:
 	if not creature:
@@ -138,8 +145,7 @@ func assign_activity(creature: CreatureData, activity: Activity) -> bool:
 	creature_activities[creature.id] = activity
 
 	if _signal_bus:
-		var activity_name = get_activity_name(activity)
-		_signal_bus.activity_assigned.emit(creature, activity_name)
+		_signal_bus.activity_assigned.emit(creature, activity)
 
 	return true
 
@@ -166,8 +172,7 @@ func perform_activity(creature: CreatureData, activity: Activity, activity_name:
 	if activity < 0:
 		restore_stamina(creature, abs(int(activity)))
 		if _signal_bus:
-			var name: String = activity_name if not activity_name.is_empty() else get_activity_name(activity)
-			_signal_bus.stamina_activity_performed.emit(creature, name, activity)
+			_signal_bus.stamina_activity_performed.emit(creature, activity, abs(int(activity)))
 		return true
 
 	# Handle depletion activities (positive values)
@@ -176,8 +181,7 @@ func perform_activity(creature: CreatureData, activity: Activity, activity_name:
 			return false
 		deplete_stamina(creature, activity)
 		if _signal_bus:
-			var name: String = activity_name if not activity_name.is_empty() else get_activity_name(activity)
-			_signal_bus.stamina_activity_performed.emit(creature, name, activity)
+			_signal_bus.stamina_activity_performed.emit(creature, activity, abs(int(activity)))
 		return true
 
 	# IDLE activity (no change)
@@ -220,23 +224,28 @@ func restore_weekly(creature: CreatureData) -> void:
 	# No passive weekly recovery
 	pass
 
-func process_weekly_activities() -> Dictionary:
+func process_weekly_activities(skip_creature_ids: Array[String] = []) -> Dictionary:
 	var t0: int = Time.get_ticks_msec()
 	var results: Dictionary = {
 		"activities_performed": [],
 		"stamina_changes": []
 	}
 
-	# Get collection system
+	# Ensure collection system is available (fail-fast)
 	if not _collection_system:
 		_collection_system = GameCore.get_system("collection")
 		if not _collection_system:
-			push_error("StaminaSystem.process_weekly_activities: Collection system not available")
+			push_error("StaminaSystem.process_weekly_activities: CRITICAL - Collection system not available. Cannot process activities.")
+			results["error"] = "Collection system not available"
+			results["failed"] = true
 			return results
 
 	# Process assigned activities for active creatures
 	var active_creatures: Array[CreatureData] = _collection_system.get_active_creatures()
 	for creature in active_creatures:
+		# Skip expired creatures
+		if creature.id in skip_creature_ids:
+			continue
 		var activity = get_assigned_activity(creature)
 		if activity != Activity.IDLE:
 			var before_stamina = get_stamina(creature)
@@ -285,6 +294,18 @@ func cleanup_creature(creature: CreatureData) -> void:
 	depletion_modifiers.erase(creature.id)
 	recovery_modifiers.erase(creature.id)
 	exhausted_creatures.erase(creature.id)
+
+func _on_creature_cleanup_required(creature_id: String) -> void:
+	"""Handle creature cleanup signal from collection system"""
+	if creature_id.is_empty():
+		return
+
+	# Clean up all references to this creature ID
+	creature_stamina.erase(creature_id)
+	creature_activities.erase(creature_id)
+	depletion_modifiers.erase(creature_id)
+	recovery_modifiers.erase(creature_id)
+	exhausted_creatures.erase(creature_id)
 
 # Helper function to auto-assign activities based on stamina levels
 func auto_assign_activities() -> void:

@@ -152,6 +152,74 @@ enum CollectionOperation {
 	UPDATED = 3
 }
 
+# === SYSTEM ENUMS ===
+
+# System keys for type-safe access
+enum SystemKey {
+	COLLECTION = 0,
+	TIME = 1,
+	SAVE = 2,
+	TRAINING = 3,
+	FOOD = 4,
+	RESOURCE_TRACKER = 5,
+	STAMINA = 6,
+	SHOP = 7,
+	QUEST = 8,
+	AGE = 9,
+	TAG = 10,
+	STAT = 11,
+	SPECIES = 12,
+	ITEM_MANAGER = 13,
+	UI_MANAGER = 14,
+	WEEKLY_ORCHESTRATOR = 15
+}
+
+# Creature acquisition sources
+enum CreatureSource {
+	SHOP = 0,
+	QUEST = 1,
+	BREEDING = 2,
+	GIFT = 3,
+	STARTER = 4,
+	DEBUG = 5
+}
+
+# Creature release reasons
+enum ReleaseReason {
+	SOLD = 0,
+	EXPIRED = 1,
+	RELEASED = 2,
+	SACRIFICED = 3,
+	TRADED = 4
+}
+
+# Transaction failure reasons
+enum TransactionFailureReason {
+	INSUFFICIENT_GOLD = 0,
+	INVENTORY_FULL = 1,
+	ITEM_NOT_FOUND = 2,
+	INVALID_QUANTITY = 3,
+	VENDOR_LOCKED = 4
+}
+
+# Gold source types
+enum GoldSource {
+	QUEST_REWARD = 0,
+	ITEM_SALE = 1,
+	ACHIEVEMENT = 2,
+	DEBUG = 3,
+	ROLLBACK = 4
+}
+
+# Gold expense types
+enum GoldExpense {
+	ITEM_PURCHASE = 0,
+	TRAINING_FEE = 1,
+	HEALING = 2,
+	UPGRADE = 3,
+	ROLLBACK = 4
+}
+
 # === UTILITY FUNCTIONS ===
 
 # Convert age category enum to string
@@ -345,3 +413,72 @@ static func validate_species_category(category: int, context: String = "") -> bo
 		push_error("GlobalEnums: Invalid species category %d in %s" % [category, context])
 		return false
 	return true
+
+# === SYSTEM ENUM UTILITIES ===
+
+# Convert SystemKey enum to string for backwards compatibility
+static func system_key_to_string(key: SystemKey) -> String:
+	match key:
+		SystemKey.COLLECTION: return "collection"
+		SystemKey.TIME: return "time"
+		SystemKey.SAVE: return "save"
+		SystemKey.TRAINING: return "training"
+		SystemKey.FOOD: return "food"
+		SystemKey.RESOURCE_TRACKER: return "resource"
+		SystemKey.STAMINA: return "stamina"
+		SystemKey.SHOP: return "shop"
+		SystemKey.QUEST: return "quest"
+		SystemKey.AGE: return "age"
+		SystemKey.TAG: return "tag"
+		SystemKey.STAT: return "stat"
+		SystemKey.SPECIES: return "species"
+		SystemKey.ITEM_MANAGER: return "item_manager"
+		SystemKey.UI_MANAGER: return "ui"
+		SystemKey.WEEKLY_ORCHESTRATOR: return "weekly_update"
+		_:
+			push_error("GlobalEnums.system_key_to_string: Invalid system key %d" % key)
+			return ""
+
+# Convert string to SystemKey enum for migration
+static func string_to_system_key(key_str: String) -> SystemKey:
+	match key_str.to_lower():
+		"collection": return SystemKey.COLLECTION
+		"time": return SystemKey.TIME
+		"save": return SystemKey.SAVE
+		"training": return SystemKey.TRAINING
+		"food": return SystemKey.FOOD
+		"resource", "resources": return SystemKey.RESOURCE_TRACKER
+		"stamina": return SystemKey.STAMINA
+		"shop": return SystemKey.SHOP
+		"quest": return SystemKey.QUEST
+		"age": return SystemKey.AGE
+		"tag": return SystemKey.TAG
+		"stat": return SystemKey.STAT
+		"species": return SystemKey.SPECIES
+		"item_manager": return SystemKey.ITEM_MANAGER
+		"ui", "ui_manager": return SystemKey.UI_MANAGER
+		"weekly_update", "weekly_orchestrator": return SystemKey.WEEKLY_ORCHESTRATOR
+		_:
+			push_error("GlobalEnums.string_to_system_key: Invalid system key '%s'" % key_str)
+			return SystemKey.COLLECTION  # Return fallback but log error
+
+# Convert CreatureSource enum to string
+static func creature_source_to_string(source: CreatureSource) -> String:
+	match source:
+		CreatureSource.SHOP: return "shop"
+		CreatureSource.QUEST: return "quest"
+		CreatureSource.BREEDING: return "breeding"
+		CreatureSource.GIFT: return "gift"
+		CreatureSource.STARTER: return "starter"
+		CreatureSource.DEBUG: return "debug"
+		_: return "unknown"
+
+# Convert ReleaseReason enum to string
+static func release_reason_to_string(reason: ReleaseReason) -> String:
+	match reason:
+		ReleaseReason.SOLD: return "sold"
+		ReleaseReason.EXPIRED: return "expired"
+		ReleaseReason.RELEASED: return "released"
+		ReleaseReason.SACRIFICED: return "sacrificed"
+		ReleaseReason.TRADED: return "traded"
+		_: return "unknown"

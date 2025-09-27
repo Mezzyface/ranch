@@ -48,10 +48,11 @@ func _ready() -> void:
 	print("FoodSystem initialized")
 	_signal_bus = GameCore.get_signal_bus()
 
-	# Connect to feeding signals
+	# Connect to signals for system coordination
 	if _signal_bus:
 		_signal_bus.creature_fed.connect(_on_creature_fed)
 		_signal_bus.week_advanced.connect(_on_week_advanced)
+		_signal_bus.creature_cleanup_required.connect(_on_creature_cleanup_required)
 
 # === TRAINING FOOD MANAGEMENT ===
 
@@ -214,4 +215,13 @@ func save_state() -> Dictionary:
 func load_state(data: Dictionary) -> void:
 	"""Load food system state"""
 	active_effects = data.get("active_effects", {})
+
+func _on_creature_cleanup_required(creature_id: String) -> void:
+	"""Handle creature cleanup signal from collection system"""
+	if creature_id.is_empty():
+		return
+
+	# Clean up any active food effects for this creature
+	if active_effects.has(creature_id):
+		active_effects.erase(creature_id)
 	print("FoodSystem loaded: %d active effects" % active_effects.size())

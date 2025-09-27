@@ -4,7 +4,8 @@
 
 **Created**: 2024-12-26 - Based on completed Stage 1 Tasks 1-8
 **Updated**: 2024-12-27 - Added Stage 2 TimeSystem and WeeklyUpdateOrchestrator
-**Status**: Stage 1 Core Systems (8/11 complete) + Stage 2 TimeSystem + Weekly Updates
+**Updated**: 2025-09-27 - Added SystemKey enum, signal migration, and memory cleanup patterns
+**Status**: Stage 1 Core Systems (8/11 complete) + Stage 2 TimeSystem + Weekly Updates + Architecture Improvements
 
 ---
 
@@ -453,6 +454,141 @@ func emit_new_system_event(data: Variant) -> void:
 # In systems that need the new functionality
 var new_system = GameCore.get_system("new_system")
 new_system.do_something(creature_data)
+```
+
+---
+
+## 🔐 Type-Safe System Access (NEW)
+
+### Using SystemKey Enum
+The `SystemKey` enum provides type-safe system access, eliminating magic strings:
+
+```gdscript
+# OLD - String-based access (still supported for backwards compatibility)
+var collection = GameCore.get_system("collection")
+
+# NEW - Type-safe enum access (preferred)
+var collection = GameCore.get_system(GlobalEnums.SystemKey.COLLECTION)
+
+# Available SystemKey values:
+# COLLECTION, TIME, SAVE, TRAINING, FOOD, RESOURCE_TRACKER,
+# STAMINA, SHOP, QUEST, AGE, TAG, STAT, SPECIES,
+# ITEM_MANAGER, UI_MANAGER, WEEKLY_ORCHESTRATOR
+```
+
+### Benefits of Type-Safe Access:
+- Compile-time checking of system names
+- Auto-complete support in IDE
+- Prevents typos and runtime errors
+- Easy refactoring if system names change
+
+---
+
+## 📡 Centralized Signal Routing
+
+### Signal Migration Pattern
+All controller signals now route through SignalBus for consistency:
+
+```gdscript
+# OLD - Direct signal connection (deprecated)
+game_controller.creatures_updated.connect(_on_creatures_updated)
+
+# NEW - Centralized SignalBus (preferred)
+var signal_bus = GameCore.get_signal_bus()
+signal_bus.creatures_updated.connect(_on_creatures_updated)
+
+# Emission helpers with validation
+signal_bus.emit_creatures_updated()  # Validates before emission
+signal_bus.emit_scene_changed(path)  # Checks for valid path
+```
+
+### Migrated Signals:
+**GameController signals** (now in SignalBus):
+- `creatures_updated`
+- `scene_change_requested(path)`
+- `game_loaded`
+- `game_saved`
+- `main_menu_requested`
+- `quit_requested`
+
+**UIManager signals** (now in SignalBus):
+- `scene_changed(path)`
+- `scene_load_failed(path, error)`
+- `window_shown(name)`
+- `window_hidden(name)`
+- `all_windows_closed`
+
+---
+
+## 🧹 Memory Management & Cleanup
+
+### Creature Cleanup Pattern
+When creatures are removed from the collection, all systems must clean up their references:
+
+```gdscript
+# In PlayerCollection when releasing a creature:
+func release_creature(creature_id: String, reason: String) -> bool:
+    # ... removal logic ...
+
+    # Emit cleanup signal for all systems
+    signal_bus.creature_cleanup_required.emit(creature_id)
+
+    return true
+
+# In dependent systems (StaminaSystem, TrainingSystem, FoodSystem, etc.):
+func _ready() -> void:
+    var signal_bus = GameCore.get_signal_bus()
+    signal_bus.creature_cleanup_required.connect(_on_creature_cleanup_required)
+
+func _on_creature_cleanup_required(creature_id: String) -> void:
+    # Clean up all references to this creature
+    creature_stamina.erase(creature_id)
+    creature_activities.erase(creature_id)
+    depletion_modifiers.erase(creature_id)
+    # ... etc ...
+```
+
+### Expired Creature Handling
+The WeeklyUpdateOrchestrator prevents expired creatures from processing:
+
+```gdscript
+# Track expired creatures during weekly updates
+var expired_creature_ids: Array[String] = []
+
+# During aging phase:
+if creature.is_expired():
+    expired_creature_ids.append(creature.id)
+
+# Skip expired creatures in subsequent phases:
+func process_stamina_update() -> void:
+    for creature in active_creatures:
+        if creature.id in expired_creature_ids:
+            continue  # Skip expired creature
+        # ... process stamina ...
+```
+
+---
+
+## ⚠️ Fail-Fast System Dependencies
+
+### Explicit Dependency Checking
+Systems now fail fast with clear errors instead of silent fallbacks:
+
+```gdscript
+# OLD - Silent fallback (dangerous)
+func process_activity() -> void:
+    _collection_system = GameCore.get_system("collection")
+    if not _collection_system:
+        return  # Silent failure
+
+# NEW - Fail-fast pattern (preferred)
+func process_activity() -> void:
+    _collection_system = GameCore.get_system("collection")
+    if not _collection_system:
+        push_error("StaminaSystem: CRITICAL - Collection system not available")
+        results["error"] = "Collection system not available"
+        results["failed"] = true
+        return results
 ```
 
 ---

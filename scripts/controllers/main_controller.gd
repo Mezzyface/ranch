@@ -24,8 +24,10 @@ func _setup_controllers() -> void:
 	add_child(game_controller)
 
 	ui_manager = GameCore.get_system("ui")
-	if ui_manager:
-		ui_manager.scene_changed.connect(_on_ui_scene_changed)
+	# Connect to SignalBus since UIManager signals have been migrated
+	var signal_bus = GameCore.get_signal_bus()
+	if signal_bus:
+		signal_bus.scene_changed.connect(_on_ui_scene_changed)
 
 func _load_initial_ui() -> void:
 	change_ui_scene("res://scenes/ui/main_menu.tscn")
