@@ -178,13 +178,52 @@ func _on_creature_dropped_to_active(creature: CreatureData, slot_index: int) -> 
 
 	var current_active = collection_system.get_active_creatures()
 
+	# Check if this is a creature from stable
+	var is_from_stable = creature.id in collection_system.stable_collection
+
+	# Check if this is swapping within active roster
+	var is_from_active = creature.id in collection_system._active_lookup
+
 	if slot_index >= 0 and slot_index < 6:
+		# If there's already a creature in this slot
 		if slot_index < current_active.size():
 			var displaced_creature = current_active[slot_index]
-			collection_system.move_to_stable(displaced_creature.id)
-			collection_system.promote_to_active(creature.id)
+
+			if is_from_stable:
+				# Moving from stable to active slot - displace current to stable
+				collection_system.move_to_stable(displaced_creature.id)
+				collection_system.promote_to_active(creature.id)
+			elif is_from_active and displaced_creature.id != creature.id:
+				# Swapping two active creatures
+				var source_index = collection_system._active_lookup[creature.id]
+				_swap_active_creatures(source_index, slot_index)
 		else:
-			collection_system.promote_to_active(creature.id)
+			# Empty slot - just add creature
+			if is_from_stable:
+				collection_system.promote_to_active(creature.id)
+			elif is_from_active:
+				# Reorganizing within active roster - no action needed
+				pass
+
+func _swap_active_creatures(index_a: int, index_b: int) -> void:
+	"""Swap two creatures in active roster."""
+	if not collection_system:
+		return
+
+	var active = collection_system.get_active_creatures()
+	if index_a >= 0 and index_a < active.size() and index_b >= 0 and index_b < active.size():
+		# Swap in the array
+		var temp = active[index_a]
+		active[index_a] = active[index_b]
+		active[index_b] = temp
+
+		# Update the system's roster
+		collection_system.active_roster = active
+		collection_system._rebuild_active_lookup()
+
+		# Emit signal for UI update
+		var signal_bus = GameCore.get_signal_bus()
+		signal_bus.emit_active_roster_changed(active)
 
 func _on_creature_clicked(creature: CreatureData) -> void:
 	print("CollectionPanel: Creature clicked: ", creature.creature_name)

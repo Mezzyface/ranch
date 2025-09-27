@@ -92,9 +92,11 @@ func _show_creature_data() -> void:
 
 	if stamina_bar and stamina_bar.get_parent():
 		stamina_bar.get_parent().show()
-		# Use constitution for health and dexterity for stamina as rough approximations
-		var stamina =creature_data.stamina_current  # Scale dexterity for staminastamina_bar.max_value = stamina
-		stamina_bar.value = stamina
+		# Show stamina based on creature data
+		var max_stamina = creature_data.stamina_max
+		var current_stamina = creature_data.stamina_current
+		stamina_bar.max_value = max_stamina
+		stamina_bar.value = current_stamina
 
 func _on_mouse_entered() -> void:
 	_mouse_in = true

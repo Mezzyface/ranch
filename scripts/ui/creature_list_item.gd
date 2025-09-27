@@ -110,6 +110,25 @@ func _create_drag_preview() -> Control:
 	preview.creature_data = creature_data
 	return preview
 
+func _can_drop_data(position: Vector2, data) -> bool:
+	if not data.has("creature"):
+		return false
+
+	# Can only drop creatures from active roster to stable
+	if data.has("source_slot") and data.source_slot >= 0:
+		return true
+
+	return false
+
+func _drop_data(position: Vector2, data) -> void:
+	if data.has("creature") and data.has("source_slot"):
+		var dropped_creature = data.creature as CreatureData
+		if dropped_creature:
+			# Move the creature from active to stable
+			var collection_system = GameCore.get_system("collection")
+			if collection_system:
+				collection_system.move_to_stable(dropped_creature.id)
+
 func set_creature(new_creature: CreatureData) -> void:
 	creature_data = new_creature
 	_update_display()
