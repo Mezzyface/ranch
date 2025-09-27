@@ -56,6 +56,15 @@ func _ready() -> void:
 
 func set_game_controller(controller: GameController) -> void:
 	"""Set the game controller reference and connect signals"""
+	# Disconnect existing signals if we have a previous controller
+	if game_controller:
+		if game_controller.training_data_updated.is_connected(_on_training_data_updated):
+			game_controller.training_data_updated.disconnect(_on_training_data_updated)
+		if game_controller.food_inventory_updated.is_connected(_on_food_inventory_updated):
+			game_controller.food_inventory_updated.disconnect(_on_food_inventory_updated)
+		if game_controller.creatures_updated.is_connected(_on_creatures_updated):
+			game_controller.creatures_updated.disconnect(_on_creatures_updated)
+
 	game_controller = controller
 	if game_controller:
 		game_controller.training_data_updated.connect(_on_training_data_updated)

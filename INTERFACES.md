@@ -839,3 +839,119 @@ Performance Optimizations:
 - Component pooling for large inventories
 
 ---
+
+## 11. Training & Food Systems (Stage 4)
+
+### 10.1 TrainingSystem
+Path: `scripts/systems/training_system.gd`
+Purpose: Creature training management with queue-based scheduling and food enhancement
+Dependencies: TimeSystem, StaminaSystem, ItemManager, FoodSystem
+
+Enums:
+```gdscript
+enum TrainingActivity { PHYSICAL, AGILITY, MENTAL, DISCIPLINE }
+enum FacilityTier { BASIC, ADVANCED, ELITE }
+```
+
+Public Methods:
+| Method | Signature | Side Effects | Notes |
+|--------|----------|--------------|-------|
+| schedule_training | `func schedule_training(creature: CreatureData, activity: TrainingActivity, facility_tier: FacilityTier = FacilityTier.BASIC, food_type: int = -1) -> Dictionary` | Mutates queue + emits signals | Core scheduling |
+| cancel_training | `func cancel_training(creature_id: String) -> bool` | Mutates queue/active | Removes from queue or active |
+| get_training_status | `func get_training_status(creature_id: String) -> Dictionary` | None | Status lookup |
+| process_weekly_training | `func process_weekly_training() -> Dictionary` | Mutates all training state | Called by TimeSystem |
+| batch_schedule_training | `func batch_schedule_training(training_requests: Array[Dictionary]) -> Dictionary` | Mutates queue | Performance optimization |
+| get_facility_utilization | `func get_facility_utilization() -> Dictionary` | None | Capacity info |
+| is_creature_in_training | `func is_creature_in_training(creature_id: String) -> bool` | None | Membership check |
+| get_activity_name | `func get_activity_name(activity: TrainingActivity) -> String` | None | Display name |
+| get_facility_name | `func get_facility_name(facility_tier: FacilityTier) -> String` | None | Display name |
+
+Training Entry Structure:
+```gdscript
+{
+    "creature_id": String,
+    "creature_name": String,
+    "activity": TrainingActivity,
+    "facility_tier": FacilityTier,
+    "start_week": int,
+    "end_week": int,
+    "status": String,  # "scheduled", "active", "completed"
+    "food_type": int   # -1 for none, 0-3 for food types
+}
+```
+
+Training Activities & Stat Targets:
+| Activity | Stats Targeted | Base Gains |
+|----------|---------------|------------|
+| PHYSICAL | STR, CON | 5-15 per stat |
+| AGILITY | DEX | 5-15 |
+| MENTAL | INT, WIS | 5-15 per stat |
+| DISCIPLINE | DIS | 5-15 |
+
+Facility Tiers & Multipliers:
+| Tier | Multiplier | Capacity per Activity |
+|------|------------|---------------------|
+| BASIC | 1.0x | 10 slots |
+| ADVANCED | 1.5x | 5 slots |
+| ELITE | 2.0x | 2 slots |
+
+Food Enhancement:
+- Training foods provide 50% effectiveness boost for 4 weeks
+- Food consumed when training starts (not when selected)
+- Food types: power_bar (0), speed_snack (1), brain_food (2), focus_tea (3)
+
+Signals Emitted:
+- `training_scheduled` - When training added to queue
+- `training_started` - When training becomes active
+- `training_completed` - When training finishes with stat gains
+
+Performance Targets:
+- batch_schedule_training: 100 trainings in <100ms
+- process_weekly_training: <100ms total
+- Current performance: ~4ms for 100 trainings
+
+Invariants:
+- Training duration: exactly 1 week
+- Stamina cost: 20 per training session
+- Only one training per creature at a time
+- Food consumption atomic with training start
+
+### 10.2 FoodSystem
+Path: `scripts/systems/food_system.gd`
+Purpose: Training food management and effectiveness tracking
+Dependencies: ItemManager
+
+Public Methods:
+| Method | Signature | Side Effects | Notes |
+|--------|----------|--------------|-------|
+| get_food_effectiveness | `func get_food_effectiveness(creature_id: String, activity_type: int) -> float` | None | Returns multiplier (1.0 or 1.5) |
+| apply_food_boost | `func apply_food_boost(creature_id: String, food_type: int) -> bool` | Mutates food effects | 4-week boost |
+| get_active_food_effects | `func get_active_food_effects(creature_id: String) -> Array[Dictionary]` | None | Current effects |
+| process_weekly_effects | `func process_weekly_effects() -> void` | Mutates effects state | Decrements durations |
+| clear_expired_effects | `func clear_expired_effects() -> void` | Mutates effects state | Cleanup expired |
+
+Food Types & Training Activity Mapping:
+| Food Type | Item ID | Activity Enhanced |
+|-----------|---------|------------------|
+| 0 | power_bar | Physical Training |
+| 1 | speed_snack | Agility Training |
+| 2 | brain_food | Mental Training |
+| 3 | focus_tea | Discipline Training |
+
+Food Effect Structure:
+```gdscript
+{
+    "creature_id": String,
+    "food_type": int,
+    "weeks_remaining": int,
+    "effectiveness_multiplier": float  # 1.5 for enhanced training
+}
+```
+
+Invariants:
+- Food effects last exactly 4 weeks
+- Multiple food effects can be active simultaneously
+- Effects expire at beginning of week (before training processing)
+- Food items consumed from ItemManager inventory
+
+---

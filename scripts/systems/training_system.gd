@@ -360,19 +360,19 @@ func _consume_training_food(creature_id: String, food_type: int) -> bool:
 
 	var item_id = food_items[food_type]
 
-	# Check if we have the food item
-	var item_manager = GameCore.get_system("item_manager")
-	if not item_manager:
-		print("Warning: ItemManager not available for food consumption")
+	# Check if we have the food item using ResourceTracker
+	var resource_tracker = GameCore.get_system("resource")
+	if not resource_tracker:
+		print("Warning: ResourceTracker not available for food consumption")
 		return false
 
-	var inventory = item_manager.get_inventory()
+	var inventory = resource_tracker.get_inventory()
 	if not inventory.has(item_id) or inventory[item_id] <= 0:
 		print("Warning: No %s available for training" % item_id)
 		return false
 
-	# Consume the food item
-	if item_manager.remove_item(item_id, 1):
+	# Consume the food item through ResourceTracker
+	if resource_tracker.remove_item(item_id, 1):
 		print("Consumed %s for creature %s training" % [item_id, creature_id])
 		return true
 	else:
