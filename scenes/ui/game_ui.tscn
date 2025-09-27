@@ -4,6 +4,7 @@
 [ext_resource type="Script" uid="uid://cslrpvvy3w1vf" path="res://scripts/ui/game_ui_controller.gd" id="2_5w82k"]
 [ext_resource type="PackedScene" uid="uid://k2mp7y30jqcb" path="res://scenes/ui/panels/collection_panel.tscn" id="3_k2mp7"]
 [ext_resource type="PackedScene" uid="uid://bx5d0leh0v4xd" path="res://scenes/ui/panels/shop_panel.tscn" id="4_shop"]
+[ext_resource type="PackedScene" uid="uid://cy6k8lp9m2vxs" path="res://scenes/ui/panels/training_panel.tscn" id="5_training"]
 
 [node name="GameUI" type="Control"]
 layout_mode = 3
@@ -106,6 +107,10 @@ text = "Shop"
 layout_mode = 2
 text = "Quests"
 
+[node name="TrainingButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
+layout_mode = 2
+text = "Training"
+
 [node name="NextWeekButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
 layout_mode = 2
 text = "Next Week"
@@ -190,6 +195,20 @@ layout_mode = 1
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="TrainingView" type="Control" parent="HUD/MainContent/ContentSwitcher"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TrainingPanel" parent="HUD/MainContent/ContentSwitcher/TrainingView" instance=ExtResource("5_training")]
+layout_mode = 1
+grow_horizontal = 2
+grow_vertical = 2
+
 [node name="Windows" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
@@ -213,4 +232,5 @@ mouse_filter = 2
 [connection signal="pressed" from="HUD/BottomBar/ActionButtons/CollectButton" to="." method="_on_collect_pressed"]
 [connection signal="pressed" from="HUD/BottomBar/ActionButtons/ShopButton" to="." method="_on_shop_pressed"]
 [connection signal="pressed" from="HUD/BottomBar/ActionButtons/QuestButton" to="." method="_on_quest_pressed"]
+[connection signal="pressed" from="HUD/BottomBar/ActionButtons/TrainingButton" to="." method="_on_training_pressed"]
 [connection signal="pressed" from="HUD/BottomBar/ActionButtons/NextWeekButton" to="." method="_on_next_week_pressed"]

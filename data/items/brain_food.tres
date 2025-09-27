@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://d1n4py8x2l50q"]
+
+[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_8r0l4"]
+
+[resource]
+script = ExtResource("1_8r0l4")
+item_id = "brain_food"
+display_name = "Brain Food"
+item_type = 0
+rarity = 1
+base_price = 25
+sell_value = 15
+stack_size = 10
+is_consumable = true
+is_tradeable = true
+is_quest_item = false
+stamina_restore = 5
+stat_boosts = {}
+stat_boost_duration_hours = 0
+healing_amount = 0
+required_level = 1
+required_tags = Array[String]([])
+description = "Nutrient-rich food that enhances mental training effectiveness by 50% for 4 weeks. Essential for developing intelligence and wisdom."
+flavor_text = "\"The mind is a muscle that requires proper nourishment.\" - Sage Elm, Mystical Menagerie"
+icon_path = ""
+crafting_recipe = Array[Dictionary]([])
+crafting_time_minutes = 0
+drop_sources = Array[String]([])
+drop_chance = 0.0

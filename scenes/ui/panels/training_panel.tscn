@@ -1,0 +1,394 @@
+[gd_scene load_steps=3 format=3 uid="uid://cy6k8lqam2vxs"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/training_panel_controller.gd" id="2_script"]
+
+[node name="TrainingPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.15, 0.1, 1)
+
+[node name="VSplitContainer" type="VSplitContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+split_offset = 300
+
+[node name="TopSection" type="HSplitContainer" parent="VSplitContainer"]
+layout_mode = 2
+split_offset = 400
+
+[node name="FacilitiesPanel" type="Panel" parent="VSplitContainer/TopSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(400, 0)
+
+[node name="FacilitiesBackground" type="ColorRect" parent="VSplitContainer/TopSection/FacilitiesPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.2, 0.15, 0.9)
+
+[node name="FacilitiesContent" type="VBoxContainer" parent="VSplitContainer/TopSection/FacilitiesPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FacilitiesTitle" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent"]
+layout_mode = 2
+text = "Training Facilities"
+horizontal_alignment = 1
+
+[node name="FacilitiesGrid" type="GridContainer" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent"]
+layout_mode = 2
+size_flags_vertical = 3
+columns = 2
+
+[node name="PhysicalFacility" type="Panel" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="PhysicalContent" type="VBoxContainer" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/PhysicalFacility"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PhysicalTitle" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/PhysicalFacility/PhysicalContent"]
+layout_mode = 2
+text = "Training Grounds"
+horizontal_alignment = 1
+
+[node name="PhysicalTier" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/PhysicalFacility/PhysicalContent"]
+layout_mode = 2
+text = "Tier: Basic"
+horizontal_alignment = 1
+
+[node name="PhysicalCapacity" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/PhysicalFacility/PhysicalContent"]
+layout_mode = 2
+text = "Capacity: 0/10"
+horizontal_alignment = 1
+
+[node name="PhysicalStats" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/PhysicalFacility/PhysicalContent"]
+layout_mode = 2
+text = "Targets: STR, CON"
+horizontal_alignment = 1
+
+[node name="AgilityFacility" type="Panel" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="AgilityContent" type="VBoxContainer" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/AgilityFacility"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="AgilityTitle" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/AgilityFacility/AgilityContent"]
+layout_mode = 2
+text = "Agility Course"
+horizontal_alignment = 1
+
+[node name="AgilityTier" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/AgilityFacility/AgilityContent"]
+layout_mode = 2
+text = "Tier: Basic"
+horizontal_alignment = 1
+
+[node name="AgilityCapacity" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/AgilityFacility/AgilityContent"]
+layout_mode = 2
+text = "Capacity: 0/10"
+horizontal_alignment = 1
+
+[node name="AgilityStats" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/AgilityFacility/AgilityContent"]
+layout_mode = 2
+text = "Targets: DEX"
+horizontal_alignment = 1
+
+[node name="MentalFacility" type="Panel" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MentalContent" type="VBoxContainer" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/MentalFacility"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MentalTitle" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/MentalFacility/MentalContent"]
+layout_mode = 2
+text = "Library"
+horizontal_alignment = 1
+
+[node name="MentalTier" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/MentalFacility/MentalContent"]
+layout_mode = 2
+text = "Tier: Basic"
+horizontal_alignment = 1
+
+[node name="MentalCapacity" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/MentalFacility/MentalContent"]
+layout_mode = 2
+text = "Capacity: 0/10"
+horizontal_alignment = 1
+
+[node name="MentalStats" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/MentalFacility/MentalContent"]
+layout_mode = 2
+text = "Targets: INT, WIS"
+horizontal_alignment = 1
+
+[node name="DisciplineFacility" type="Panel" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="DisciplineContent" type="VBoxContainer" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/DisciplineFacility"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="DisciplineTitle" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/DisciplineFacility/DisciplineContent"]
+layout_mode = 2
+text = "Meditation Chamber"
+horizontal_alignment = 1
+
+[node name="DisciplineTier" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/DisciplineFacility/DisciplineContent"]
+layout_mode = 2
+text = "Tier: Basic"
+horizontal_alignment = 1
+
+[node name="DisciplineCapacity" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/DisciplineFacility/DisciplineContent"]
+layout_mode = 2
+text = "Capacity: 0/10"
+horizontal_alignment = 1
+
+[node name="DisciplineStats" type="Label" parent="VSplitContainer/TopSection/FacilitiesPanel/FacilitiesContent/FacilitiesGrid/DisciplineFacility/DisciplineContent"]
+layout_mode = 2
+text = "Targets: DIS"
+horizontal_alignment = 1
+
+[node name="AssignmentPanel" type="Panel" parent="VSplitContainer/TopSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="AssignmentBackground" type="ColorRect" parent="VSplitContainer/TopSection/AssignmentPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.2, 0.15, 0.9)
+
+[node name="AssignmentContent" type="VBoxContainer" parent="VSplitContainer/TopSection/AssignmentPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="AssignmentTitle" type="Label" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent"]
+layout_mode = 2
+text = "Creature Assignment"
+horizontal_alignment = 1
+
+[node name="TrainingFoodsSection" type="VBoxContainer" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent"]
+layout_mode = 2
+
+[node name="FoodsTitle" type="Label" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/TrainingFoodsSection"]
+layout_mode = 2
+text = "Training Foods (+50% effectiveness)"
+
+[node name="FoodsGrid" type="GridContainer" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/TrainingFoodsSection"]
+layout_mode = 2
+columns = 2
+
+[node name="PowerBarButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/TrainingFoodsSection/FoodsGrid"]
+layout_mode = 2
+text = "Power Bar (25g)"
+
+[node name="SpeedSnackButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/TrainingFoodsSection/FoodsGrid"]
+layout_mode = 2
+text = "Speed Snack (25g)"
+
+[node name="BrainFoodButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/TrainingFoodsSection/FoodsGrid"]
+layout_mode = 2
+text = "Brain Food (25g)"
+
+[node name="FocusTeaButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/TrainingFoodsSection/FoodsGrid"]
+layout_mode = 2
+text = "Focus Tea (25g)"
+
+[node name="CreatureSelection" type="VBoxContainer" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CreatureTitle" type="Label" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/CreatureSelection"]
+layout_mode = 2
+text = "Select Creature"
+
+[node name="CreatureDropdown" type="OptionButton" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/CreatureSelection"]
+layout_mode = 2
+
+[node name="ActivitySelection" type="VBoxContainer" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent"]
+layout_mode = 2
+
+[node name="ActivityTitle" type="Label" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/ActivitySelection"]
+layout_mode = 2
+text = "Training Activity"
+
+[node name="ActivityButtons" type="GridContainer" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/ActivitySelection"]
+layout_mode = 2
+columns = 2
+
+[node name="PhysicalButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/ActivitySelection/ActivityButtons"]
+layout_mode = 2
+text = "Physical Training"
+
+[node name="AgilityButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/ActivitySelection/ActivityButtons"]
+layout_mode = 2
+text = "Agility Training"
+
+[node name="MentalButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/ActivitySelection/ActivityButtons"]
+layout_mode = 2
+text = "Mental Training"
+
+[node name="DisciplineButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent/ActivitySelection/ActivityButtons"]
+layout_mode = 2
+text = "Discipline Training"
+
+[node name="ScheduleTrainingButton" type="Button" parent="VSplitContainer/TopSection/AssignmentPanel/AssignmentContent"]
+layout_mode = 2
+text = "Schedule Training"
+
+[node name="BottomSection" type="HSplitContainer" parent="VSplitContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SchedulePanel" type="Panel" parent="VSplitContainer/BottomSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ScheduleBackground" type="ColorRect" parent="VSplitContainer/BottomSection/SchedulePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.2, 0.15, 0.9)
+
+[node name="ScheduleContent" type="VBoxContainer" parent="VSplitContainer/BottomSection/SchedulePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ScheduleTitle" type="Label" parent="VSplitContainer/BottomSection/SchedulePanel/ScheduleContent"]
+layout_mode = 2
+text = "Training Schedule"
+horizontal_alignment = 1
+
+[node name="ScheduleList" type="ItemList" parent="VSplitContainer/BottomSection/SchedulePanel/ScheduleContent"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ProgressPanel" type="Panel" parent="VSplitContainer/BottomSection"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ProgressBackground" type="ColorRect" parent="VSplitContainer/BottomSection/ProgressPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.15, 0.2, 0.15, 0.9)
+
+[node name="ProgressContent" type="VBoxContainer" parent="VSplitContainer/BottomSection/ProgressPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ProgressTitle" type="Label" parent="VSplitContainer/BottomSection/ProgressPanel/ProgressContent"]
+layout_mode = 2
+text = "Training Progress"
+horizontal_alignment = 1
+
+[node name="ProgressList" type="ItemList" parent="VSplitContainer/BottomSection/ProgressPanel/ProgressContent"]
+layout_mode = 2
+size_flags_vertical = 3

@@ -97,6 +97,14 @@ signal creature_recovered(creature_data: CreatureData)
 signal stamina_activity_performed(creature_data: CreatureData, activity: String, cost: int)
 signal stamina_weekly_processed(active_count: int, stable_count: int)
 signal food_consumed(creature_data: CreatureData, food_type: String)
+signal activity_assigned(creature_data: CreatureData, activity: String)
+
+# === TRAINING SIGNALS ===
+# Training system signals (Stage 4)
+signal training_scheduled(creature_data: CreatureData, activity: String, facility: String)
+signal training_cancelled(creature_id: String, status: String)
+signal training_completed(creature_data: CreatureData, activity: String, stat_gains: Dictionary)
+signal training_food_consumed(creature_id: String, food_name: String, expires_week: int)
 
 # === SIGNAL MANAGEMENT ===
 # Connection tracking for debugging and cleanup

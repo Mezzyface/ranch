@@ -8,12 +8,15 @@ extends Control
 @onready var collect_button: Button = $HUD/BottomBar/ActionButtons/CollectButton
 @onready var shop_button: Button = $HUD/BottomBar/ActionButtons/ShopButton
 @onready var quest_button: Button = $HUD/BottomBar/ActionButtons/QuestButton
+@onready var training_button: Button = $HUD/BottomBar/ActionButtons/TrainingButton
 @onready var next_week_button: Button = $HUD/BottomBar/ActionButtons/NextWeekButton
 @onready var content_switcher: Control = $HUD/MainContent/ContentSwitcher
 @onready var default_view: Control = $HUD/MainContent/ContentSwitcher/DefaultView
 @onready var collection_view: Control = $HUD/MainContent/ContentSwitcher/CollectionView
 @onready var shop_view: Control = $HUD/MainContent/ContentSwitcher/ShopView
 @onready var shop_panel: Control = $HUD/MainContent/ContentSwitcher/ShopView/ShopPanel
+@onready var training_view: Control = $HUD/MainContent/ContentSwitcher/TrainingView
+@onready var training_panel: Control = $HUD/MainContent/ContentSwitcher/TrainingView/TrainingPanel
 
 var _ui_manager: UIManager
 var game_controller
@@ -38,6 +41,15 @@ func create_creatures() -> void:
 		creature.creature_name = "Test %s %d" % [creature.species_id.capitalize(), i+1]
 		collection.acquire_creature(creature, "test")
 
+	# Add some training food items for testing
+	var resource_tracker = GameCore.get_system("resource")
+	if resource_tracker:
+		resource_tracker.add_item("power_bar", 5)
+		resource_tracker.add_item("speed_snack", 5)
+		resource_tracker.add_item("brain_food", 5)
+		resource_tracker.add_item("focus_tea", 5)
+		resource_tracker.add_gold(500, "initial_test_funds")
+
 
 func _setup_controllers() -> void:
 	_ui_manager = GameCore.get_system("ui")
@@ -46,6 +58,8 @@ func _connect_signals() -> void:
 	if game_controller:
 		game_controller.time_updated.connect(_on_time_updated)
 		game_controller.creatures_updated.connect(_on_creatures_updated)
+		game_controller.training_data_updated.connect(_on_training_data_updated)
+		game_controller.food_inventory_updated.connect(_on_food_inventory_updated)
 
 	# Connect to time and aging signals directly
 	var signal_bus = GameCore.get_signal_bus()
@@ -104,6 +118,10 @@ func _on_quest_pressed() -> void:
 	if _ui_manager:
 		_ui_manager.show_window("quests")
 
+func _on_training_pressed() -> void:
+	print("🟡 GameUI: Training button pressed - toggling training view")
+	_toggle_training_view()
+
 func _on_next_week_pressed() -> void:
 	print("⏰ GameUI: Next Week button pressed - advancing time")
 	var time_system = GameCore.get_system("time")
@@ -135,12 +153,19 @@ func _toggle_shop_view() -> void:
 	else:
 		_show_shop_view()
 
+func _toggle_training_view() -> void:
+	if _current_view == "training":
+		_show_default_view()
+	else:
+		_show_training_view()
+
 func _show_collection_view() -> void:
 	_hide_all_views()
 	_current_view = "collection"
 	collection_view.show()
 	collect_button.text = "Close Collection"
 	shop_button.text = "Shop"
+	training_button.text = "Training"
 
 func _show_shop_view() -> void:
 	_hide_all_views()
@@ -148,10 +173,27 @@ func _show_shop_view() -> void:
 	shop_view.show()
 	collect_button.text = "Collect"
 	shop_button.text = "Close Shop"
+	training_button.text = "Training"
 
 	# Initialize shop panel if needed
 	if shop_panel and shop_panel.has_method("_initialize_shop_panel"):
 		shop_panel._initialize_shop_panel()
+
+func _show_training_view() -> void:
+	_hide_all_views()
+	_current_view = "training"
+	training_view.show()
+	collect_button.text = "Collect"
+	shop_button.text = "Shop"
+	training_button.text = "Close Training"
+
+	# Initialize training panel with game controller
+	if training_panel and training_panel.has_method("set_game_controller"):
+		training_panel.set_game_controller(game_controller)
+
+	# Refresh training panel if needed
+	if training_panel and training_panel.has_method("refresh"):
+		training_panel.refresh()
 
 func _show_default_view() -> void:
 	_hide_all_views()
@@ -159,11 +201,13 @@ func _show_default_view() -> void:
 	default_view.show()
 	collect_button.text = "Collect"
 	shop_button.text = "Shop"
+	training_button.text = "Training"
 
 func _hide_all_views() -> void:
 	default_view.hide()
 	collection_view.hide()
 	shop_view.hide()
+	training_view.hide()
 
 func _on_week_advanced_ui(new_week: int, total_weeks: int) -> void:
 	print("GameUI: Week advanced to %d - updating time display" % new_week)
@@ -176,3 +220,13 @@ func _on_aging_completed(creatures_aged: int, total_weeks: int) -> void:
 func _on_gold_spent(amount: int, reason: String) -> void:
 	print("GameUI: Gold spent (%d for %s) - updating resources display" % [amount, reason])
 	_update_resources_display()
+
+func _on_training_data_updated() -> void:
+	print("GameUI: Training data updated - refreshing training panel")
+	if _current_view == "training" and training_panel and training_panel.has_method("refresh"):
+		training_panel.refresh()
+
+func _on_food_inventory_updated() -> void:
+	print("GameUI: Food inventory updated - refreshing training panel")
+	if _current_view == "training" and training_panel and training_panel.has_method("refresh_food_buttons"):
+		training_panel.refresh_food_buttons()

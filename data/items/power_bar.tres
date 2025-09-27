@@ -1,0 +1,29 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://b5k2gx4p8v6nl"]
+
+[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_5h8k2"]
+
+[resource]
+script = ExtResource("1_5h8k2")
+item_id = "power_bar"
+display_name = "Power Bar"
+item_type = 0
+rarity = 1
+base_price = 25
+sell_value = 15
+stack_size = 10
+is_consumable = true
+is_tradeable = true
+is_quest_item = false
+stamina_restore = 5
+stat_boosts = {}
+stat_boost_duration_hours = 0
+healing_amount = 0
+required_level = 1
+required_tags = Array[String]([])
+description = "A nutritious protein bar that enhances physical training effectiveness by 50% for 4 weeks. Popular among strength and endurance athletes."
+flavor_text = "\"Nothing beats a good Power Bar before hitting the training grounds!\" - Brutus, Savage Supplies"
+icon_path = ""
+crafting_recipe = Array[Dictionary]([])
+crafting_time_minutes = 0
+drop_sources = Array[String]([])
+drop_chance = 0.0

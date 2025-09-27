@@ -95,7 +95,7 @@ Test Automation: `tests/run_tests.bat`, `tests/run_tests.ps1`
 - Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
 
 ## 7. CURRENT SYSTEM KEYS
-`collection` (PlayerCollection), `save` (SaveSystem), `tag` (TagSystem), `age` (AgeSystem), `stat` (StatSystem), `resource` (ResourceTracker), `species` (SpeciesSystem), `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager), `stamina` (StaminaSystem), `weekly_update` (WeeklyUpdateOrchestrator), `shop` (ShopSystem)
+`collection` (PlayerCollection), `save` (SaveSystem), `tag` (TagSystem), `age` (AgeSystem), `stat` (StatSystem), `resource` (ResourceTracker), `species` (SpeciesSystem), `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager), `stamina` (StaminaSystem), `weekly_update` (WeeklyUpdateOrchestrator), `shop` (ShopSystem), `training` (TrainingSystem), `food` (FoodSystem)
 (Extend list when adding new system; update tests referencing keys.)
 
 Canonical signal usage (do NOT invent new wrappers):
@@ -129,6 +129,7 @@ If a new domain event truly required, follow Section 13 before adding.
 | 100 species lookups | <50ms |
 | Weekly time progression | <200ms |
 | Event processing (100 events) | <50ms |
+| Batch training (100 trainings) | <100ms |
 If exceeded, add timing + mitigation note in summary.
 
 ## 9. SUBMISSION CHECKLIST
