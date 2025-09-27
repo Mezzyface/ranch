@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://bp28cvsdhkr7d"]
 
-[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_3eycf"]
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_3eycf"]
 
 [resource]
 script = ExtResource("1_3eycf")
@@ -23,4 +23,5 @@ stat_boosts = {
 stat_boost_duration_hours = 48
 description = "Legendary golden nectar that provides balanced enhancement to all creature abilities."
 flavor_text = "A shimmering golden liquid that seems to pulse with inner light and energy."
+icon_path = "res://assets/sprites/items/all-svgs_coffee-mug.svg"
 drop_sources = Array[String](["shop", "legendary_quest"])

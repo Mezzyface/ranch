@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://bxxn7j241gcvl"]
 
-[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_dkr2t"]
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_dkr2t"]
 
 [resource]
 script = ExtResource("1_dkr2t")
@@ -13,4 +13,5 @@ stack_size = 8
 stamina_restore = 8
 description = "Fresh, juicy berries that most creatures find delicious. Slightly more energizing than basic feeds."
 flavor_text = "Plump berries bursting with natural sweetness and energy."
+icon_path = "res://assets/sprites/items/all-svgs_berries-bowl.svg"
 drop_sources = Array[String](["shop", "forage_quest"])

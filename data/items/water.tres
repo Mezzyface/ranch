@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://c50oyjexhn444"]
 
-[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_rhjmi"]
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_rhjmi"]
 
 [resource]
 script = ExtResource("1_rhjmi")
@@ -13,4 +13,5 @@ stack_size = 15
 stamina_restore = 3
 description = "Clean, refreshing water essential for all creature health. Basic hydration needs."
 flavor_text = "Crystal clear water from mountain springs."
+icon_path = "res://assets/sprites/items/all-svgs_coffee-cup.svg"
 drop_sources = Array[String](["shop", "basic_quest"])

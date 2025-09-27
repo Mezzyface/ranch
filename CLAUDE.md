@@ -65,6 +65,14 @@ godot --headless --scene tests/stage_2_preflight.tscn        # Stage 2 readiness
 Core Loader: `scripts/core/game_core.gd`
 Signals: `scripts/core/signal_bus.gd`
 Enums: `scripts/core/global_enums.gd`
+Main Controller: `scripts/controllers/main_controller.gd` (persistent scene manager)
+Game Controller: `scripts/controllers/game_controller.gd` (game state abstraction)
+UI Manager: `scripts/ui/ui_manager.gd` (scene/window management)
+UI Controllers: `scripts/ui/*_controller.gd` (UI scene logic)
+UI Scenes: `scenes/ui/*.tscn` (main_menu, game_ui)
+UI Components: `scenes/ui/components/*.tscn` (reusable UI elements)
+UI Theme: `resources/themes/default_theme.tres`
+Main Scene: `scenes/main/main.tscn` (application entry point)
 ItemManager: `scripts/systems/item_manager.gd` (replaces ItemDatabase)
 SpeciesSystem: `scripts/systems/species_system.gd` (loads SpeciesResource files)
 TimeSystem: `scripts/systems/time_system.gd` (weekly progression, events)
@@ -87,7 +95,7 @@ Test Automation: `tests/run_tests.bat`, `tests/run_tests.ps1`
 - Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
 
 ## 7. CURRENT SYSTEM KEYS
-`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`, `item_manager` (ItemManager), `time` (TimeSystem)
+`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`, `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager)
 (Extend list when adding new system; update tests referencing keys.)
 
 Canonical signal usage (do NOT invent new wrappers):
@@ -102,6 +110,14 @@ var time_system = GameCore.get_system("time")
 time_system.advance_week()  # manual progression
 time_system.schedule_event(event, target_week)  # event scheduling
 ```
+UIManager access pattern:
+```gdscript
+var ui_manager = GameCore.get_system("ui")
+ui_manager.change_scene("res://scenes/ui/game_ui.tscn")  # scene management
+ui_manager.show_window("shop")  # window management
+```
+Architecture: Main scene (persistent) → GameController → Systems. UI scenes receive GameController reference, never access systems directly.
+
 If a new domain event truly required, follow Section 13 before adding.
 
 ## 8. PERFORMANCE BASELINES

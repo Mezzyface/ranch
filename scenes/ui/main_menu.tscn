@@ -1,0 +1,67 @@
+[gd_scene load_steps=3 format=3 uid="uid://b2x3yl5wkupux"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_1e3gj"]
+[ext_resource type="Script" uid="uid://cincoop4vc5bx" path="res://scripts/ui/main_menu_controller.gd" id="2_x4gd1"]
+
+[node name="MainMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_1e3gj")
+script = ExtResource("2_x4gd1")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.15, 1)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainPanel" type="VBoxContainer" parent="CenterContainer"]
+layout_mode = 2
+alignment = 1
+
+[node name="Title" type="Label" parent="CenterContainer/MainPanel"]
+layout_mode = 2
+text = "Creature Collection Game"
+horizontal_alignment = 1
+
+[node name="VSeparator" type="VSeparator" parent="CenterContainer/MainPanel"]
+layout_mode = 2
+
+[node name="ButtonContainer" type="VBoxContainer" parent="CenterContainer/MainPanel"]
+layout_mode = 2
+
+[node name="NewGameButton" type="Button" parent="CenterContainer/MainPanel/ButtonContainer"]
+layout_mode = 2
+text = "New Game"
+
+[node name="LoadGameButton" type="Button" parent="CenterContainer/MainPanel/ButtonContainer"]
+layout_mode = 2
+text = "Load Game"
+
+[node name="SettingsButton" type="Button" parent="CenterContainer/MainPanel/ButtonContainer"]
+layout_mode = 2
+text = "Settings"
+
+[node name="QuitButton" type="Button" parent="CenterContainer/MainPanel/ButtonContainer"]
+layout_mode = 2
+text = "Quit"
+
+[connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/NewGameButton" to="." method="_on_new_game_pressed"]
+[connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/LoadGameButton" to="." method="_on_load_game_pressed"]
+[connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/SettingsButton" to="." method="_on_settings_pressed"]
+[connection signal="pressed" from="CenterContainer/MainPanel/ButtonContainer/QuitButton" to="." method="_on_quit_pressed"]

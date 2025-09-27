@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3 uid="uid://dgtjlacurtq5"]
 
-[ext_resource type="Script" path="res://scripts/resources/species_resource.gd" id="1_ijxm5"]
+[ext_resource type="Script" uid="uid://d3t4s8hufwn8i" path="res://scripts/resources/species_resource.gd" id="1_ijxm5"]
 
 [resource]
 script = ExtResource("1_ijxm5")
@@ -43,6 +43,8 @@ tag_probabilities = {
 "Stealthy": 0.7
 }
 name_pool = Array[String](["Skitter", "Dash", "Scout", "Guard", "Patrol", "Sentry", "Swift", "Alert", "Watch", "Ward", "Shield", "Defender"])
+sprite_path = "res://assets/sprites/scuttleguard/all-svgs_alien-bug.svg"
+icon_path = "res://assets/sprites/scuttleguard/all-svgs_alien-bug.svg"
 feeding_preferences = Array[String](["grain", "hay", "water"])
 training_modifiers = {
 "dexterity": 1.2,

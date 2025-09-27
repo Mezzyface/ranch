@@ -62,7 +62,22 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_resource_system.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_resources.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene generate_resources.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene generate_species.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene generate_species.tscn)",
+      "Bash(grep:*)",
+      "Bash(git mv:*)",
+      "Bash(git rm:*)",
+      "Bash(do if [ -f \"$file\" ])",
+      "Bash(then echo \"✓ $file\")",
+      "Bash(else echo \"✗ $file\")",
+      "Bash(fi)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_time.tscn)",
+      "Bash(set TEST_FILTER=TimeSystem)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_ui_system.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/ui/main_menu.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/ui/game_ui.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/main/main.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_load_game.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_main_menu_load.tscn)"
     ],
     "deny": [],
     "ask": []

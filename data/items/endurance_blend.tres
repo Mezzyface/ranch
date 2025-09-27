@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://di7asgsrkhkq1"]
 
-[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_jbrad"]
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_jbrad"]
 
 [resource]
 script = ExtResource("1_jbrad")
@@ -18,4 +18,5 @@ stat_boosts = {
 stat_boost_duration_hours = 24
 description = "Specialized nutritional blend that improves stamina and physical resilience."
 flavor_text = "A hearty mixture that builds endurance and helps creatures push their limits."
+icon_path = "res://assets/sprites/items/all-svgs_soda-can.svg"
 drop_sources = Array[String](["shop", "training_quest"])

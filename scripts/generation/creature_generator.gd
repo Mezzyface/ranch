@@ -430,4 +430,3 @@ static func is_valid_species(species_id: String) -> bool:
 
 	# Return false if SpeciesSystem not available
 	return false
-

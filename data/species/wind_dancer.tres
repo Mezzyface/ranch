@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3 uid="uid://deoo42xqk73hg"]
 
-[ext_resource type="Script" path="res://scripts/resources/species_resource.gd" id="1_khvbp"]
+[ext_resource type="Script" uid="uid://d3t4s8hufwn8i" path="res://scripts/resources/species_resource.gd" id="1_khvbp"]
 
 [resource]
 script = ExtResource("1_khvbp")
@@ -48,6 +48,8 @@ tag_probabilities = {
 "Keen Eyes": 0.8
 }
 name_pool = Array[String](["Zephyr", "Gale", "Breeze", "Storm", "Tempest", "Gust", "Whirlwind", "Cyclone", "Hurricane", "Mistral", "Sirocco", "Chinook"])
+sprite_path = "res://assets/sprites/wind_dancer/.all-svgs_wasp-sting.svg"
+icon_path = "res://assets/sprites/wind_dancer/.all-svgs_wasp-sting.svg"
 feeding_preferences = Array[String](["berries", "water", "agility_treats"])
 training_modifiers = {
 "dexterity": 1.5,

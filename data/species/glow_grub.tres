@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3 uid="uid://ba4dna2e7fcqy"]
 
-[ext_resource type="Script" path="res://scripts/resources/species_resource.gd" id="1_hj1uo"]
+[ext_resource type="Script" uid="uid://d3t4s8hufwn8i" path="res://scripts/resources/species_resource.gd" id="1_hj1uo"]
 
 [resource]
 script = ExtResource("1_hj1uo")
@@ -48,6 +48,8 @@ tag_probabilities = {
 "Useful": 0.8
 }
 name_pool = Array[String](["Glow", "Shine", "Spark", "Beam", "Flicker", "Gleam", "Radiance", "Lumina", "Aurora", "Prism", "Crystal", "Lantern"])
+sprite_path = "res://assets/sprites/glow_grub/.all-svgs_maggot.svg"
+icon_path = "res://assets/sprites/glow_grub/.all-svgs_maggot.svg"
 feeding_preferences = Array[String](["grain", "water", "berries"])
 training_modifiers = {
 "intelligence": 1.2,

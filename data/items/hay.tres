@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://dafx2f0sblkye"]
 
-[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_mkd6g"]
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_mkd6g"]
 
 [resource]
 script = ExtResource("1_mkd6g")
@@ -13,4 +13,5 @@ stack_size = 10
 stamina_restore = 5
 description = "Fresh hay perfect for herbivorous creatures. Provides basic nutrition and comfort."
 flavor_text = "Sweet-smelling hay that reminds creatures of peaceful meadows."
+icon_path = "res://assets/sprites/items/all-svgs_burn.svg"
 drop_sources = Array[String](["shop", "basic_quest"])

@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://e83t12ftxr0c"]
 
-[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_7xx03"]
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_7xx03"]
 
 [resource]
 script = ExtResource("1_7xx03")
@@ -18,4 +18,5 @@ stat_boosts = {
 stat_boost_duration_hours = 24
 description = "Light, energy-rich treats that enhance speed and agility training."
 flavor_text = "Quick-dissolving treats that make creatures feel light on their feet."
+icon_path = "res://assets/sprites/items/all-svgs_soda-can.svg"
 drop_sources = Array[String](["shop", "training_quest"])

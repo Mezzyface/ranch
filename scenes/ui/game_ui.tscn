@@ -1,0 +1,142 @@
+[gd_scene load_steps=3 format=3 uid="uid://cc8p0eswhr2yi"]
+
+[ext_resource type="Theme" uid="uid://bfvxqkp6lm5r3" path="res://resources/themes/default_theme.tres" id="1_mxp7l"]
+[ext_resource type="Script" path="res://scripts/ui/game_ui_controller.gd" id="2_5w82k"]
+
+[node name="GameUI" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("1_mxp7l")
+script = ExtResource("2_5w82k")
+
+[node name="HUD" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="TopBar" type="HBoxContainer" parent="HUD"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 60.0
+
+[node name="Background" type="ColorRect" parent="HUD/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+color = Color(0.2, 0.2, 0.3, 0.8)
+
+[node name="MenuButton" type="Button" parent="HUD/TopBar"]
+layout_mode = 2
+text = "Menu"
+
+[node name="TimeLabel" type="Label" parent="HUD/TopBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Week 1"
+horizontal_alignment = 1
+
+[node name="ResourcesLabel" type="Label" parent="HUD/TopBar"]
+layout_mode = 2
+text = "Gold: 100"
+
+[node name="SidePanel" type="VBoxContainer" parent="HUD"]
+layout_mode = 1
+anchors_preset = 9
+anchor_bottom = 1.0
+offset_top = 60.0
+offset_right = 200.0
+offset_bottom = -60.0
+
+[node name="Background" type="ColorRect" parent="HUD/SidePanel"]
+layout_mode = 2
+size_flags_vertical = 3
+color = Color(0.15, 0.15, 0.2, 0.9)
+
+[node name="CreatureListLabel" type="Label" parent="HUD/SidePanel"]
+layout_mode = 2
+text = "Active Creatures"
+horizontal_alignment = 1
+
+[node name="CreatureList" type="ItemList" parent="HUD/SidePanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="BottomBar" type="HBoxContainer" parent="HUD"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 200.0
+offset_top = -60.0
+
+[node name="Background" type="ColorRect" parent="HUD/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+color = Color(0.2, 0.2, 0.3, 0.8)
+
+[node name="ActionButtons" type="HBoxContainer" parent="HUD/BottomBar"]
+layout_mode = 2
+
+[node name="CollectButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
+layout_mode = 2
+text = "Collect"
+
+[node name="ShopButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
+layout_mode = 2
+text = "Shop"
+
+[node name="QuestButton" type="Button" parent="HUD/BottomBar/ActionButtons"]
+layout_mode = 2
+text = "Quests"
+
+[node name="MainContent" type="Control" parent="HUD"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 200.0
+offset_top = 60.0
+offset_bottom = -60.0
+
+[node name="Background" type="ColorRect" parent="HUD/MainContent"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.1, 0.1, 0.15, 1)
+
+[node name="ContentLabel" type="Label" parent="HUD/MainContent"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -11.5
+offset_right = 50.0
+offset_bottom = 11.5
+text = "Game Content"
+horizontal_alignment = 1
+
+[node name="Windows" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="Dialogs" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[connection signal="pressed" from="HUD/TopBar/MenuButton" to="." method="_on_menu_pressed"]
+[connection signal="item_selected" from="HUD/SidePanel/CreatureList" to="." method="_on_creature_selected"]
+[connection signal="pressed" from="HUD/BottomBar/ActionButtons/CollectButton" to="." method="_on_collect_pressed"]
+[connection signal="pressed" from="HUD/BottomBar/ActionButtons/ShopButton" to="." method="_on_shop_pressed"]
+[connection signal="pressed" from="HUD/BottomBar/ActionButtons/QuestButton" to="." method="_on_quest_pressed"]

@@ -1,6 +1,6 @@
-[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://ctlmfvfv4godd"]
 
-[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_o7kye"]
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_o7kye"]
 
 [resource]
 script = ExtResource("1_o7kye")
@@ -18,4 +18,5 @@ stat_boosts = {
 stat_boost_duration_hours = 24
 description = "High-quality protein blend designed to enhance muscle development and strength."
 flavor_text = "A carefully crafted mix of proteins that builds stronger, more powerful creatures."
+icon_path = "res://assets/sprites/items/all-svgs_soda-bottle.svg"
 drop_sources = Array[String](["shop", "training_quest"])
