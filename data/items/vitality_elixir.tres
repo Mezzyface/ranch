@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_cti5x"]
+
+[resource]
+script = ExtResource("1_cti5x")
+item_id = "vitality_elixir"
+display_name = "Vitality Elixir"
+rarity = 4
+base_price = 750
+sell_value = 375
+stack_size = 2
+stamina_restore = 50
+healing_amount = 100
+description = "Rare elixir that restores vitality and can slow the effects of aging. The most precious consumable known."
+flavor_text = "A mysterious elixir that glows with life-giving energy, said to turn back time itself."
+drop_sources = Array[String](["legendary_quest", "rare_event"])

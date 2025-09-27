@@ -92,7 +92,8 @@ func add_item(item_id: String, quantity: int = 1) -> bool:
 		push_error("Cannot add negative or zero quantity")
 		return false
 
-	if not ItemDatabase.is_valid_item(item_id):
+	var item_manager = GameCore.get_system("item_manager")
+	if not item_manager or not item_manager.is_valid_item(item_id):
 		push_error("Invalid item ID: %s" % item_id)
 		return false
 
@@ -147,8 +148,9 @@ func feed_creature(creature_id: String, food_id: String) -> bool:
 		push_error("No %s in inventory" % food_id)
 		return false
 
-	var food_data: Dictionary = ItemDatabase.get_item_data(food_id)
-	if not food_data.has("food_type"):
+	var item_manager = GameCore.get_system("item_manager")
+	var item_resource: ItemResource = item_manager.get_item_resource(food_id) if item_manager else null
+	if not item_resource or item_resource.item_type != GlobalEnums.ItemType.FOOD:
 		push_error("Item %s is not food" % food_id)
 		return false
 
@@ -159,6 +161,8 @@ func feed_creature(creature_id: String, food_id: String) -> bool:
 	# Emit feeding signal for other systems to handle effects
 	var signal_bus = GameCore.get_signal_bus()
 	if signal_bus:
+		# Convert ItemResource to legacy format for signal compatibility
+		var food_data = item_manager.get_item_data(food_id)
 		signal_bus.emit_creature_fed(creature_id, food_id, food_data)
 
 	return true

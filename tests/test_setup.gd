@@ -2360,16 +2360,17 @@ func _test_resource_system(resource_system: Node, signal_bus: SignalBus) -> void
 	else:
 		_log_error("Failed to remove item")
 
-	# Test 3: ItemDatabase validation
-	if ItemDatabase.is_valid_item("grain"):
-		_log_success("ItemDatabase validation working")
+	# Test 3: ItemManager validation
+	var item_manager = GameCore.get_system("item_manager")
+	if item_manager and item_manager.is_valid_item("grain"):
+		_log_success("ItemManager validation working")
 	else:
-		_log_error("ItemDatabase validation failed")
+		_log_error("ItemManager validation failed")
 
-	if not ItemDatabase.is_valid_item("fake_item"):
-		_log_success("ItemDatabase rejects invalid items")
+	if item_manager and not item_manager.is_valid_item("fake_item"):
+		_log_success("ItemManager rejects invalid items")
 	else:
-		_log_error("ItemDatabase should reject invalid items")
+		_log_error("ItemManager should reject invalid items")
 
 	# Test 4: Food operations
 	if resource_system.add_item("berries", 3):

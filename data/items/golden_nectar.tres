@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_3eycf"]
+
+[resource]
+script = ExtResource("1_3eycf")
+item_id = "golden_nectar"
+display_name = "Golden Nectar"
+item_type = 0
+rarity = 3
+base_price = 500
+sell_value = 250
+stack_size = 3
+stamina_restore = 25
+stat_boosts = {
+"constitution": 5,
+"dexterity": 5,
+"discipline": 5,
+"intelligence": 5,
+"strength": 5,
+"wisdom": 5
+}
+stat_boost_duration_hours = 48
+description = "Legendary golden nectar that provides balanced enhancement to all creature abilities."
+flavor_text = "A shimmering golden liquid that seems to pulse with inner light and energy."
+drop_sources = Array[String](["shop", "legendary_quest"])

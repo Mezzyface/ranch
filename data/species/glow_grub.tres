@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/species_resource.gd" id="1_hj1uo"]
+
+[resource]
+script = ExtResource("1_hj1uo")
+species_id = "glow_grub"
+display_name = "Glow Grub"
+description = "Small, peaceful creatures that emit a soft bioluminescent glow. While not suited for combat, their gentle nature and unique lighting make them valuable companions."
+category = 6
+base_price = 150
+lifespan_weeks = 312
+maturity_weeks = 62
+peak_weeks = 156
+size_category = 0
+habitat_preference = "underground"
+stat_ranges = {
+"constitution": {
+"max": 90,
+"min": 40
+},
+"dexterity": {
+"max": 100,
+"min": 50
+},
+"discipline": {
+"max": 140,
+"min": 80
+},
+"intelligence": {
+"max": 120,
+"min": 60
+},
+"strength": {
+"max": 80,
+"min": 30
+},
+"wisdom": {
+"max": 160,
+"min": 100
+}
+}
+guaranteed_tags = Array[String](["Small", "Bioluminescent", "Docile"])
+optional_tags = Array[String](["Fragile", "Peaceful", "Useful"])
+tag_probabilities = {
+"Fragile": 0.6,
+"Peaceful": 0.9,
+"Useful": 0.8
+}
+name_pool = Array[String](["Glow", "Shine", "Spark", "Beam", "Flicker", "Gleam", "Radiance", "Lumina", "Aurora", "Prism", "Crystal", "Lantern"])
+feeding_preferences = Array[String](["grain", "water", "berries"])
+training_modifiers = {
+"intelligence": 1.2,
+"strength": 0.7,
+"wisdom": 1.3
+}
+special_abilities = Array[String](["bioluminescence", "light_source"])

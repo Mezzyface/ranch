@@ -42,6 +42,8 @@ func _load_system(system_name: String) -> void:
 			system = preload("res://scripts/systems/resource_tracker.gd").new()
 		"species":
 			system = preload("res://scripts/systems/species_system.gd").new()
+		"item_manager", "items":
+			system = preload("res://scripts/systems/item_manager.gd").new()
 		_:
 			push_error("Unknown system: " + system_name)
 			return

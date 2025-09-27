@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_mkd6g"]
+
+[resource]
+script = ExtResource("1_mkd6g")
+item_id = "hay"
+display_name = "Hay"
+item_type = 0
+base_price = 25
+sell_value = 12
+stack_size = 10
+stamina_restore = 5
+description = "Fresh hay perfect for herbivorous creatures. Provides basic nutrition and comfort."
+flavor_text = "Sweet-smelling hay that reminds creatures of peaceful meadows."
+drop_sources = Array[String](["shop", "basic_quest"])

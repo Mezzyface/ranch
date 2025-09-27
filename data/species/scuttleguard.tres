@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/species_resource.gd" id="1_ijxm5"]
+
+[resource]
+script = ExtResource("1_ijxm5")
+species_id = "scuttleguard"
+display_name = "Scuttleguard"
+description = "Small but vigilant creatures that excel at patrol and sentry duties. Their keen senses and quick reflexes make them excellent guardians despite their diminutive size."
+category = 0
+size_category = 0
+stat_ranges = {
+"constitution": {
+"max": 140,
+"min": 80
+},
+"dexterity": {
+"max": 150,
+"min": 90
+},
+"discipline": {
+"max": 150,
+"min": 90
+},
+"intelligence": {
+"max": 70,
+"min": 40
+},
+"strength": {
+"max": 130,
+"min": 70
+},
+"wisdom": {
+"max": 170,
+"min": 110
+}
+}
+guaranteed_tags = Array[String](["Small", "Territorial", "Dark Vision"])
+optional_tags = Array[String](["Stealthy", "Enhanced Hearing", "Nocturnal"])
+tag_probabilities = {
+"Enhanced Hearing": 0.8,
+"Nocturnal": 0.6,
+"Stealthy": 0.7
+}
+name_pool = Array[String](["Skitter", "Dash", "Scout", "Guard", "Patrol", "Sentry", "Swift", "Alert", "Watch", "Ward", "Shield", "Defender"])
+feeding_preferences = Array[String](["grain", "hay", "water"])
+training_modifiers = {
+"dexterity": 1.2,
+"wisdom": 1.1
+}
+special_abilities = Array[String](["patrol", "early_warning"])

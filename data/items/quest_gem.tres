@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_decm4"]
+
+[resource]
+script = ExtResource("1_decm4")
+item_id = "quest_gem"
+display_name = "Mysterious Gem"
+item_type = 4
+rarity = 2
+is_consumable = false
+is_tradeable = false
+is_quest_item = true
+description = "A mysterious gem that pulses with unknown energy. Clearly important for some quest or purpose."
+flavor_text = "The gem seems to whisper secrets of ancient magic and forgotten knowledge."
+drop_sources = Array[String](["quest"])

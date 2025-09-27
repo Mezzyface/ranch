@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/species_resource.gd" id="1_khvbp"]
+
+[resource]
+script = ExtResource("1_khvbp")
+species_id = "wind_dancer"
+display_name = "Wind Dancer"
+description = "Graceful, aerial creatures with exceptional speed and agility. Their natural wings allow them to soar through the skies with unmatched elegance."
+category = 5
+rarity = 1
+base_price = 400
+lifespan_weeks = 416
+maturity_weeks = 83
+peak_weeks = 208
+habitat_preference = "aerial"
+stat_ranges = {
+"constitution": {
+"max": 100,
+"min": 50
+},
+"dexterity": {
+"max": 280,
+"min": 180
+},
+"discipline": {
+"max": 130,
+"min": 70
+},
+"intelligence": {
+"max": 140,
+"min": 80
+},
+"strength": {
+"max": 120,
+"min": 60
+},
+"wisdom": {
+"max": 180,
+"min": 120
+}
+}
+guaranteed_tags = Array[String](["Medium", "Winged", "Fast"])
+optional_tags = Array[String](["Graceful", "Aerial", "Keen Eyes"])
+tag_probabilities = {
+"Aerial": 1.0,
+"Graceful": 0.9,
+"Keen Eyes": 0.8
+}
+name_pool = Array[String](["Zephyr", "Gale", "Breeze", "Storm", "Tempest", "Gust", "Whirlwind", "Cyclone", "Hurricane", "Mistral", "Sirocco", "Chinook"])
+feeding_preferences = Array[String](["berries", "water", "agility_treats"])
+training_modifiers = {
+"dexterity": 1.5,
+"strength": 0.8,
+"wisdom": 1.2
+}
+special_abilities = Array[String](["flight", "aerial_maneuvers"])

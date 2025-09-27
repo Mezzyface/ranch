@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_rhjmi"]
+
+[resource]
+script = ExtResource("1_rhjmi")
+item_id = "water"
+display_name = "Fresh Water"
+item_type = 0
+base_price = 10
+sell_value = 5
+stack_size = 15
+stamina_restore = 3
+description = "Clean, refreshing water essential for all creature health. Basic hydration needs."
+flavor_text = "Crystal clear water from mountain springs."
+drop_sources = Array[String](["shop", "basic_quest"])

@@ -1,3 +1,4 @@
+@tool
 class_name SpeciesResource
 extends Resource
 
@@ -76,6 +77,16 @@ func get_random_name() -> String:
 	var base_name: String = name_pool[randi() % name_pool.size()]
 	return name_prefix + base_name + name_suffix
 
+func is_valid() -> bool:
+	"""Quick validation check for compatibility."""
+	if species_id.is_empty() or display_name.is_empty():
+		return false
+	if lifespan_weeks <= 0:
+		return false
+	if name_pool.is_empty():
+		return false
+	return true
+
 func validate() -> Dictionary:
 	"""Validate species resource for completeness and correctness."""
 	var errors: Array[String] = []
@@ -86,8 +97,14 @@ func validate() -> Dictionary:
 		errors.append("display_name cannot be empty")
 	if lifespan_weeks <= 0:
 		errors.append("lifespan_weeks must be positive")
+	if maturity_weeks <= 0:
+		errors.append("maturity_weeks must be positive")
+	if peak_weeks <= maturity_weeks:
+		errors.append("peak_weeks must be greater than maturity_weeks")
 	if name_pool.is_empty():
 		errors.append("name_pool cannot be empty")
+	if base_price < 0:
+		errors.append("base_price cannot be negative")
 
 	# Validate stat ranges
 	for stat_name in stat_ranges:
@@ -96,6 +113,14 @@ func validate() -> Dictionary:
 			errors.append("Stat %s missing min/max values" % stat_name)
 		elif range_data.min >= range_data.max:
 			errors.append("Stat %s min >= max" % stat_name)
+		elif range_data.min < 1 or range_data.max > 1000:
+			errors.append("Stat %s values must be between 1-1000" % stat_name)
+
+	# Validate tag probabilities
+	for tag in tag_probabilities:
+		var prob = tag_probabilities[tag]
+		if prob < 0.0 or prob > 1.0:
+			errors.append("Tag probability for %s must be between 0.0-1.0" % tag)
 
 	return {
 		"valid": errors.is_empty(),

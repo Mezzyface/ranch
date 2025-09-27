@@ -1,7 +1,5 @@
 extends Node
 
-const ItemDatabaseScript = preload("res://scripts/data/item_database.gd")
-
 signal test_completed(success: bool, details: Array)
 
 func _ready() -> void:
@@ -72,13 +70,14 @@ func _ready() -> void:
 	else:
 		print("✅ Nonexistent item validation works")
 
-	# Test 4: Item Database Validation
-	if not ItemDatabaseScript.is_valid_item("grain") or ItemDatabaseScript.is_valid_item("fake_item"):
-		print("❌ ItemDatabase validation failed")
-		details.append("ItemDatabase validation failed")
+	# Test 4: ItemManager Validation
+	var item_manager = GameCore.get_system("item_manager")
+	if not item_manager or not item_manager.is_valid_item("grain") or item_manager.is_valid_item("fake_item"):
+		print("❌ ItemManager validation failed")
+		details.append("ItemManager validation failed")
 		success = false
 	else:
-		print("✅ ItemDatabase validation works correctly")
+		print("✅ ItemManager validation works correctly")
 
 	# Test 5: Creature Feeding
 	resource_system.add_item("berries", 3)

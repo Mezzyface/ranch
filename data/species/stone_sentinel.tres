@@ -1,0 +1,57 @@
+[gd_resource type="Resource" script_class="SpeciesResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/species_resource.gd" id="1_a4wyy"]
+
+[resource]
+script = ExtResource("1_a4wyy")
+species_id = "stone_sentinel"
+display_name = "Stone Sentinel"
+description = "Massive, slow-moving creatures with incredible defensive capabilities. Their stone-like hide provides natural armor, making them nearly impervious to physical attacks."
+category = 5
+rarity = 1
+base_price = 500
+lifespan_weeks = 780
+maturity_weeks = 156
+peak_weeks = 390
+size_category = 2
+stat_ranges = {
+"constitution": {
+"max": 300,
+"min": 200
+},
+"dexterity": {
+"max": 60,
+"min": 20
+},
+"discipline": {
+"max": 250,
+"min": 150
+},
+"intelligence": {
+"max": 60,
+"min": 30
+},
+"strength": {
+"max": 250,
+"min": 150
+},
+"wisdom": {
+"max": 120,
+"min": 80
+}
+}
+guaranteed_tags = Array[String](["Large", "Sturdy", "Natural Armor"])
+optional_tags = Array[String](["Intimidating", "Slow", "Hardy"])
+tag_probabilities = {
+"Hardy": 0.7,
+"Intimidating": 0.8,
+"Slow": 0.9
+}
+name_pool = Array[String](["Boulder", "Granite", "Fortress", "Bastion", "Aegis", "Bulwark", "Rampart", "Citadel", "Keep", "Tower", "Wall", "Guardian"])
+feeding_preferences = Array[String](["grain", "hay", "endurance_blend"])
+training_modifiers = {
+"constitution": 1.4,
+"dexterity": 0.5,
+"strength": 1.3
+}
+special_abilities = Array[String](["defensive_stance", "intimidate"])

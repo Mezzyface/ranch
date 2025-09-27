@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/item_resource.gd" id="1_jbrad"]
+
+[resource]
+script = ExtResource("1_jbrad")
+item_id = "endurance_blend"
+display_name = "Endurance Blend"
+item_type = 0
+rarity = 1
+base_price = 150
+sell_value = 75
+stack_size = 5
+stamina_restore = 15
+stat_boosts = {
+"constitution": 10
+}
+stat_boost_duration_hours = 24
+description = "Specialized nutritional blend that improves stamina and physical resilience."
+flavor_text = "A hearty mixture that builds endurance and helps creatures push their limits."
+drop_sources = Array[String](["shop", "training_quest"])

@@ -20,7 +20,9 @@ Primary machine-actionable guidance for AI coding agents (Claude, GPT, etc.). Ke
 - Age category & modifier logic lives on `CreatureData` (do not duplicate)
 - Arrays explicitly typed (e.g. `Array[String]`, `Array[CreatureData]`)
 - Signals: use existing SignalBus emission helpers; no new bespoke wrapper unless a brand‑new domain event (see Section 12)
-- Species truth: SpeciesSystem resources (Deprecated Hardcoded Species Map is read‑only; do not extend)
+- **Resource-based data**: Use ItemManager/SpeciesSystem with .tres files; ItemDatabase is DEPRECATED
+- Resource validation: All resource classes (SpeciesResource, ItemResource) must implement `is_valid()` and fail-fast on invalid data
+- Resource files: Must be proper Godot .tres format with @tool annotation and @export properties
 - Enums are append‑only: NEVER reorder or repurpose existing values (breaks save compatibility & comparisons)
 - Performance: New batch ops must respect baselines (Section 7) or include timing comment (Section 13)
 - Save orchestration: SaveSystem coordinates; each system owns its serialization (no duplication inside SaveSystem)
@@ -63,8 +65,12 @@ godot --headless --scene tests/stage_2_preflight.tscn        # Stage 2 readiness
 Core Loader: `scripts/core/game_core.gd`
 Signals: `scripts/core/signal_bus.gd`
 Enums: `scripts/core/global_enums.gd`
+ItemManager: `scripts/systems/item_manager.gd` (replaces ItemDatabase)
+SpeciesSystem: `scripts/systems/species_system.gd` (loads SpeciesResource files)
 Systems: `scripts/systems/*.gd`
-Data: `scripts/data/*.gd`
+Resource Classes: `scripts/resources/*.gd` (ItemResource, SpeciesResource)
+Resource Files: `data/items/*.tres`, `data/species/*.tres` (Godot Resource instances)
+Data: `scripts/data/*.gd` (Core data structures)
 Entities: `scripts/entities/*.gd`
 Generation: `scripts/generation/`
 Tests (individual): `tests/individual/`
@@ -79,7 +85,7 @@ Test Automation: `tests/run_tests.bat`, `tests/run_tests.ps1`
 - Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
 
 ## 7. CURRENT SYSTEM KEYS
-`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`  
+`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`, `item_manager` (ItemManager)
 (Extend list when adding new system; update tests referencing keys.)
 
 Canonical signal usage (do NOT invent new wrappers):
@@ -106,6 +112,8 @@ If exceeded, add timing + mitigation note in summary.
 - [ ] Only `GameCore.get_system()` used for systems
 - [ ] No duplicated age/stat logic
 - [ ] Species edits via resources only (not Deprecated Hardcoded Species Map)
+- [ ] **Resource validation**: All .tres files loadable with proper script_class and @tool annotation
+- [ ] **ItemManager integration**: Use GameCore.get_system("item_manager") for item operations
 - [ ] Tests updated/added for changed logic
 - [ ] Performance within baseline or timing comment added
 - [ ] Enums only appended (if touched)
@@ -121,6 +129,9 @@ If exceeded, add timing + mitigation note in summary.
 - Structural refactor without approval label → likely scope creep (abort & request explicit task)
 - Silent fallback patterns → data corruption; use push_error() and fail fast
 - Direct tag array manipulation → bypasses validation; use TagSystem methods only
+- **Invalid .tres format** → Resource files must have proper Godot format with script_class and load_steps
+- **Missing @tool annotation** → Resource classes must use @tool for editor loading
+- **Missing ItemManager** → Use GameCore.get_system("item_manager") for item operations
 
 ## 11. ADDING A NEW SYSTEM (MINIMAL STEPS)
 1. `scripts/systems/<name>_system.gd` (extends Node)
@@ -189,7 +200,7 @@ Rules:
 | INTERFACES.md | Interface contracts index | Append-only when adding or extending contracts |
 
 ## 17. DEPRECATED ARTIFACTS
-- Deprecated Hardcoded Species Map: constant `SPECIES_DATA` in `scripts/generation/creature_generator.gd` (read‑only; do NOT extend; removal scheduled post-migration validation)
+- **Hardcoded Species Map**: constant `SPECIES_DATA` in `scripts/generation/creature_generator.gd` (read‑only; do NOT extend; removal scheduled post-migration validation)
 - Legacy per-signal wrapper pattern (replaced by central validation + future generic emitter)
 
 ## 18. COMMIT MESSAGE GUIDELINE (FOR AI-GENERATED PATCHES)
