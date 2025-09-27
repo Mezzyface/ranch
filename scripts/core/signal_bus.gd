@@ -81,6 +81,16 @@ signal item_removed(item_id: String, quantity: int, remaining: int)
 signal transaction_failed(reason: String, amount: int)
 signal creature_fed(creature_id: String, food_id: String, food_data: Dictionary)
 
+# === STAMINA SIGNALS ===
+# Stamina management signals (Stage 2 Task 5)
+signal stamina_depleted(creature_data: CreatureData, amount: int)
+signal stamina_restored(creature_data: CreatureData, amount: int)
+signal creature_exhausted(creature_data: CreatureData)
+signal creature_recovered(creature_data: CreatureData)
+signal stamina_activity_performed(creature_data: CreatureData, activity: String, cost: int)
+signal stamina_weekly_processed(active_count: int, stable_count: int)
+signal food_consumed(creature_data: CreatureData, food_type: String)
+
 # === SIGNAL MANAGEMENT ===
 # Connection tracking for debugging and cleanup
 var _signal_connections: Dictionary = {}

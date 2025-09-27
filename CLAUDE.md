@@ -95,7 +95,7 @@ Test Automation: `tests/run_tests.bat`, `tests/run_tests.ps1`
 - Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
 
 ## 7. CURRENT SYSTEM KEYS
-`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`, `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager)
+`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`, `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager), `stamina` (StaminaSystem)
 (Extend list when adding new system; update tests referencing keys.)
 
 Canonical signal usage (do NOT invent new wrappers):

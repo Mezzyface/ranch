@@ -24,7 +24,7 @@ func has_system(system_name: String) -> bool:
 	return _systems.has(system_name) or _is_valid_system_name(system_name)
 
 func _is_valid_system_name(system_name: String) -> bool:
-	var valid_systems = ["creature", "save", "quest", "stat", "tag", "age", "collection", "resource", "resources", "species", "item_manager", "items", "time", "ui"]
+	var valid_systems = ["creature", "save", "quest", "stat", "tag", "age", "collection", "resource", "resources", "species", "item_manager", "items", "time", "ui", "stamina"]
 	return system_name in valid_systems
 
 func _load_system(system_name: String) -> void:
@@ -55,6 +55,8 @@ func _load_system(system_name: String) -> void:
 			system = preload("res://scripts/systems/time_system.gd").new()
 		"ui":
 			system = preload("res://scripts/ui/ui_manager.gd").new()
+		"stamina":
+			system = preload("res://scripts/systems/stamina_system.gd").new()
 		_:
 			push_error("Unknown system: " + system_name)
 			return

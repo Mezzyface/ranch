@@ -1,16 +1,16 @@
 # Stage 2 Task 5: StaminaSystem Implementation
 
 ## Overview
-Implement a stamina management system that tracks creature energy levels, handles weekly depletion for active creatures, and provides recovery mechanics through rest and food.
+Implement a stamina management system that tracks creature energy levels, handles activity-based stamina consumption, and provides recovery mechanics through food.
 
 ## Success Criteria
-- [ ] StaminaSystem loads via GameCore lazy loading
-- [ ] Stamina tracking per creature (0-100 scale)
-- [ ] Weekly depletion for active roster
-- [ ] Recovery mechanics for resting creatures
-- [ ] Food-based stamina restoration
-- [ ] Integration with creature activities
-- [ ] Performance: Update 100 creatures in <50ms
+- [x] StaminaSystem loads via GameCore lazy loading
+- [x] Stamina tracking per creature (0-100 scale)
+- [x] Activity-based stamina consumption (no passive drain)
+- [x] Stasis for stable creatures (no stamina changes)
+- [x] Food-based stamina restoration
+- [x] Integration with creature activities
+- [x] Performance: Update 100 creatures in <50ms
 
 ## Files to Create/Modify
 
@@ -33,8 +33,6 @@ class_name StaminaSystem extends Node
 # Constants
 const MAX_STAMINA: int = 100
 const MIN_STAMINA: int = 0
-const ACTIVE_WEEKLY_COST: int = 20
-const STABLE_WEEKLY_RECOVERY: int = 30
 const EXHAUSTION_THRESHOLD: int = 20
 
 # Stamina tracking
@@ -58,18 +56,22 @@ func process_weekly_stamina() -> void
 func process_weekly_stamina() -> void:
     var collection = GameCore.get_system("collection")
 
-    # Deplete active creatures
-    for creature in collection.get_active_creatures():
-        var depletion = ACTIVE_WEEKLY_COST
-        depletion *= depletion_modifiers.get(creature.id, 1.0)
-        deplete_stamina(creature, depletion)
+    # Active creatures: No passive stamina changes
+    # Stamina only changes when performing specific activities
+    var active_count = collection.get_active_creatures().size()
 
-    # Restore stable creatures
-    for creature in collection.get_stable_creatures():
-        var recovery = STABLE_WEEKLY_RECOVERY
-        recovery *= recovery_modifiers.get(creature.id, 1.0)
-        restore_stamina(creature, recovery)
+    # Stable creatures: In complete stasis - no changes
+    var stable_count = collection.get_stable_creatures().size()
+
+    # Emit signal for tracking purposes
+    SignalBus.stamina_weekly_processed.emit(active_count, stable_count)
 ```
+
+**Design Notes:**
+- Active creatures only lose stamina when performing activities (Training, Quest, etc.)
+- Stable creatures are in stasis - stamina remains frozen
+- No passive stamina drain or recovery
+- Food items are the primary recovery method
 
 ### 3. Food Integration
 ```gdscript
