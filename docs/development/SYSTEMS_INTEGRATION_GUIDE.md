@@ -3,8 +3,8 @@
 **Purpose**: Document how all Stage 1 systems work together and depend on each other, providing clear integration patterns and workflows for future development.
 
 **Created**: 2024-12-26 - Based on completed Stage 1 Tasks 1-8
-**Updated**: 2024-12-26 - Added Stage 2 TimeSystem integration
-**Status**: Stage 1 Core Systems (8/11 complete) + Stage 2 TimeSystem
+**Updated**: 2024-12-27 - Added Stage 2 TimeSystem and WeeklyUpdateOrchestrator
+**Status**: Stage 1 Core Systems (8/11 complete) + Stage 2 TimeSystem + Weekly Updates
 
 ---
 
@@ -22,7 +22,11 @@ graph TD
     Systems --> SaveSystem[SaveSystem]
     Systems --> PlayerCollection[PlayerCollection]
     Systems --> TimeSystem[TimeSystem<br/>Stage 2]
+    Systems --> WeeklyOrchestrator[WeeklyUpdateOrchestrator<br/>Stage 2]
+    Systems --> StaminaSystem[StaminaSystem<br/>Stage 2]
     Systems --> Generator[CreatureGenerator<br/>Static Utility]
+
+    TimeSystem --> WeeklyOrchestrator
 
     CreatureSystem --> CreatureData[CreatureData<br/>Pure Data]
     CreatureSystem --> CreatureEntity[CreatureEntity<br/>Behavior Node]
@@ -44,7 +48,9 @@ graph TD
 | **CreatureGenerator** | TagSystem, CreatureData | PlayerCollection, Shop | None (utility) |
 | **SaveSystem** | GameCore, All Systems | Main Game Loop | 2 save signals |
 | **PlayerCollection** | All Above Systems | UI, Quests | 5 collection signals |
-| **TimeSystem** | GameCore, AgeSystem, Collection | All Game Systems | 6 time signals |
+| **TimeSystem** | GameCore, WeeklyOrchestrator | All Game Systems | 6 time signals |
+| **WeeklyOrchestrator** | All Systems | TimeSystem | 1 failure signal |
+| **StaminaSystem** | GameCore, Collection | WeeklyOrchestrator | 1 stamina signal |
 
 ---
 
@@ -92,21 +98,30 @@ best_matches.sort_custom(func(a, b):
 )
 ```
 
-### 3. Time Progression and Automated Aging (Stage 2)
+### 3. Time Progression with Weekly Updates (Stage 2)
 ```gdscript
-# Automated weekly time progression with TimeSystem
+# Automated weekly time progression with orchestrated updates
 func advance_week():
     var time_system = GameCore.get_system("time")
 
-    # TimeSystem handles everything automatically:
+    # TimeSystem + WeeklyUpdateOrchestrator handle everything:
     if time_system.advance_week():
         print("Week advanced to: " + time_system.get_current_date_string())
+
+        # Update phases executed automatically:
+        # 1. PRE_UPDATE - Validation
+        # 2. AGING - All creatures age
+        # 3. STAMINA - Deplete/restore stamina
+        # 4. FOOD - Consume resources
+        # 5. QUESTS - Update progress
+        # 6. COMPETITIONS - Process results
+        # 7. ECONOMY - Handle gold/resources
+        # 8. POST_UPDATE - Cleanup
+        # 9. SAVE - Auto-save
 
         # Signals automatically emitted:
         # - weekly_update_started()
         # - week_advanced(new_week, total_weeks)
-        # - weekly_event_triggered(event) for each event
-        # - creature_aged(), creature_category_changed(), etc. via AgeSystem
         # - weekly_update_completed(duration_ms)
     else:
         print("Week advancement blocked")
@@ -125,7 +140,48 @@ func manual_aging():
     age_system.age_all_creatures(all_creatures, 1)
 ```
 
-### 4. Save/Load Game State
+### 4. Weekly Update Orchestration (Stage 2)
+```gdscript
+# Access weekly update results
+func process_weekly_summary():
+    var time_system = GameCore.get_system("time")
+    var orchestrator = time_system.weekly_orchestrator
+
+    # Get last update results
+    var result = orchestrator.execute_weekly_update()
+    if result.success:
+        var summary: WeeklySummary = result.summary
+
+        # Display summary to player
+        show_weekly_report(summary.get_summary_text())
+
+        # Check for critical events
+        if summary.creatures_expired.size() > 0:
+            handle_creature_deaths(summary.creatures_expired)
+
+        if summary.food_remaining < 10:
+            show_food_warning()
+```
+
+### 5. Stamina Management (Stage 2)
+```gdscript
+# Stamina system integration
+func manage_creature_stamina():
+    var stamina_system = GameCore.get_system("stamina")
+    var creature: CreatureData = get_selected_creature()
+
+    # Check and consume stamina for activity
+    if stamina_system.can_perform_activity(creature, StaminaSystem.Activity.QUEST):
+        stamina_system.consume_stamina(creature, StaminaSystem.Activity.QUEST)
+        start_quest(creature)
+    else:
+        show_exhaustion_warning(creature)
+
+    # Manual restoration
+    stamina_system.feed_creature(creature, "energy_drink")  # +40 stamina
+```
+
+### 6. Save/Load Game State
 ```gdscript
 # Complete save workflow
 func save_game(slot_name: String):

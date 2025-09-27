@@ -170,6 +170,28 @@ func clear_modifiers(creature: CreatureData) -> void:
 	depletion_modifiers.erase(creature.id)
 	recovery_modifiers.erase(creature.id)
 
+func deplete_weekly(creature: CreatureData) -> void:
+	if not creature:
+		return
+
+	var current: int = get_stamina(creature)
+	var depletion: int = 5
+	var modifier: float = depletion_modifiers.get(creature.id, 1.0)
+	var final_depletion: int = int(depletion * modifier)
+
+	set_stamina(creature, max(MIN_STAMINA, current - final_depletion))
+
+func restore_weekly(creature: CreatureData) -> void:
+	if not creature:
+		return
+
+	var current: int = get_stamina(creature)
+	var restoration: int = 10
+	var modifier: float = recovery_modifiers.get(creature.id, 1.0)
+	var final_restoration: int = int(restoration * modifier)
+
+	set_stamina(creature, min(MAX_STAMINA, current + final_restoration))
+
 func process_weekly_stamina() -> void:
 	var t0: int = Time.get_ticks_msec()
 

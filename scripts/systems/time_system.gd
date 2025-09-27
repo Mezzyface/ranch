@@ -23,10 +23,17 @@ var _performance_samples: Array[int] = []
 var debug_mode: bool = false
 var time_scale: float = 1.0
 
+var weekly_orchestrator: WeeklyUpdateOrchestrator = null
+
 func _ready() -> void:
 	name = "TimeSystem"
 	_setup_default_events()
+	_setup_orchestrator()
 	print("TimeSystem initialized")
+
+func _setup_orchestrator() -> void:
+	weekly_orchestrator = WeeklyUpdateOrchestrator.new()
+	add_child(weekly_orchestrator)
 
 func _setup_default_events() -> void:
 	var aging_event = WeeklyEvent.new()
@@ -176,30 +183,41 @@ func _process_weekly_events() -> void:
 			event.execute()
 
 func _trigger_system_updates() -> void:
-	if GameCore.has_system("age"):
-		var age_system = GameCore.get_system("age")
-		if age_system.has_method("process_weekly_aging"):
-			age_system.process_weekly_aging()
+	if weekly_orchestrator:
+		var result = weekly_orchestrator.execute_weekly_update()
+		if not result.success:
+			push_error("TimeSystem: Weekly update failed at phase %s" % result.get("failed_phase", "unknown"))
+			return
 
-	if GameCore.has_system("stamina"):
-		var stamina_system = GameCore.get_system("stamina")
-		if stamina_system.has_method("process_weekly_stamina"):
-			stamina_system.process_weekly_stamina()
+		if result.has("summary"):
+			var summary: WeeklySummary = result.summary
+			if debug_mode:
+				print(summary.get_summary_text())
+	else:
+		if GameCore.has_system("age"):
+			var age_system = GameCore.get_system("age")
+			if age_system.has_method("process_weekly_aging"):
+				age_system.process_weekly_aging()
 
-	if GameCore.has_system("food"):
-		var food_system = GameCore.get_system("food")
-		if food_system.has_method("process_weekly_consumption"):
-			food_system.process_weekly_consumption()
+		if GameCore.has_system("stamina"):
+			var stamina_system = GameCore.get_system("stamina")
+			if stamina_system.has_method("process_weekly_stamina"):
+				stamina_system.process_weekly_stamina()
 
-	if GameCore.has_system("quest"):
-		var quest_system = GameCore.get_system("quest")
-		if quest_system.has_method("process_weekly_updates"):
-			quest_system.process_weekly_updates()
+		if GameCore.has_system("food"):
+			var food_system = GameCore.get_system("food")
+			if food_system.has_method("process_weekly_consumption"):
+				food_system.process_weekly_consumption()
 
-	if GameCore.has_system("save"):
-		var save_system = GameCore.get_system("save")
-		if save_system.has_method("trigger_auto_save"):
-			save_system.trigger_auto_save()
+		if GameCore.has_system("quest"):
+			var quest_system = GameCore.get_system("quest")
+			if quest_system.has_method("process_weekly_updates"):
+				quest_system.process_weekly_updates()
+
+		if GameCore.has_system("save"):
+			var save_system = GameCore.get_system("save")
+			if save_system.has_method("trigger_auto_save"):
+				save_system.trigger_auto_save()
 
 func _sort_events_by_priority(events: Array) -> void:
 	events.sort_custom(func(a: WeeklyEvent, b: WeeklyEvent): return a.priority < b.priority)

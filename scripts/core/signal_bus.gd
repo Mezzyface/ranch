@@ -65,6 +65,7 @@ signal time_advance_blocked(reasons: Array[String])
 signal weekly_event_triggered(event: WeeklyEvent)
 signal weekly_update_started()
 signal weekly_update_completed(duration_ms: int)
+signal weekly_update_failed()
 
 # === SAVE/LOAD SIGNALS (Task 7) ===
 # Additional save-related signals for Task 7 implementation

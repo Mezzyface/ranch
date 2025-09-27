@@ -50,6 +50,7 @@ A creature collection game where players:
 - **[Comprehensive API Guide](docs/development/COMPREHENSIVE_API_GUIDE.md)** - 📚 Complete API reference, usage patterns, and quick solutions
 - **[Systems Integration Guide](docs/development/SYSTEMS_INTEGRATION_GUIDE.md)** - 🔧 How systems work together
 - **[Age System Guide](docs/development/age_system_guide.md)** - 🕒 Detailed age system documentation
+- **[Weekly Update System Guide](docs/systems/WEEKLY_UPDATE_SYSTEM.md)** - 🔄 Weekly orchestration and updates
 - [CLAUDE.md](CLAUDE.md) - AI agent guidance & invariants
 - [INTERFACES.md](INTERFACES.md) - Formal interface contracts
 
@@ -243,8 +244,13 @@ var qualified: Array[CreatureData] = tag_system.filter_creatures_by_tags(all_cre
 
 **Progress: 10/11 Stage 1 tasks complete (~91%)**
 
+### 🚧 Stage 2: Time Management & UI (In Progress)
+- **Time System**: ✅ Weekly progression with events
+- **Stamina System**: ✅ Activity-based stamina consumption
+- **Weekly Update Orchestrator**: ✅ Automated system updates with rollback
+- **UI System**: 🔄 Basic game interface (in progress)
+
 ### Upcoming Stages
-- **Stage 2**: Time Management & Basic UI (2 weeks)
 - **Stage 3**: Shop System & Economy (2 weeks)
 - **Stage 4**: Training System (2 weeks)
 - **Stage 5**: Quest System - Tutorial Phase (2-3 weeks)
