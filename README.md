@@ -47,10 +47,11 @@ A creature collection game where players:
 ## 📚 Documentation Guide
 
 ### 🎯 Start Here for Development
-- **[API Reference](docs/development/API_REFERENCE.md)** - 📚 Complete method signatures, prevent common errors
+- **[Comprehensive API Guide](docs/development/COMPREHENSIVE_API_GUIDE.md)** - 📚 Complete API reference, usage patterns, and quick solutions
 - **[Systems Integration Guide](docs/development/SYSTEMS_INTEGRATION_GUIDE.md)** - 🔧 How systems work together
-- **[Quick Start Guide](docs/development/QUICK_START_GUIDE.md)** - 🚀 Copy-paste solutions for common tasks
-- [CLAUDE.md](CLAUDE.md) - Lessons learned from implementation
+- **[Age System Guide](docs/development/age_system_guide.md)** - 🕒 Detailed age system documentation
+- [CLAUDE.md](CLAUDE.md) - AI agent guidance & invariants
+- [INTERFACES.md](INTERFACES.md) - Formal interface contracts
 
 ### 📖 Game Design Documentation
 - [Project Overview](docs/project/game.md) - Core gameplay loop and architecture
