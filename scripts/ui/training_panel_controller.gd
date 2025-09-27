@@ -48,6 +48,7 @@ var selected_food_type: int = -1  # Track selected food instead of consuming
 
 # Activity names for display
 const ACTIVITY_NAMES = ["Physical Training", "Agility Training", "Mental Training", "Discipline Training"]
+const FACILITY_NAMES = ["Basic", "Advanced", "Elite"]
 const FOOD_NAMES = ["Power Bar", "Speed Snack", "Brain Food", "Focus Tea"]
 
 func _ready() -> void:
@@ -156,21 +157,23 @@ func _update_schedule_display() -> void:
 		return
 
 	var training_data = game_controller.get_training_data()
-	var queued_trainings = training_data.get("training_queue", [])
-	var active_trainings = training_data.get("active_trainings", [])
+	var training_assignments = training_data.get("training_assignments", {})
 
-	# Add queued trainings
-	for entry in queued_trainings:
-		var activity_name = ACTIVITY_NAMES[entry.get("activity", 0)] if entry.get("activity", 0) < ACTIVITY_NAMES.size() else "Unknown"
-		var text = "QUEUED: %s - %s" % [entry.get("creature_name", "Unknown"), activity_name]
-		schedule_list.add_item(text)
+	# Add current training assignments
+	for creature_id in training_assignments:
+		var assignment = training_assignments[creature_id]
+		var activity_name = ACTIVITY_NAMES[assignment.get("activity", 0)] if assignment.get("activity", 0) < ACTIVITY_NAMES.size() else "Unknown"
+		var facility_name = FACILITY_NAMES[assignment.get("facility_tier", 0)] if assignment.get("facility_tier", 0) < FACILITY_NAMES.size() else "Basic"
 
-	# Add active trainings
-	for entry in active_trainings:
-		var activity_name = ACTIVITY_NAMES[entry.get("activity", 0)] if entry.get("activity", 0) < ACTIVITY_NAMES.size() else "Unknown"
-		var current_week = game_controller.get_current_week()
-		var weeks_remaining = entry.get("end_week", current_week) - current_week
-		var text = "ACTIVE: %s - %s (%d weeks left)" % [entry.get("creature_name", "Unknown"), activity_name, weeks_remaining]
+		# Get creature name from collection
+		var creature_name = "Unknown"
+		var active_creatures = game_controller.get_active_creatures_data()
+		for creature in active_creatures:
+			if creature.get("id") == creature_id:
+				creature_name = creature.get("creature_name", "Unknown")
+				break
+
+		var text = "ASSIGNED: %s - %s (%s)" % [creature_name, activity_name, facility_name]
 		schedule_list.add_item(text)
 
 func _update_progress_display() -> void:

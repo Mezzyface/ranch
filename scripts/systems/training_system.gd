@@ -58,9 +58,8 @@ const ACTIVITY_NAMES: Dictionary = {
 	TrainingActivity.DISCIPLINE: "Discipline Training"
 }
 
-# Training queue system
-var training_queue: Array[Dictionary] = []  # Array of training entries
-var active_trainings: Array[Dictionary] = []  # Currently in-progress trainings
+# Training assignment system (replaces queue-based system)
+var creature_training_assignments: Dictionary = {}  # creature_id -> {activity, facility_tier, food_type}
 var completed_trainings: Array[Dictionary] = []  # Completed this week
 
 # Facility availability per tier
@@ -100,110 +99,91 @@ func _ready() -> void:
 	for tier in FacilityTier.values():
 		_stats.by_facility[tier] = 0
 
-	# Connect to time system for weekly updates
+	# Connect to stamina system for training activity events
 	if _signal_bus:
-		_signal_bus.week_advanced.connect(_on_week_advanced)
+		_signal_bus.stamina_activity_performed.connect(_on_training_activity_performed)
 
 # === CORE TRAINING METHODS ===
 
 func schedule_training(creature: CreatureData, activity: TrainingActivity, facility_tier: FacilityTier = FacilityTier.BASIC, food_type: int = -1) -> Dictionary:
-	"""Schedule a training session for a creature"""
+	"""Schedule a training assignment for a creature (assigns training activity to StaminaSystem)"""
 	if not creature:
 		return {"success": false, "reason": "Invalid creature data"}
 
-	# Check if creature is already in training
-	if _is_creature_in_training(creature.id):
-		return {"success": false, "reason": "Creature already in training"}
+	# Check if creature already has a training assignment
+	if creature_training_assignments.has(creature.id):
+		return {"success": false, "reason": "Creature already has training assignment"}
 
 	# Check facility availability
 	if not _is_facility_available(facility_tier):
 		return {"success": false, "reason": "No available facilities of tier %s" % get_facility_name(facility_tier)}
 
-	# Get stamina system for validation
+	# Get stamina system to assign training activity
 	if not _stamina_system:
 		_stamina_system = GameCore.get_system("stamina")
 
-	# Check stamina requirements (training costs 10 stamina)
-	if _stamina_system and not _stamina_system.can_perform_activity(creature, 10):
+	if not _stamina_system:
+		return {"success": false, "reason": "StaminaSystem not available"}
+
+	# Check stamina requirements (training costs 10 stamina according to StaminaSystem)
+	if not _stamina_system.can_perform_activity(creature, 10):
 		return {"success": false, "reason": "Insufficient stamina for training"}
 
-	# Create training entry
-	var training_entry: Dictionary = {
-		"creature_id": creature.id,
-		"creature_name": creature.creature_name,
+	# Store training assignment details
+	creature_training_assignments[creature.id] = {
 		"activity": activity,
 		"facility_tier": facility_tier,
-		"start_week": _get_current_week(),
-		"end_week": _get_current_week() + TRAINING_DURATION_WEEKS,
-		"status": "scheduled",
-		"food_type": food_type  # Store food type to consume when training starts
+		"food_type": food_type
 	}
 
-	# Add to queue
-	training_queue.append(training_entry)
+	# Assign TRAINING activity to StaminaSystem
+	var assigned = _stamina_system.assign_activity(creature, _stamina_system.Activity.TRAINING)
+	if not assigned:
+		creature_training_assignments.erase(creature.id)
+		return {"success": false, "reason": "Failed to assign training activity"}
+
+	# Consume training food immediately when training is assigned
+	if food_type >= 0:
+		_consume_training_food(creature.id, food_type)
+
 	used_facilities[facility_tier] += 1
 
 	# Emit signal
 	if _signal_bus:
 		_signal_bus.training_scheduled.emit(creature, get_activity_name(activity), get_facility_name(facility_tier))
 
-	return {"success": true, "training_id": training_queue.size() - 1}
+	return {"success": true}
 
 func cancel_training(creature_id: String) -> bool:
-	"""Cancel a scheduled or active training"""
-	# Check queue first
-	for i in range(training_queue.size()):
-		var entry = training_queue[i]
-		if entry.creature_id == creature_id:
-			used_facilities[entry.facility_tier] -= 1
-			training_queue.remove_at(i)
-			if _signal_bus:
-				_signal_bus.training_cancelled.emit(creature_id, "scheduled")
-			return true
+	"""Cancel a training assignment"""
+	if not creature_training_assignments.has(creature_id):
+		return false
 
-	# Check active trainings
-	for i in range(active_trainings.size()):
-		var entry = active_trainings[i]
-		if entry.creature_id == creature_id:
-			used_facilities[entry.facility_tier] -= 1
-			active_trainings.remove_at(i)
-			if _signal_bus:
-				_signal_bus.training_cancelled.emit(creature_id, "active")
-			return true
+	var assignment = creature_training_assignments[creature_id]
+	used_facilities[assignment.facility_tier] -= 1
+	creature_training_assignments.erase(creature_id)
 
-	return false
+	# Remove training activity from StaminaSystem
+	var creature = _get_creature_by_id(creature_id)
+	if _stamina_system and creature:
+		_stamina_system.assign_activity(creature, _stamina_system.Activity.IDLE)
+
+	if _signal_bus:
+		_signal_bus.training_cancelled.emit(creature_id, "assigned")
+
+	return true
 
 func get_training_status(creature_id: String) -> Dictionary:
 	"""Get the current training status for a creature"""
-	# Check scheduled trainings
-	for entry in training_queue:
-		if entry.creature_id == creature_id:
-			return {
-				"status": "scheduled",
-				"activity": get_activity_name(entry.activity),
-				"facility": get_facility_name(entry.facility_tier),
-				"weeks_remaining": entry.end_week - _get_current_week()
-			}
-
-	# Check active trainings
-	for entry in active_trainings:
-		if entry.creature_id == creature_id:
-			return {
-				"status": "active",
-				"activity": get_activity_name(entry.activity),
-				"facility": get_facility_name(entry.facility_tier),
-				"weeks_remaining": entry.end_week - _get_current_week()
-			}
-
-	# Check completed this week
-	for entry in completed_trainings:
-		if entry.creature_id == creature_id:
-			return {
-				"status": "completed",
-				"activity": get_activity_name(entry.activity),
-				"facility": get_facility_name(entry.facility_tier),
-				"stat_gains": entry.get("stat_gains", {})
-			}
+	# Check training assignments
+	if creature_training_assignments.has(creature_id):
+		var assignment = creature_training_assignments[creature_id]
+		return {
+			"status": "assigned",
+			"activity": get_activity_name(assignment.activity),
+			"facility": get_facility_name(assignment.facility_tier),
+			"food_type": assignment.food_type
+		}
 
 	return {"status": "none"}
 
@@ -227,83 +207,6 @@ func get_facility_utilization() -> Dictionary:
 
 # === BATCH PROCESSING ===
 
-func process_weekly_training() -> Dictionary:
-	"""Process all training activities for the week"""
-	var t0: int = Time.get_ticks_msec()
-	var results: Dictionary = {
-		"trainings_started": 0,
-		"trainings_completed": 0,
-		"stat_gains": [],
-		"errors": []
-	}
-
-	# Get collection system for creature lookup
-	if not _collection_system:
-		_collection_system = GameCore.get_system("collection")
-		if not _collection_system:
-			push_error("TrainingSystem.process_weekly_training: Collection system not available")
-			return results
-
-	# Move scheduled trainings to active
-	var new_active: Array[Dictionary] = []
-	for entry in training_queue:
-		if entry.start_week <= _get_current_week():
-			# Consume training food if specified
-			if entry.has("food_type") and entry.food_type >= 0:
-				_consume_training_food(entry.creature_id, entry.food_type)
-
-			entry.status = "active"
-			new_active.append(entry)
-			results.trainings_started += 1
-
-	# Remove started trainings from queue
-	for entry in new_active:
-		var index = training_queue.find(entry)
-		if index >= 0:
-			training_queue.remove_at(index)
-
-	# Add to active trainings
-	active_trainings.append_array(new_active)
-
-	# Process completed trainings
-	var completed_this_week: Array[Dictionary] = []
-	for entry in active_trainings:
-		if entry.end_week <= _get_current_week():
-			var creature = _get_creature_by_id(entry.creature_id)
-			if creature:
-				var gains = _apply_training_gains(creature, entry.activity, entry.facility_tier)
-				entry.stat_gains = gains
-				entry.status = "completed"
-				completed_this_week.append(entry)
-				results.trainings_completed += 1
-				results.stat_gains.append({
-					"creature_name": creature.creature_name,
-					"activity": get_activity_name(entry.activity),
-					"gains": gains
-				})
-
-				# Update stats
-				_stats.total_trainings += 1
-				_stats.by_activity[entry.activity] += 1
-				_stats.by_facility[entry.facility_tier] += 1
-			else:
-				results.errors.append("Creature %s not found for training completion" % entry.creature_id)
-
-	# Remove completed trainings from active and free up facilities
-	for entry in completed_this_week:
-		var index = active_trainings.find(entry)
-		if index >= 0:
-			active_trainings.remove_at(index)
-			used_facilities[entry.facility_tier] -= 1
-
-	# Store completed trainings for this week
-	completed_trainings = completed_this_week
-
-	var dt: int = Time.get_ticks_msec() - t0
-	if not _performance_mode:
-		print("AI_NOTE: performance(process_weekly_training) = %d ms (baseline <100ms)" % dt)
-
-	return results
 
 func batch_schedule_training(training_requests: Array[Dictionary]) -> Dictionary:
 	"""Batch schedule multiple training sessions with performance optimization"""
@@ -419,14 +322,8 @@ func _apply_training_gains(creature: CreatureData, activity: TrainingActivity, f
 	return gains
 
 func _is_creature_in_training(creature_id: String) -> bool:
-	"""Check if a creature is already scheduled or in training"""
-	for entry in training_queue:
-		if entry.creature_id == creature_id:
-			return true
-	for entry in active_trainings:
-		if entry.creature_id == creature_id:
-			return true
-	return false
+	"""Check if a creature has a training assignment"""
+	return creature_training_assignments.has(creature_id)
 
 func _is_facility_available(facility_tier: FacilityTier) -> bool:
 	"""Check if a facility tier has available slots"""
@@ -465,9 +362,51 @@ func _get_current_week() -> int:
 	# Fallback - assume week 1 if time system not available
 	return 1
 
-func _on_week_advanced(_new_week: int, _total_weeks: int) -> void:
-	"""Handle weekly time advancement"""
-	process_weekly_training()
+func _on_training_activity_performed(creature_data: CreatureData, activity: String, cost: int) -> void:
+	"""Handle when a creature performs training activity (called by StaminaSystem)"""
+	if activity != "TRAINING":
+		return  # Not a training activity
+
+	if not creature_training_assignments.has(creature_data.id):
+		print("Warning: Creature %s performed training but has no training assignment" % creature_data.creature_name)
+		return
+
+	var assignment = creature_training_assignments[creature_data.id]
+	var training_activity = assignment.activity
+	var facility_tier = assignment.facility_tier
+
+	# Apply training gains immediately
+	var gains = _apply_training_gains(creature_data, training_activity, facility_tier)
+
+	# Record completed training
+	var completion_record = {
+		"creature_id": creature_data.id,
+		"creature_name": creature_data.creature_name,
+		"activity": training_activity,
+		"facility_tier": facility_tier,
+		"stat_gains": gains,
+		"week": _get_current_week()
+	}
+	completed_trainings.append(completion_record)
+
+	# Clear assignment (training is one-time)
+	creature_training_assignments.erase(creature_data.id)
+	used_facilities[facility_tier] -= 1
+
+	# Clear training activity assignment from StaminaSystem
+	if _stamina_system:
+		_stamina_system.assign_activity(creature_data, _stamina_system.Activity.IDLE)
+
+	# Update stats
+	_stats.total_trainings += 1
+	_stats.by_activity[training_activity] += 1
+	_stats.by_facility[facility_tier] += 1
+
+	# Emit completion signal
+	if _signal_bus:
+		_signal_bus.training_completed.emit(creature_data, get_activity_name(training_activity), gains)
+
+	print("Training completed: %s gained %s from %s" % [creature_data.creature_name, gains, get_activity_name(training_activity)])
 
 # === UTILITY METHODS ===
 
@@ -479,13 +418,9 @@ func get_facility_name(facility_tier: FacilityTier) -> String:
 	"""Get display name for facility tier"""
 	return FACILITY_NAMES.get(facility_tier, "Unknown Facility")
 
-func get_training_queue() -> Array[Dictionary]:
-	"""Get copy of current training queue"""
-	return training_queue.duplicate()
-
-func get_active_trainings() -> Array[Dictionary]:
-	"""Get copy of current active trainings"""
-	return active_trainings.duplicate()
+func get_training_assignments() -> Dictionary:
+	"""Get copy of current training assignments"""
+	return creature_training_assignments.duplicate()
 
 func get_completed_trainings() -> Array[Dictionary]:
 	"""Get copy of completed trainings from this week"""
@@ -512,8 +447,7 @@ func set_performance_mode(enabled: bool) -> void:
 func save_state() -> Dictionary:
 	"""Save training system state"""
 	return {
-		"training_queue": training_queue.duplicate(),
-		"active_trainings": active_trainings.duplicate(),
+		"creature_training_assignments": creature_training_assignments.duplicate(),
 		"completed_trainings": completed_trainings.duplicate(),
 		"used_facilities": used_facilities.duplicate(),
 		"statistics": _stats.duplicate()
@@ -521,19 +455,17 @@ func save_state() -> Dictionary:
 
 func load_state(data: Dictionary) -> void:
 	"""Load training system state"""
-	var queue_data = data.get("training_queue", [])
-	var active_data = data.get("active_trainings", [])
+	var assignments_data = data.get("creature_training_assignments", {})
 	var completed_data = data.get("completed_trainings", [])
 
-	training_queue.clear()
-	active_trainings.clear()
+	creature_training_assignments.clear()
 	completed_trainings.clear()
 
-	# Safely assign arrays
-	for entry in queue_data:
-		training_queue.append(entry)
-	for entry in active_data:
-		active_trainings.append(entry)
+	# Load assignments
+	for creature_id in assignments_data:
+		creature_training_assignments[creature_id] = assignments_data[creature_id]
+
+	# Load completed trainings
 	for entry in completed_data:
 		completed_trainings.append(entry)
 	used_facilities = data.get("used_facilities", {

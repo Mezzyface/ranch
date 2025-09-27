@@ -138,8 +138,7 @@ func get_training_data() -> Dictionary:
 
 	return {
 		"facility_utilization": _training_system.get_facility_utilization(),
-		"training_queue": _training_system.get_training_queue(),
-		"active_trainings": _training_system.get_active_trainings(),
+		"training_assignments": _training_system.get_training_assignments(),
 		"completed_trainings": _training_system.get_completed_trainings()
 	}
 

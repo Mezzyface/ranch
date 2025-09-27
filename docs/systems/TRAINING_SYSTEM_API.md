@@ -1,6 +1,6 @@
 # Training System API
 
-The TrainingSystem manages creature training activities, facilities, and food-enhanced training sessions.
+The TrainingSystem manages creature training activities through activity-based architecture, integrating with the StaminaSystem for weekly activity processing.
 
 ## Overview
 
@@ -9,6 +9,7 @@ The TrainingSystem manages creature training activities, facilities, and food-en
 - **UI Controller**: `scripts/ui/training_panel_controller.gd`
 - **UI Scene**: `scenes/ui/panels/training_panel.tscn`
 - **Test**: `tests/individual/test_training.tscn`
+- **Architecture**: Activity-based (responds to StaminaSystem events)
 
 ## Core Features
 
@@ -33,11 +34,11 @@ The TrainingSystem manages creature training activities, facilities, and food-en
 
 ### Core Training
 ```gdscript
-# Schedule training for a creature
+# Schedule training for a creature (assigns TRAINING activity to StaminaSystem)
 func schedule_training(creature: CreatureData, activity: TrainingActivity, facility_tier: FacilityTier = FacilityTier.BASIC, food_type: int = -1) -> Dictionary
 
-# Process weekly training (called by TimeSystem)
-func process_weekly_training() -> Dictionary
+# Cancel training assignment for a creature
+func cancel_training(creature_id: String) -> bool
 
 # Batch schedule multiple trainings
 func batch_schedule_training(training_requests: Array[Dictionary]) -> Dictionary
@@ -48,11 +49,14 @@ func batch_schedule_training(training_requests: Array[Dictionary]) -> Dictionary
 # Get training status for a creature
 func get_training_status(creature_id: String) -> Dictionary
 
+# Get current training assignments
+func get_training_assignments() -> Dictionary
+
 # Get facility utilization info
 func get_facility_utilization() -> Dictionary
 
-# Cancel creature training
-func cancel_training(creature_id: String) -> bool
+# Get completed trainings from this week
+func get_completed_trainings() -> Array[Dictionary]
 ```
 
 ### Utility Methods
@@ -93,7 +97,7 @@ var food_inventory = game_controller.get_food_inventory()
 ### Training Panel Structure
 - **Facilities Panel**: Shows facility types, tiers, and capacity
 - **Assignment Panel**: Creature selection, food selection, activity buttons
-- **Schedule Panel**: Shows queued and active trainings
+- **Assignments Panel**: Shows current training assignments
 - **Progress Panel**: Shows completed trainings with stat gains
 
 ### UI Controls
@@ -104,57 +108,56 @@ var food_inventory = game_controller.get_food_inventory()
 
 ## Data Structures
 
-### Training Entry
+### Training Assignment
+```gdscript
+{
+    "activity": TrainingActivity,
+    "facility_tier": FacilityTier,
+    "food_type": int   # -1 for none, 0-3 for food types
+}
+```
+
+### Training Completion Record
 ```gdscript
 {
     "creature_id": String,
     "creature_name": String,
     "activity": TrainingActivity,
     "facility_tier": FacilityTier,
-    "start_week": int,
-    "end_week": int,
-    "status": String,  # "scheduled", "active", "completed"
-    "food_type": int   # -1 for none, 0-3 for food types
-}
-```
-
-### Training Results
-```gdscript
-{
-    "trainings_started": int,
-    "trainings_completed": int,
-    "stat_gains": Array[Dictionary],
-    "errors": Array[String]
+    "stat_gains": Dictionary,  # {"strength": 7, "constitution": 6}
+    "week": int
 }
 ```
 
 ## Integration Points
 
-### StaminaSystem
-- Training costs 20 stamina per session
+### StaminaSystem (Activity-Based Architecture)
+- Training assigns TRAINING activity to StaminaSystem
+- Training costs 10 stamina per session (Activity.TRAINING)
 - Stamina checked before scheduling
-- Stamina consumed when training starts
+- Training executed when StaminaSystem processes weekly activities
+- TrainingSystem responds to `stamina_activity_performed` signal
 
 ### FoodSystem / ItemManager
-- Food items consumed when training begins (not when selected)
-- Food provides 50% effectiveness boost
+- Food items consumed when training is assigned (immediate consumption)
+- Food provides 50% effectiveness boost for stat gains
 - Items: power_bar, speed_snack, brain_food, focus_tea
 
 ### TimeSystem
-- Training duration: 1 week
-- Processing triggered by `week_advanced` signal
-- Queue management based on current week
+- Training duration: 1 week (immediate completion)
+- Processing triggered by StaminaSystem weekly activity processing
+- No queue management - activity-based execution
 
 ### SignalBus Events
-- `training_scheduled`: When training is queued
-- `training_started`: When training becomes active
+- `training_scheduled`: When training assignment is made
 - `training_completed`: When training finishes with stat gains
+- `stamina_activity_performed`: Triggers training execution
 
 ## Performance Targets
 
 - **Batch Operations**: 100 trainings scheduled in <100ms
-- **Weekly Processing**: Complete in <100ms
-- **Current Performance**: ~4ms for 100 trainings (well under target)
+- **Activity Processing**: Training completion in <50ms
+- **Current Performance**: ~0ms for activity processing (well under target)
 
 ## Testing
 

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://coxofwctmj06p"]
+
+[ext_resource type="Script" path="res://test_training_stat_gains.gd" id="1_script"]
+
+[node name="TestTrainingStatGains" type="Node"]
+script = ExtResource("1_script")

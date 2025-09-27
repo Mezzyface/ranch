@@ -844,8 +844,9 @@ Performance Optimizations:
 
 ### 10.1 TrainingSystem
 Path: `scripts/systems/training_system.gd`
-Purpose: Creature training management with queue-based scheduling and food enhancement
-Dependencies: TimeSystem, StaminaSystem, ItemManager, FoodSystem
+Purpose: Creature training management with activity-based execution and food enhancement
+Dependencies: StaminaSystem, ItemManager, FoodSystem
+Architecture: Activity-based (responds to stamina_activity_performed signals)
 
 Enums:
 ```gdscript
@@ -856,27 +857,34 @@ enum FacilityTier { BASIC, ADVANCED, ELITE }
 Public Methods:
 | Method | Signature | Side Effects | Notes |
 |--------|----------|--------------|-------|
-| schedule_training | `func schedule_training(creature: CreatureData, activity: TrainingActivity, facility_tier: FacilityTier = FacilityTier.BASIC, food_type: int = -1) -> Dictionary` | Mutates queue + emits signals | Core scheduling |
-| cancel_training | `func cancel_training(creature_id: String) -> bool` | Mutates queue/active | Removes from queue or active |
+| schedule_training | `func schedule_training(creature: CreatureData, activity: TrainingActivity, facility_tier: FacilityTier = FacilityTier.BASIC, food_type: int = -1) -> Dictionary` | Assigns TRAINING activity to StaminaSystem + emits signals | Core scheduling |
+| cancel_training | `func cancel_training(creature_id: String) -> bool` | Clears assignment + activity | Removes training assignment |
 | get_training_status | `func get_training_status(creature_id: String) -> Dictionary` | None | Status lookup |
-| process_weekly_training | `func process_weekly_training() -> Dictionary` | Mutates all training state | Called by TimeSystem |
-| batch_schedule_training | `func batch_schedule_training(training_requests: Array[Dictionary]) -> Dictionary` | Mutates queue | Performance optimization |
+| get_training_assignments | `func get_training_assignments() -> Dictionary` | None | Current assignments |
+| get_completed_trainings | `func get_completed_trainings() -> Array[Dictionary]` | None | This week's completions |
+| batch_schedule_training | `func batch_schedule_training(training_requests: Array[Dictionary]) -> Dictionary` | Batch assignments | Performance optimization |
 | get_facility_utilization | `func get_facility_utilization() -> Dictionary` | None | Capacity info |
-| is_creature_in_training | `func is_creature_in_training(creature_id: String) -> bool` | None | Membership check |
 | get_activity_name | `func get_activity_name(activity: TrainingActivity) -> String` | None | Display name |
 | get_facility_name | `func get_facility_name(facility_tier: FacilityTier) -> String` | None | Display name |
 
-Training Entry Structure:
+Training Assignment Structure:
+```gdscript
+{
+    "activity": TrainingActivity,
+    "facility_tier": FacilityTier,
+    "food_type": int   # -1 for none, 0-3 for food types
+}
+```
+
+Training Completion Record:
 ```gdscript
 {
     "creature_id": String,
     "creature_name": String,
     "activity": TrainingActivity,
     "facility_tier": FacilityTier,
-    "start_week": int,
-    "end_week": int,
-    "status": String,  # "scheduled", "active", "completed"
-    "food_type": int   # -1 for none, 0-3 for food types
+    "stat_gains": Dictionary,  # {"strength": 7, "constitution": 6}
+    "week": int
 }
 ```
 
@@ -896,25 +904,32 @@ Facility Tiers & Multipliers:
 | ELITE | 2.0x | 2 slots |
 
 Food Enhancement:
-- Training foods provide 50% effectiveness boost for 4 weeks
-- Food consumed when training starts (not when selected)
+- Training foods provide 50% effectiveness boost for stat gains
+- Food consumed when training is assigned (immediate consumption)
 - Food types: power_bar (0), speed_snack (1), brain_food (2), focus_tea (3)
 
+Activity-Based Flow:
+1. schedule_training() assigns TRAINING activity to StaminaSystem
+2. StaminaSystem processes weekly activities and emits stamina_activity_performed
+3. TrainingSystem responds to signal and applies immediate stat gains
+4. Training assignment and activity are cleared after completion
+
 Signals Emitted:
-- `training_scheduled` - When training added to queue
-- `training_started` - When training becomes active
+- `training_scheduled` - When training assignment is made
 - `training_completed` - When training finishes with stat gains
+- Listens to: `stamina_activity_performed` - Triggers training execution
 
 Performance Targets:
 - batch_schedule_training: 100 trainings in <100ms
-- process_weekly_training: <100ms total
-- Current performance: ~4ms for 100 trainings
+- activity processing: <50ms total
+- Current performance: ~0ms for activity processing
 
 Invariants:
-- Training duration: exactly 1 week
-- Stamina cost: 20 per training session
-- Only one training per creature at a time
-- Food consumption atomic with training start
+- Training duration: immediate completion upon activity execution
+- Stamina cost: 10 per training session (Activity.TRAINING)
+- Only one training assignment per creature at a time
+- Food consumption atomic with training assignment
+- Activity cleared after training completion
 
 ### 10.2 FoodSystem
 Path: `scripts/systems/food_system.gd`
