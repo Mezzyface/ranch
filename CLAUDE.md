@@ -95,7 +95,7 @@ Test Automation: `tests/run_tests.bat`, `tests/run_tests.ps1`
 - Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
 
 ## 7. CURRENT SYSTEM KEYS
-`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`, `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager), `stamina` (StaminaSystem)
+`collection` (PlayerCollection), `save` (SaveSystem), `tag` (TagSystem), `age` (AgeSystem), `stat` (StatSystem), `resource` (ResourceTracker), `species` (SpeciesSystem), `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager), `stamina` (StaminaSystem), `weekly_update` (WeeklyUpdateOrchestrator)
 (Extend list when adding new system; update tests referencing keys.)
 
 Canonical signal usage (do NOT invent new wrappers):
@@ -225,6 +225,12 @@ Rules:
 | README.md | Human overview & milestones | Milestone / scope shift |
 | ARCHIVE_STAGE1_TASK_DETAILS.md | Historical narrative | New stage archive only |
 | INTERFACES.md | Interface contracts index | Append-only when adding or extending contracts |
+| docs/systems/*.md | System API documentation | System interface changes |
+| docs/resources/*.md | Resource documentation | Resource schema changes |
+| docs/controllers/*.md | Controller documentation | Controller pattern changes |
+| docs/ui/*.md | UI component documentation | Component interface changes |
+| docs/data/*.md | Data class documentation | Data structure changes |
+| docs/entities/*.md | Entity documentation | Entity behavior changes |
 
 ## 17. DEPRECATED ARTIFACTS
 - Legacy per-signal wrapper pattern (replaced by central validation + future generic emitter)

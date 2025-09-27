@@ -354,7 +354,47 @@ Public Methods:
 
 Invariant: Age modifier applied only in competition path, not base effective stat.
 
-### 6.5 SpeciesSystem
+### 6.5 StaminaSystem
+Path: `scripts/systems/stamina_system.gd`
+Activity-based stamina management with no passive changes.
+
+Activity Enum:
+| Value | Name | Stamina Effect | Description |
+|-------|------|---------------|-------------|
+| 0 | IDLE | 0 | No activity, no stamina change |
+| -20 | REST | +20 | Restores stamina through rest |
+| 10 | TRAINING | -10 | Improves stats through practice |
+| 15 | QUEST | -15 | Participates in quest activities |
+| 25 | COMPETITION | -25 | Competes in events |
+| 30 | BREEDING | -30 | Breeding activities |
+
+Public Methods:
+| Method | Signature | Notes |
+|--------|----------|-------|
+| get_stamina | `func get_stamina(creature: CreatureData) -> int` | Current stamina 0-100 |
+| set_stamina | `func set_stamina(creature: CreatureData, value: int) -> void` | Clamped to valid range |
+| deplete_stamina | `func deplete_stamina(creature: CreatureData, amount: int) -> bool` | Applies modifiers |
+| restore_stamina | `func restore_stamina(creature: CreatureData, amount: int) -> void` | Applies modifiers |
+| is_exhausted | `func is_exhausted(creature: CreatureData) -> bool` | True if stamina ≤ 20 |
+| can_perform_activity | `func can_perform_activity(creature: CreatureData, cost: int) -> bool` | Stamina check |
+| assign_activity | `func assign_activity(creature: CreatureData, activity: Activity) -> bool` | Assign weekly activity |
+| get_assigned_activity | `func get_assigned_activity(creature: CreatureData) -> Activity` | Get current activity |
+| perform_activity | `func perform_activity(creature: CreatureData, activity: Activity, activity_name: String = "") -> bool` | Execute activity |
+| get_activity_name | `func get_activity_name(activity: Activity) -> String` | Display name |
+| process_weekly_activities | `func process_weekly_activities() -> Dictionary` | Process all assigned activities |
+| auto_assign_activities | `func auto_assign_activities() -> void` | Auto-assign based on stamina |
+| apply_food_effect | `func apply_food_effect(creature: CreatureData, food_type: String) -> void` | Food restoration |
+| set_depletion_modifier | `func set_depletion_modifier(creature: CreatureData, modifier: float) -> void` | Stamina loss rate |
+| set_recovery_modifier | `func set_recovery_modifier(creature: CreatureData, modifier: float) -> void` | Recovery rate |
+| clear_modifiers | `func clear_modifiers(creature: CreatureData) -> void` | Remove modifiers |
+
+Invariants:
+- No passive stamina changes (deplete_weekly/restore_weekly are no-ops)
+- Stamina only changes through assigned activities
+- Activities must be explicitly assigned - IDLE maintains current stamina
+- Exhaustion threshold is 20 stamina
+
+### 6.6 SpeciesSystem
 Path: `scripts/systems/species_system.gd`
 Public Methods:
 | Method | Signature | Notes |

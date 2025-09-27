@@ -29,7 +29,7 @@ autosave_enabled: bool = true            # Autosave toggle
 
 ##### Save Operations
 ```gdscript
-save_game(slot_name: String = "autosave") -> bool
+save_game_state(slot_name: String = "default") -> bool
 # Save complete game state to specified slot
 # Returns: true if successful
 
@@ -48,7 +48,7 @@ save_to_file(filepath: String, data: Dictionary) -> bool
 
 ##### Load Operations
 ```gdscript
-load_game(slot_name: String) -> bool
+load_game_state(slot_name: String = "default") -> bool
 # Load complete game state from slot
 # Returns: true if successful
 
@@ -216,11 +216,11 @@ func _on_save_completed(slot: String, success: bool):
 var save_system = GameCore.get_system("save")
 
 # Manual save
-if save_system.save_game("slot1"):
+if save_system.save_game_state("slot1"):
     print("Game saved successfully")
 
 # Load game
-if save_system.load_game("slot1"):
+if save_system.load_game_state("slot1"):
     print("Game loaded successfully")
 
 # Quick save/load
@@ -244,7 +244,7 @@ for save in saves:
 # Check before overwriting
 if save_system.has_save("slot1"):
     if confirm_dialog("Overwrite existing save?"):
-        save_system.save_game("slot1")
+        save_system.save_game_state("slot1")
 
 # Copy save for backup
 save_system.copy_save("slot1", "slot1_backup")

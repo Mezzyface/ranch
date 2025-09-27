@@ -114,8 +114,8 @@ func _handle_aging() -> bool:
 	var collection = GameCore.get_system("collection")
 
 	var aged_count = 0
-	var category_changes = []
-	var expired = []
+	var category_changes: Array[Dictionary] = []
+	var expired: Array[String] = []
 
 	var all_creatures = collection.get_active_creatures() + collection.get_stable_creatures()
 	for creature in all_creatures:
@@ -148,34 +148,36 @@ func _handle_stamina() -> bool:
 		return true
 
 	var stamina_system = GameCore.get_system("stamina")
-	var collection = GameCore.get_system("collection")
 
+	# Process assigned activities for the week
+	var activity_results = stamina_system.process_weekly_activities()
+
+	# Organize results for summary
 	var depleted = []
 	var recovered = []
 
-	for creature in collection.get_active_creatures():
-		var before = stamina_system.get_stamina(creature)
-		stamina_system.deplete_weekly(creature)
-		var after = stamina_system.get_stamina(creature)
-		if after < before:
-			depleted.append({
-				"creature": creature.creature_name,
-				"amount": before - after
-			})
+	for activity_record in activity_results.get("activities_performed", []):
+		if activity_record.has("failed"):
+			continue
 
-	for creature in collection.get_stable_creatures():
-		var before = stamina_system.get_stamina(creature)
-		stamina_system.restore_weekly(creature)
-		var after = stamina_system.get_stamina(creature)
-		if after > before:
+		var stamina_change = activity_record.get("stamina_change", 0)
+		if stamina_change < 0:
+			depleted.append({
+				"creature": activity_record.creature,
+				"amount": abs(stamina_change),
+				"activity": activity_record.activity
+			})
+		elif stamina_change > 0:
 			recovered.append({
-				"creature": creature.creature_name,
-				"amount": after - before
+				"creature": activity_record.creature,
+				"amount": stamina_change,
+				"activity": activity_record.activity
 			})
 
 	update_results["stamina"] = {
 		"depleted": depleted,
-		"recovered": recovered
+		"recovered": recovered,
+		"activities": activity_results.get("activities_performed", [])
 	}
 
 	return true
@@ -264,7 +266,7 @@ func _handle_save() -> bool:
 		return true
 
 	var save_system = GameCore.get_system("save")
-	save_system.save_game("autosave_week")
+	save_system.save_game_state("autosave_week")
 	return true
 
 func _generate_summary() -> WeeklySummary:
@@ -275,8 +277,12 @@ func _generate_summary() -> WeeklySummary:
 
 	if update_results.has("aging"):
 		summary.creatures_aged = update_results.aging.get("aged_creatures", 0)
-		summary.category_changes = update_results.aging.get("category_changes", [])
-		summary.creatures_expired = update_results.aging.get("expired_creatures", [])
+		var changes: Array[Dictionary] = []
+		changes.assign(update_results.aging.get("category_changes", []))
+		summary.category_changes = changes
+		var expired_list: Array[String] = []
+		expired_list.assign(update_results.aging.get("expired_creatures", []))
+		summary.creatures_expired = expired_list
 
 	if update_results.has("stamina"):
 		summary.stamina_changes = update_results.stamina
@@ -290,10 +296,14 @@ func _generate_summary() -> WeeklySummary:
 		summary.gold_earned = update_results.economy.get("earned", 0)
 
 	if update_results.has("quests"):
-		summary.quest_completions = update_results.quests.get("completions", [])
+		var completions: Array[String] = []
+		completions.assign(update_results.quests.get("completions", []))
+		summary.quest_completions = completions
 
 	if update_results.has("competitions"):
-		summary.competition_results = update_results.competitions.get("results", [])
+		var results: Array[Dictionary] = []
+		results.assign(update_results.competitions.get("results", []))
+		summary.competition_results = results
 
 	return summary
 

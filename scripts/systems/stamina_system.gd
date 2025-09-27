@@ -7,6 +7,8 @@ const EXHAUSTION_THRESHOLD: int = 20
 
 # Activity costs
 enum Activity {
+	IDLE = 0,        # No stamina change
+	REST = -20,      # Negative value = restoration
 	TRAINING = 10,
 	QUEST = 15,
 	COMPETITION = 25,
@@ -25,6 +27,7 @@ const FOOD_STAMINA_VALUES: Dictionary = {
 
 # Stamina tracking
 var creature_stamina: Dictionary = {}  # creature_id -> int
+var creature_activities: Dictionary = {}  # creature_id -> Activity
 var depletion_modifiers: Dictionary = {}  # creature_id -> float
 var recovery_modifiers: Dictionary = {}  # creature_id -> float
 var exhausted_creatures: Dictionary = {}  # creature_id -> bool
@@ -124,23 +127,60 @@ func can_perform_activity(creature: CreatureData, cost: int) -> bool:
 		return false
 	return get_stamina(creature) >= cost
 
-func perform_activity(creature: CreatureData, activity: Activity, activity_name: String = "") -> bool:
-	if not can_perform_activity(creature, activity):
+func assign_activity(creature: CreatureData, activity: Activity) -> bool:
+	if not creature:
 		return false
 
-	deplete_stamina(creature, activity)
+	# Check if creature has enough stamina for the activity
+	if activity > 0 and not can_perform_activity(creature, activity):
+		return false
+
+	creature_activities[creature.id] = activity
 
 	if _signal_bus:
-		var name: String = activity_name
-		if name.is_empty():
-			match activity:
-				Activity.TRAINING: name = "TRAINING"
-				Activity.QUEST: name = "QUEST"
-				Activity.COMPETITION: name = "COMPETITION"
-				Activity.BREEDING: name = "BREEDING"
-				_: name = "UNKNOWN"
-		_signal_bus.stamina_activity_performed.emit(creature, name, activity)
+		var activity_name = get_activity_name(activity)
+		_signal_bus.activity_assigned.emit(creature, activity_name)
 
+	return true
+
+func get_assigned_activity(creature: CreatureData) -> Activity:
+	if not creature:
+		return Activity.IDLE
+	return creature_activities.get(creature.id, Activity.IDLE)
+
+func get_activity_name(activity: Activity) -> String:
+	match activity:
+		Activity.IDLE: return "IDLE"
+		Activity.REST: return "REST"
+		Activity.TRAINING: return "TRAINING"
+		Activity.QUEST: return "QUEST"
+		Activity.COMPETITION: return "COMPETITION"
+		Activity.BREEDING: return "BREEDING"
+		_: return "UNKNOWN"
+
+func perform_activity(creature: CreatureData, activity: Activity, activity_name: String = "") -> bool:
+	if not creature:
+		return false
+
+	# Handle restoration activities (negative values)
+	if activity < 0:
+		restore_stamina(creature, abs(int(activity)))
+		if _signal_bus:
+			var name: String = activity_name if not activity_name.is_empty() else get_activity_name(activity)
+			_signal_bus.stamina_activity_performed.emit(creature, name, activity)
+		return true
+
+	# Handle depletion activities (positive values)
+	if activity > 0:
+		if not can_perform_activity(creature, activity):
+			return false
+		deplete_stamina(creature, activity)
+		if _signal_bus:
+			var name: String = activity_name if not activity_name.is_empty() else get_activity_name(activity)
+			_signal_bus.stamina_activity_performed.emit(creature, name, activity)
+		return true
+
+	# IDLE activity (no change)
 	return true
 
 func apply_food_effect(creature: CreatureData, food_type: String) -> void:
@@ -171,54 +211,67 @@ func clear_modifiers(creature: CreatureData) -> void:
 	recovery_modifiers.erase(creature.id)
 
 func deplete_weekly(creature: CreatureData) -> void:
-	if not creature:
-		return
-
-	var current: int = get_stamina(creature)
-	var depletion: int = 5
-	var modifier: float = depletion_modifiers.get(creature.id, 1.0)
-	var final_depletion: int = int(depletion * modifier)
-
-	set_stamina(creature, max(MIN_STAMINA, current - final_depletion))
+	# Stamina is only depleted through assigned activities
+	# No passive weekly drain
+	pass
 
 func restore_weekly(creature: CreatureData) -> void:
-	if not creature:
-		return
+	# Stamina is only restored through assigned activities (like rest)
+	# No passive weekly recovery
+	pass
 
-	var current: int = get_stamina(creature)
-	var restoration: int = 10
-	var modifier: float = recovery_modifiers.get(creature.id, 1.0)
-	var final_restoration: int = int(restoration * modifier)
-
-	set_stamina(creature, min(MAX_STAMINA, current + final_restoration))
-
-func process_weekly_stamina() -> void:
+func process_weekly_activities() -> Dictionary:
 	var t0: int = Time.get_ticks_msec()
+	var results: Dictionary = {
+		"activities_performed": [],
+		"stamina_changes": []
+	}
 
 	# Get collection system
 	if not _collection_system:
 		_collection_system = GameCore.get_system("collection")
 		if not _collection_system:
-			push_error("StaminaSystem.process_weekly_stamina: Collection system not available")
-			return
+			push_error("StaminaSystem.process_weekly_activities: Collection system not available")
+			return results
 
-	var active_count: int = 0
-	var stable_count: int = 0
-
-	# Active creatures don't have passive drain - only lose stamina from activities
+	# Process assigned activities for active creatures
 	var active_creatures: Array[CreatureData] = _collection_system.get_active_creatures()
-	active_count = active_creatures.size()
+	for creature in active_creatures:
+		var activity = get_assigned_activity(creature)
+		if activity != Activity.IDLE:
+			var before_stamina = get_stamina(creature)
+			if perform_activity(creature, activity):
+				var after_stamina = get_stamina(creature)
+				results.activities_performed.append({
+					"creature": creature.creature_name,
+					"activity": get_activity_name(activity),
+					"stamina_change": after_stamina - before_stamina
+				})
+			else:
+				# Activity failed (insufficient stamina)
+				results.activities_performed.append({
+					"creature": creature.creature_name,
+					"activity": get_activity_name(activity),
+					"failed": true,
+					"reason": "insufficient_stamina"
+				})
 
-	# Stable creatures are in stasis - no changes
+	# Stable creatures remain idle (no activities)
 	var stable_creatures: Array[CreatureData] = _collection_system.get_stable_creatures()
-	stable_count = stable_creatures.size()
+	# Stable creatures don't perform activities
 
 	if _signal_bus:
-		_signal_bus.stamina_weekly_processed.emit(active_count, stable_count)
+		_signal_bus.stamina_weekly_processed.emit(active_creatures.size(), stable_creatures.size())
 
 	var dt: int = Time.get_ticks_msec() - t0
 	if not _performance_mode:
-		print("AI_NOTE: performance(process_weekly_stamina) = %d ms (baseline <50ms)" % dt)
+		print("AI_NOTE: performance(process_weekly_activities) = %d ms (baseline <50ms)" % dt)
+
+	return results
+
+func process_weekly_stamina() -> void:
+	# Redirect to new activity-based system
+	process_weekly_activities()
 
 func _on_week_advanced(_new_week: int, _total_weeks: int) -> void:
 	process_weekly_stamina()
@@ -228,14 +281,40 @@ func cleanup_creature(creature: CreatureData) -> void:
 		return
 
 	creature_stamina.erase(creature.id)
+	creature_activities.erase(creature.id)
 	depletion_modifiers.erase(creature.id)
 	recovery_modifiers.erase(creature.id)
 	exhausted_creatures.erase(creature.id)
+
+# Helper function to auto-assign activities based on stamina levels
+func auto_assign_activities() -> void:
+	if not _collection_system:
+		_collection_system = GameCore.get_system("collection")
+		if not _collection_system:
+			return
+
+	var active_creatures = _collection_system.get_active_creatures()
+	for creature in active_creatures:
+		var stamina = get_stamina(creature)
+		var current_activity = get_assigned_activity(creature)
+
+		# Only reassign if creature is idle
+		if current_activity == Activity.IDLE:
+			if stamina < 30:
+				# Low stamina - assign rest
+				assign_activity(creature, Activity.REST)
+			elif stamina >= 80:
+				# High stamina - can do intensive activities
+				# For now, randomly assign between training and idle
+				if randf() > 0.5:
+					assign_activity(creature, Activity.TRAINING)
+			# Otherwise remain idle
 
 # Save/Load support
 func save_state() -> Dictionary:
 	return {
 		"creature_stamina": creature_stamina.duplicate(),
+		"creature_activities": creature_activities.duplicate(),
 		"depletion_modifiers": depletion_modifiers.duplicate(),
 		"recovery_modifiers": recovery_modifiers.duplicate(),
 		"exhausted_creatures": exhausted_creatures.duplicate()
@@ -243,6 +322,7 @@ func save_state() -> Dictionary:
 
 func load_state(data: Dictionary) -> void:
 	creature_stamina = data.get("creature_stamina", {})
+	creature_activities = data.get("creature_activities", {})
 	depletion_modifiers = data.get("depletion_modifiers", {})
 	recovery_modifiers = data.get("recovery_modifiers", {})
 	exhausted_creatures = data.get("exhausted_creatures", {})

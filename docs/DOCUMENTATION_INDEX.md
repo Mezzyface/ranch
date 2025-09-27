@@ -23,6 +23,29 @@ This index provides a complete overview of all documentation in the repository, 
 
 ## 📂 Documentation Structure
 
+### `/docs/systems/` - System API Documentation
+- **[TIME_SYSTEM_API.md](systems/TIME_SYSTEM_API.md)** - TimeSystem for weekly progression
+- **[WEEKLY_UPDATE_SYSTEM.md](systems/WEEKLY_UPDATE_SYSTEM.md)** - Weekly update orchestration
+- **[COLLECTION_SYSTEM_API.md](systems/COLLECTION_SYSTEM_API.md)** - PlayerCollection roster management
+- **[SAVE_SYSTEM_API.md](systems/SAVE_SYSTEM_API.md)** - SaveSystem persistence
+- **[AGE_STAT_TAG_SYSTEMS_API.md](systems/AGE_STAT_TAG_SYSTEMS_API.md)** - Age, Stat, and Tag systems
+- **[STAMINA_SYSTEM_API.md](systems/STAMINA_SYSTEM_API.md)** - Activity-based stamina management
+
+### `/docs/resources/` - Resource Documentation
+- **[RESOURCE_SYSTEM_API.md](resources/RESOURCE_SYSTEM_API.md)** - ItemResource, SpeciesResource management
+
+### `/docs/controllers/` - Controller Documentation
+- **[CONTROLLER_SYSTEM_API.md](controllers/CONTROLLER_SYSTEM_API.md)** - Main, Game, and UI controllers
+
+### `/docs/ui/` - UI Component Documentation
+- **[UI_COMPONENTS_API.md](ui/UI_COMPONENTS_API.md)** - CreatureCard, FilterBar, and UI elements
+
+### `/docs/data/` - Data Class Documentation
+- **[DATA_CLASSES_API.md](data/DATA_CLASSES_API.md)** - CreatureData, StatsData, QuestData structures
+
+### `/docs/entities/` - Entity Documentation
+- **[ENTITY_SYSTEM_API.md](entities/ENTITY_SYSTEM_API.md)** - CreatureEntity behavioral patterns
+
 ### `/docs/development/` - Developer Resources
 - `COMPREHENSIVE_API_GUIDE.md` - Merged API reference, usage patterns, quick solutions
 - `SYSTEMS_INTEGRATION_GUIDE.md` - System dependencies and workflows
@@ -78,20 +101,22 @@ This index provides a complete overview of all documentation in the repository, 
 
 ---
 
-## 🔄 Recent Consolidation (2025-09-26)
+## 🔄 Recent Updates
 
-### Merged Files
+### 2025-09-27 - Comprehensive API Documentation
+Added complete API documentation for all systems:
+- **Systems**: Time, Collection, Save, Age/Stat/Tag systems
+- **Resources**: Item and Species resource management
+- **Controllers**: Main, Game, and UI controller patterns
+- **UI Components**: Reusable UI elements and patterns
+- **Data Classes**: Core data structures
+- **Entities**: Behavioral entity system
+
+### 2025-09-26 - Documentation Consolidation
 - `USAGE.md`, `QUICK_REFERENCE.md`, `API_REFERENCE.md`, `QUICK_START_GUIDE.md` → **[Comprehensive API Guide](development/COMPREHENSIVE_API_GUIDE.md)**
-
-### Relocated Files
 - `AGESYSTEM_USAGE_GUIDE.md` → `docs/development/age_system_guide.md`
 - `VALIDATION_GUIDE.md` → `tests/validation_guide.md`
 - `ARCHITECTURE_VERIFICATION_REPORT.md` → `docs/implementation/architecture_verification.md`
-
-### Removed (Redundant)
-- Root-level `USAGE.md` and `QUICK_REFERENCE.md`
-- Old `API_REFERENCE.md` and `QUICK_START_GUIDE.md`
-- Deleted `tasks/STAGE_1_COMPLETION_SUMMARY.md`
 
 ---
 
