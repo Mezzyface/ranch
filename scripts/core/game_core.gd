@@ -20,6 +20,13 @@ func get_system(system_name: String) -> Node:
 		_load_system(system_name)
 	return _systems.get(system_name)
 
+func has_system(system_name: String) -> bool:
+	return _systems.has(system_name) or _is_valid_system_name(system_name)
+
+func _is_valid_system_name(system_name: String) -> bool:
+	var valid_systems = ["creature", "save", "quest", "stat", "tag", "age", "collection", "resource", "resources", "species", "item_manager", "items", "time"]
+	return system_name in valid_systems
+
 func _load_system(system_name: String) -> void:
 	var system: Node
 
@@ -44,6 +51,8 @@ func _load_system(system_name: String) -> void:
 			system = preload("res://scripts/systems/species_system.gd").new()
 		"item_manager", "items":
 			system = preload("res://scripts/systems/item_manager.gd").new()
+		"time":
+			system = preload("res://scripts/systems/time_system.gd").new()
 		_:
 			push_error("Unknown system: " + system_name)
 			return

@@ -67,10 +67,12 @@ Signals: `scripts/core/signal_bus.gd`
 Enums: `scripts/core/global_enums.gd`
 ItemManager: `scripts/systems/item_manager.gd` (replaces ItemDatabase)
 SpeciesSystem: `scripts/systems/species_system.gd` (loads SpeciesResource files)
+TimeSystem: `scripts/systems/time_system.gd` (weekly progression, events)
+Weekly Events: `scripts/core/weekly_event.gd` (time-based event system)
 Systems: `scripts/systems/*.gd`
 Resource Classes: `scripts/resources/*.gd` (ItemResource, SpeciesResource)
 Resource Files: `data/items/*.tres`, `data/species/*.tres` (Godot Resource instances)
-Data: `scripts/data/*.gd` (Core data structures)
+Data: `scripts/data/*.gd` (Core data structures, TimeData)
 Entities: `scripts/entities/*.gd`
 Generation: `scripts/generation/`
 Tests (individual): `tests/individual/`
@@ -85,13 +87,20 @@ Test Automation: `tests/run_tests.bat`, `tests/run_tests.ps1`
 - Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
 
 ## 7. CURRENT SYSTEM KEYS
-`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`, `item_manager` (ItemManager)
+`collection`, `save`, `tag`, `age`, `stat`, `resource` (ResourceTracker), `species`, `item_manager` (ItemManager), `time` (TimeSystem)
 (Extend list when adding new system; update tests referencing keys.)
 
 Canonical signal usage (do NOT invent new wrappers):
 ```gdscript
 var bus = GameCore.get_signal_bus()
 bus.creature_acquired.emit(creature, "shop")  # existing signal
+bus.week_advanced.emit(new_week, total_weeks)  # time progression
+```
+TimeSystem access pattern:
+```gdscript
+var time_system = GameCore.get_system("time")
+time_system.advance_week()  # manual progression
+time_system.schedule_event(event, target_week)  # event scheduling
 ```
 If a new domain event truly required, follow Section 13 before adding.
 
@@ -102,6 +111,8 @@ If a new domain event truly required, follow Section 13 before adding.
 | Batch aging 1000 creatures | <100ms |
 | Save/load 100 creatures | <200ms |
 | 100 species lookups | <50ms |
+| Weekly time progression | <200ms |
+| Event processing (100 events) | <50ms |
 If exceeded, add timing + mitigation note in summary.
 
 ## 9. SUBMISSION CHECKLIST

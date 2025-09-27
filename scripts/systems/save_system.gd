@@ -630,6 +630,15 @@ func _save_system_states(slot_name: String) -> bool:
 	else:
 		config.set_value("age_system", "not_loaded", true)
 
+	# Save TimeSystem state
+	if GameCore.has_system("time"):
+		var time_system = GameCore.get_system("time")
+		var time_state = time_system.save_time_state()
+		for key in time_state.keys():
+			config.set_value("time_system", key, time_state[key])
+	else:
+		config.set_value("time_system", "not_loaded", true)
+
 	# Save other system states as needed
 	config.set_value("save_system", "auto_save_enabled", auto_save_enabled)
 	config.set_value("save_system", "auto_save_interval", auto_save_interval_minutes)
@@ -654,6 +663,20 @@ func _load_system_states(slot_name: String) -> bool:
 	if config.load(systems_path) != OK:
 		push_error("SaveSystem: Failed to load system states")
 		return false
+
+	# Restore TimeSystem state
+	if config.has_section("time_system") and GameCore.has_system("time"):
+		var time_system = GameCore.get_system("time")
+		var time_data = {}
+
+		# Load all time system keys
+		var time_keys = config.get_section_keys("time_system")
+		for key in time_keys:
+			if key != "not_loaded":
+				time_data[key] = config.get_value("time_system", key)
+
+		if not time_data.is_empty():
+			time_system.load_time_state(time_data)
 
 	# Restore system states as needed
 	print("SaveSystem: System states loaded successfully")

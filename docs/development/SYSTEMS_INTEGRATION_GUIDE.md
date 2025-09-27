@@ -3,7 +3,8 @@
 **Purpose**: Document how all Stage 1 systems work together and depend on each other, providing clear integration patterns and workflows for future development.
 
 **Created**: 2024-12-26 - Based on completed Stage 1 Tasks 1-8
-**Status**: Stage 1 Core Systems (8/11 complete)
+**Updated**: 2024-12-26 - Added Stage 2 TimeSystem integration
+**Status**: Stage 1 Core Systems (8/11 complete) + Stage 2 TimeSystem
 
 ---
 
@@ -20,6 +21,7 @@ graph TD
     Systems --> AgeSystem[AgeSystem]
     Systems --> SaveSystem[SaveSystem]
     Systems --> PlayerCollection[PlayerCollection]
+    Systems --> TimeSystem[TimeSystem<br/>Stage 2]
     Systems --> Generator[CreatureGenerator<br/>Static Utility]
 
     CreatureSystem --> CreatureData[CreatureData<br/>Pure Data]
@@ -42,6 +44,7 @@ graph TD
 | **CreatureGenerator** | TagSystem, CreatureData | PlayerCollection, Shop | None (utility) |
 | **SaveSystem** | GameCore, All Systems | Main Game Loop | 2 save signals |
 | **PlayerCollection** | All Above Systems | UI, Quests | 5 collection signals |
+| **TimeSystem** | GameCore, AgeSystem, Collection | All Game Systems | 6 time signals |
 
 ---
 
@@ -89,29 +92,37 @@ best_matches.sort_custom(func(a, b):
 )
 ```
 
-### 3. Aging and Time Progression
+### 3. Time Progression and Automated Aging (Stage 2)
 ```gdscript
-# Weekly time progression workflow
+# Automated weekly time progression with TimeSystem
 func advance_week():
+    var time_system = GameCore.get_system("time")
+
+    # TimeSystem handles everything automatically:
+    if time_system.advance_week():
+        print("Week advanced to: " + time_system.get_current_date_string())
+
+        # Signals automatically emitted:
+        # - weekly_update_started()
+        # - week_advanced(new_week, total_weeks)
+        # - weekly_event_triggered(event) for each event
+        # - creature_aged(), creature_category_changed(), etc. via AgeSystem
+        # - weekly_update_completed(duration_ms)
+    else:
+        print("Week advancement blocked")
+
+# Manual aging workflow (Stage 1 compatibility)
+func manual_aging():
     var collection = GameCore.get_system("collection")
     var age_system = GameCore.get_system("age")
-    var save_system = GameCore.get_system("save")
 
-    # Step 1: Get all creatures
+    # Get all creatures
     var all_creatures: Array[CreatureData] = []
     all_creatures.append_array(collection.get_active_creatures())
     all_creatures.append_array(collection.get_stable_creatures())
 
-    # Step 2: Age them (batch operation)
+    # Age them (batch operation)
     age_system.age_all_creatures(all_creatures, 1)
-
-    # Signals automatically emitted:
-    # - creature_category_changed() for transitions
-    # - creature_expired() for deaths
-    # - aging_batch_completed(count, weeks)
-
-    # Step 3: Auto-save after aging
-    save_system.trigger_auto_save()
 ```
 
 ### 4. Save/Load Game State
@@ -214,6 +225,7 @@ Systems can be loaded in any order due to lazy loading, but conceptually:
 6. **CreatureGenerator** - Static, uses TagSystem when available
 7. **SaveSystem** - Can save any loaded system's state
 8. **PlayerCollection** - Integrates all above systems
+9. **TimeSystem** (Stage 2) - Orchestrates other systems via events
 
 ---
 
@@ -282,6 +294,68 @@ func evaluate_for_competition(creature: CreatureData, competition_type: String) 
         "puzzle": score = stats["INT"] * bonus
 
     return score
+```
+
+### Scenario 4: Time-Based Event Scheduling (Stage 2)
+```gdscript
+func schedule_quest_deadline():
+    var time_system = GameCore.get_system("time")
+
+    # Create deadline event
+    var deadline_event = WeeklyEvent.new()
+    deadline_event.event_id = "quest_deadline_" + str(Time.get_ticks_msec())
+    deadline_event.event_type = WeeklyEvent.EventType.QUEST_DEADLINE
+    deadline_event.event_name = "Ancient Ruins Quest Deadline"
+    deadline_event.priority = 2
+
+    # Schedule for 4 weeks from now
+    var deadline_week = time_system.total_weeks_elapsed + 4
+    time_system.schedule_event(deadline_event, deadline_week)
+
+    print("Quest deadline scheduled for week %d" % deadline_week)
+
+func schedule_shop_refresh():
+    var time_system = GameCore.get_system("time")
+
+    # Create recurring shop refresh
+    var shop_event = WeeklyEvent.new()
+    shop_event.event_id = "weekly_shop_refresh"
+    shop_event.event_type = WeeklyEvent.EventType.SHOP_REFRESH
+    shop_event.event_name = "Weekly Shop Refresh"
+    shop_event.is_recurring = true
+    shop_event.recurrence_interval = 1  # Every week
+    shop_event.priority = 5
+
+    # Add to recurring events
+    time_system.recurring_events.append(shop_event)
+```
+
+### Scenario 5: Time-Aware Game Features
+```gdscript
+func check_creature_readiness(creature: CreatureData) -> Dictionary:
+    var time_system = GameCore.get_system("time")
+
+    # Calculate creature availability based on age and time
+    var result = {
+        "ready": false,
+        "reason": "",
+        "available_week": 0
+    }
+
+    # Check minimum age requirement (must be Adult)
+    if creature.get_age_category() < GlobalEnums.AgeCategory.ADULT:
+        var weeks_to_adult = get_weeks_until_adult(creature)
+        result.reason = "Too young - needs %d more weeks" % weeks_to_adult
+        result.available_week = time_system.total_weeks_elapsed + weeks_to_adult
+        return result
+
+    # Check if creature is too old
+    if creature.get_age_category() >= GlobalEnums.AgeCategory.ANCIENT:
+        result.reason = "Too old for this activity"
+        return result
+
+    result.ready = true
+    return result
 ```
 
 ---
@@ -381,8 +455,10 @@ When integrating systems:
 
 - [API_REFERENCE.md](API_REFERENCE.md) - Complete method signatures and properties
 - [CLAUDE.md](../../CLAUDE.md) - Architecture decisions and lessons learned
+- [TIME_SYSTEM_API.md](../systems/TIME_SYSTEM_API.md) - Complete TimeSystem documentation
 - [tests/README.md](../../tests/README.md) - Testing patterns and examples
 - Individual system documentation in `docs/implementation/stages/stage_1/`
+- Stage 2 TimeSystem implementation: `docs/implementation/stages/stage_2/01_time_system.md`
 
 ---
 

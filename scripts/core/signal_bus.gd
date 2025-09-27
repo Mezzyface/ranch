@@ -57,9 +57,14 @@ signal stable_collection_updated(operation: String, creature_id: String)
 signal collection_milestone_reached(milestone: String, count: int)
 
 # === TIME SIGNALS ===
-# Time progression signals (will be used in later tasks)
-# signal week_advanced(new_week: int)
-# signal day_passed(current_week: int, current_day: int)
+# Time progression signals (Stage 2 Task 1)
+signal week_advanced(new_week: int, total_weeks: int)
+signal month_completed(month: int, year: int)
+signal year_completed(year: int)
+signal time_advance_blocked(reasons: Array[String])
+signal weekly_event_triggered(event: WeeklyEvent)
+signal weekly_update_started()
+signal weekly_update_completed(duration_ms: int)
 
 # === SAVE/LOAD SIGNALS (Task 7) ===
 # Additional save-related signals for Task 7 implementation
@@ -603,6 +608,92 @@ func emit_creature_fed(creature_id: String, food_id: String, food_data: Dictiona
 		print("SignalBus: Creature fed: %s consumed %s" % [creature_id, food_id])
 
 	creature_fed.emit(creature_id, food_id, food_data)
+
+# === TIME SIGNAL EMISSION ===
+func emit_week_advanced(new_week: int, total_weeks: int) -> void:
+	"""Emit week_advanced signal with validation."""
+	if new_week <= 0:
+		push_error("SignalBus: Cannot emit week_advanced with non-positive week: %d" % new_week)
+		return
+
+	if total_weeks < 0:
+		push_error("SignalBus: Cannot emit week_advanced with negative total_weeks: %d" % total_weeks)
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting week_advanced: week %d (total: %d)" % [new_week, total_weeks])
+
+	week_advanced.emit(new_week, total_weeks)
+
+func emit_month_completed(month: int, year: int) -> void:
+	"""Emit month_completed signal with validation."""
+	if month <= 0 or month > 13:
+		push_error("SignalBus: Invalid month: %d (must be 1-13)" % month)
+		return
+
+	if year <= 0:
+		push_error("SignalBus: Invalid year: %d" % year)
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting month_completed: month %d of year %d" % [month, year])
+
+	month_completed.emit(month, year)
+
+func emit_year_completed(year: int) -> void:
+	"""Emit year_completed signal with validation."""
+	if year <= 0:
+		push_error("SignalBus: Invalid year: %d" % year)
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting year_completed: year %d" % year)
+
+	year_completed.emit(year)
+
+func emit_time_advance_blocked(reasons: Array[String]) -> void:
+	"""Emit time_advance_blocked signal with validation."""
+	if reasons.is_empty():
+		push_error("SignalBus: Cannot emit time_advance_blocked with empty reasons")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting time_advance_blocked: %s" % str(reasons))
+
+	time_advance_blocked.emit(reasons)
+
+func emit_weekly_event_triggered(event: WeeklyEvent) -> void:
+	"""Emit weekly_event_triggered signal with validation."""
+	if event == null:
+		push_error("SignalBus: Cannot emit weekly_event_triggered with null event")
+		return
+
+	if not event.is_valid():
+		push_error("SignalBus: Cannot emit weekly_event_triggered with invalid event")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting weekly_event_triggered: %s" % event.event_name)
+
+	weekly_event_triggered.emit(event)
+
+func emit_weekly_update_started() -> void:
+	"""Emit weekly_update_started signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting weekly_update_started")
+
+	weekly_update_started.emit()
+
+func emit_weekly_update_completed(duration_ms: int) -> void:
+	"""Emit weekly_update_completed signal with validation."""
+	if duration_ms < 0:
+		push_error("SignalBus: Cannot emit weekly_update_completed with negative duration: %d" % duration_ms)
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting weekly_update_completed: %d ms" % duration_ms)
+
+	weekly_update_completed.emit(duration_ms)
 
 func _setup_signal_validation() -> void:
 	"""Set up internal signal validation and logging."""

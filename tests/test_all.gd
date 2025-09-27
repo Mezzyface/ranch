@@ -16,7 +16,8 @@ const ALL_TESTS: Array[Dictionary] = [
 	{"name": "PlayerCollection", "scene": "res://tests/individual/test_collection.tscn"},
 	{"name": "ResourceTracker", "scene": "res://tests/individual/test_resource.tscn"},
 	{"name": "SpeciesSystem", "scene": "res://tests/individual/test_species.tscn"},
-	{"name": "GlobalEnums", "scene": "res://tests/individual/test_enums.tscn"}
+	{"name": "GlobalEnums", "scene": "res://tests/individual/test_enums.tscn"},
+	{"name": "TimeSystem", "scene": "res://tests/individual/test_time.tscn"}
 ]
 
 var TESTS_TO_RUN: Array[Dictionary] = []
