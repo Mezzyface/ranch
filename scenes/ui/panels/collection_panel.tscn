@@ -1,0 +1,69 @@
+[gd_scene load_steps=3 format=3 uid="uid://k2mp7y30jqcb"]
+
+[ext_resource type="Script" path="res://scripts/ui/collection_panel.gd" id="1_h5p1w"]
+[ext_resource type="Theme" uid="uid://bfvxqkp6lm5r3" path="res://resources/themes/default_theme.tres" id="2_mxp7l"]
+
+[node name="CollectionPanel" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+theme = ExtResource("2_mxp7l")
+script = ExtResource("1_h5p1w")
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+
+[node name="ActiveSection" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="ActiveLabel" type="Label" parent="VBox/ActiveSection"]
+layout_mode = 2
+text = "Active Team - 6 Slots"
+horizontal_alignment = 1
+
+[node name="ActiveGrid" type="GridContainer" parent="VBox/ActiveSection"]
+layout_mode = 2
+size_flags_horizontal = 4
+columns = 3
+
+[node name="Separator" type="HSeparator" parent="VBox"]
+layout_mode = 2
+
+[node name="StableSection" type="VBoxContainer" parent="VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Header" type="HBoxContainer" parent="VBox/StableSection"]
+layout_mode = 2
+
+[node name="StableLabel" type="Label" parent="VBox/StableSection/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Stable"
+vertical_alignment = 1
+
+[node name="SearchBar" type="LineEdit" parent="VBox/StableSection/Header"]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Search creatures..."
+
+[node name="FilterButton" type="OptionButton" parent="VBox/StableSection/Header"]
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="ScrollContainer" type="ScrollContainer" parent="VBox/StableSection"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StableList" type="VBoxContainer" parent="VBox/StableSection/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3

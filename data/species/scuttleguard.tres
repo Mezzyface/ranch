@@ -43,8 +43,8 @@ tag_probabilities = {
 "Stealthy": 0.7
 }
 name_pool = Array[String](["Skitter", "Dash", "Scout", "Guard", "Patrol", "Sentry", "Swift", "Alert", "Watch", "Ward", "Shield", "Defender"])
-sprite_path = "res://assets/sprites/scuttleguard/all-svgs_alien-bug.svg"
-icon_path = "res://assets/sprites/scuttleguard/all-svgs_alien-bug.svg"
+sprite_path = "res://assets/sprites/creatures/scuttleguard/all-svgs_alien-bug.svg"
+icon_path = "res://assets/sprites/creatures/scuttleguard/all-svgs_alien-bug.svg"
 feeding_preferences = Array[String](["grain", "hay", "water"])
 training_modifiers = {
 "dexterity": 1.2,

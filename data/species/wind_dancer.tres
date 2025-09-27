@@ -48,8 +48,8 @@ tag_probabilities = {
 "Keen Eyes": 0.8
 }
 name_pool = Array[String](["Zephyr", "Gale", "Breeze", "Storm", "Tempest", "Gust", "Whirlwind", "Cyclone", "Hurricane", "Mistral", "Sirocco", "Chinook"])
-sprite_path = "res://assets/sprites/wind_dancer/.all-svgs_wasp-sting.svg"
-icon_path = "res://assets/sprites/wind_dancer/.all-svgs_wasp-sting.svg"
+sprite_path = "res://assets/sprites/creatures/wind_dancer/.all-svgs_wasp-sting.svg"
+icon_path = "res://assets/sprites/creatures/wind_dancer/.all-svgs_wasp-sting.svg"
 feeding_preferences = Array[String](["berries", "water", "agility_treats"])
 training_modifiers = {
 "dexterity": 1.5,

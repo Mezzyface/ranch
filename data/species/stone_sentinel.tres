@@ -48,8 +48,8 @@ tag_probabilities = {
 "Slow": 0.9
 }
 name_pool = Array[String](["Boulder", "Granite", "Fortress", "Bastion", "Aegis", "Bulwark", "Rampart", "Citadel", "Keep", "Tower", "Wall", "Guardian"])
-sprite_path = "res://assets/sprites/stone_sentinel/.all-svgs_rock-golem.svg"
-icon_path = "res://assets/sprites/stone_sentinel/.all-svgs_rock-golem.svg"
+sprite_path = "res://assets/sprites/creatures/stone_sentinel/.all-svgs_rock-golem.svg"
+icon_path = "res://assets/sprites/creatures/stone_sentinel/.all-svgs_rock-golem.svg"
 feeding_preferences = Array[String](["grain", "hay", "endurance_blend"])
 training_modifiers = {
 "constitution": 1.4,

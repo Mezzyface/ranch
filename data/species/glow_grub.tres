@@ -48,8 +48,8 @@ tag_probabilities = {
 "Useful": 0.8
 }
 name_pool = Array[String](["Glow", "Shine", "Spark", "Beam", "Flicker", "Gleam", "Radiance", "Lumina", "Aurora", "Prism", "Crystal", "Lantern"])
-sprite_path = "res://assets/sprites/glow_grub/.all-svgs_maggot.svg"
-icon_path = "res://assets/sprites/glow_grub/.all-svgs_maggot.svg"
+sprite_path = "res://assets/sprites/creatures/glow_grub/.all-svgs_maggot.svg"
+icon_path = "res://assets/sprites/creatures/glow_grub/.all-svgs_maggot.svg"
 feeding_preferences = Array[String](["grain", "water", "berries"])
 training_modifiers = {
 "intelligence": 1.2,

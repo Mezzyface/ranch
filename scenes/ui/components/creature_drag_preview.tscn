@@ -1,0 +1,46 @@
+[gd_scene load_steps=3 format=3 uid="uid://bmc6q5vt3w2vy"]
+
+[ext_resource type="Script" path="res://scripts/ui/creature_drag_preview.gd" id="1_g3k1t"]
+[ext_resource type="Theme" uid="uid://bfvxqkp6lm5r3" path="res://resources/themes/default_theme.tres" id="2_mxp7l"]
+
+[node name="CreatureDragPreview" type="Control"]
+custom_minimum_size = Vector2(100, 120)
+theme = ExtResource("2_mxp7l")
+script = ExtResource("1_g3k1t")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.2, 0.3, 0.4, 0.7)
+
+[node name="VBox" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 5.0
+offset_top = 5.0
+offset_right = -5.0
+offset_bottom = -5.0
+
+[node name="Portrait" type="TextureRect" parent="VBox"]
+layout_mode = 2
+custom_minimum_size = Vector2(60, 60)
+size_flags_horizontal = 4
+size_flags_vertical = 0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Creature"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="SpeciesLabel" type="Label" parent="VBox"]
+layout_mode = 2
+text = "Species"
+horizontal_alignment = 1
+autowrap_mode = 2
