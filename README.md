@@ -104,7 +104,7 @@ The core game architecture is fully implemented and tested:
 - **MVC Pattern**: Resources for data, Nodes for behavior
 - **SignalBus Communication**: Centralized, validated signal routing (25 signals)
 - **Data Persistence**: Hybrid save system (ConfigFile + ResourceSaver)
-- **Creature Systems**: Complete generation, aging, stats, and tags
+- **Creature Systems**: Complete generation, aging, stats, and tags (Resource-based species)
 - **Player Collection**: Active roster (6) and stable collection management
 - **Performance Standards**: All systems meeting <100ms targets
 - **Test Infrastructure**: 8 individual test suites with ~12s total runtime
@@ -237,7 +237,7 @@ var qualified: Array[CreatureData] = tag_system.filter_creatures_by_tags(all_cre
 - [x] Task 7: Save/Load System (Hybrid persistence, auto-save, comprehensive validation)
 - [x] Task 8: Player Collection (Active/stable roster management with advanced search)
 - [x] Task 9: Resource Tracking (Gold/item economy and feeding mechanics)
-- [x] Task 10: Species Resources (Template formalization and resource-based architecture)
+- [x] Task 10: Species Resources (Resource-based architecture complete, hardcoded data removed)
 - [ ] Task 11: Global Enums (Type-safe enumerations)
 
 **Progress: 10/11 Stage 1 tasks complete (~91%)**

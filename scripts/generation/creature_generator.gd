@@ -8,102 +8,9 @@ extends RefCounted
 # Keeping local reference for backward compatibility
 const GenerationType = GlobalEnums.GenerationType
 
-# Species data structure for Stage 1 (hardcoded, will migrate to SpeciesSystem in Task 10)
-const SPECIES_DATA := {
-	"scuttleguard": {
-		"display_name": "Scuttleguard",
-		"category": "starter",
-		"rarity": "common",
-		"price": 200,
-		"lifespan_weeks": 520,
-		"guaranteed_tags": ["Small", "Territorial", "Dark Vision"],
-		"optional_tags": ["Stealthy", "Enhanced Hearing", "Nocturnal"],
-		"stat_ranges": {
-			"strength": {"min": 70, "max": 130},
-			"constitution": {"min": 80, "max": 140},
-			"dexterity": {"min": 90, "max": 150},
-			"intelligence": {"min": 40, "max": 70},
-			"wisdom": {"min": 110, "max": 170},
-			"discipline": {"min": 90, "max": 150}
-		},
-		"name_pool": [
-			"Skitter", "Dash", "Scout", "Guard", "Patrol", "Sentry",
-			"Swift", "Alert", "Watch", "Ward", "Shield", "Defender"
-		]
-	},
-
-	"stone_sentinel": {
-		"display_name": "Stone Sentinel",
-		"category": "premium",
-		"rarity": "uncommon",
-		"price": 800,
-		"lifespan_weeks": 780,
-		"guaranteed_tags": ["Medium", "Camouflage", "Natural Armor", "Territorial"],
-		"optional_tags": ["Problem Solver", "Constructor", "Enhanced Hearing"],
-		"stat_ranges": {
-			"strength": {"min": 130, "max": 190},
-			"constitution": {"min": 190, "max": 280},
-			"dexterity": {"min": 50, "max": 110},
-			"intelligence": {"min": 50, "max": 90},
-			"wisdom": {"min": 130, "max": 220},
-			"discipline": {"min": 160, "max": 250}
-		},
-		"name_pool": [
-			"Boulder", "Granite", "Basalt", "Flint", "Slate", "Marble",
-			"Fortress", "Bastion", "Bulwark", "Aegis", "Rampart", "Citadel"
-		]
-	},
-
-	"wind_dancer": {
-		"display_name": "Wind Dancer",
-		"category": "flying",
-		"rarity": "common",
-		"price": 500,
-		"lifespan_weeks": 390,
-		"guaranteed_tags": ["Small", "Winged", "Flies", "Enhanced Hearing"],
-		"optional_tags": ["Messenger", "Stealthy", "Diurnal"],
-		"stat_ranges": {
-			"strength": {"min": 70, "max": 110},
-			"constitution": {"min": 80, "max": 130},
-			"dexterity": {"min": 190, "max": 280},
-			"intelligence": {"min": 90, "max": 140},
-			"wisdom": {"min": 150, "max": 250},
-			"discipline": {"min": 90, "max": 150}
-		},
-		"name_pool": [
-			"Zephyr", "Gale", "Breeze", "Whirl", "Drift", "Soar",
-			"Glide", "Flutter", "Swift", "Aerial", "Nimble", "Grace"
-		]
-	},
-
-	"glow_grub": {
-		"display_name": "Glow Grub",
-		"category": "utility",
-		"rarity": "common",
-		"price": 400,
-		"lifespan_weeks": 260,
-		"guaranteed_tags": ["Small", "Bioluminescent", "Cleanser", "Nocturnal"],
-		"optional_tags": ["Problem Solver", "Stealthy", "Enhanced Hearing"],
-		"stat_ranges": {
-			"strength": {"min": 50, "max": 90},
-			"constitution": {"min": 90, "max": 150},
-			"dexterity": {"min": 70, "max": 130},
-			"intelligence": {"min": 70, "max": 110},
-			"wisdom": {"min": 130, "max": 190},
-			"discipline": {"min": 110, "max": 170}
-		},
-		"name_pool": [
-			"Glow", "Shine", "Gleam", "Radiance", "Beacon", "Luminous",
-			"Spark", "Flicker", "Pulse", "Bright", "Shimmer", "Light"
-		]
-	}
-}
 
 # Optional tag assignment probability
 const OPTIONAL_TAG_CHANCE: float = 0.25
-
-# Performance optimization: Cache species keys
-static var _cached_species_keys: Array[String] = []
 
 # === GENERATION STATISTICS ===
 static var _generation_stats: Dictionary = {}
@@ -115,11 +22,16 @@ static func generate_creature_data(species_id: String, generation_type: GlobalEn
 	Generate lightweight CreatureData (default approach for save/serialization efficiency).
 	Use this for most generation needs unless behavior is immediately required.
 	"""
-	if not SPECIES_DATA.has(species_id):
+	var species_system = _get_species_system()
+	if not species_system:
+		push_error("CreatureGenerator: SpeciesSystem required but not available")
+		return null
+
+	if not species_system.is_valid_species(species_id):
 		push_error("CreatureGenerator: Unknown species_id '%s'" % species_id)
 		return null
 
-	var species: Dictionary = SPECIES_DATA[species_id]
+	var species: Dictionary = species_system.get_species_info(species_id)
 	var data: CreatureData = CreatureData.new()
 
 	# Basic creature info
@@ -216,9 +128,12 @@ static func generate_population_data(count: int, species_distribution: Dictionar
 	# Set up species distribution
 	if species_distribution.is_empty():
 		# Equal distribution
-		var keys = SPECIES_DATA.keys()
-		for key in keys:
-			species_list.append(key as String)
+		var species_system = _get_species_system()
+		if species_system:
+			species_list = species_system.get_all_species()
+		else:
+			push_error("CreatureGenerator: SpeciesSystem required for population generation")
+			return []
 		for i in species_list.size():
 			weights.append(1.0 / species_list.size())
 	else:
@@ -354,6 +269,14 @@ static func _get_tag_system():
 	# Try to get TagSystem (will lazy load if needed)
 	return GameCore.get_system("tag")
 
+static func _get_species_system():
+	"""Get SpeciesSystem through GameCore if available."""
+	if not GameCore:
+		return null
+
+	# Try to get SpeciesSystem (will lazy load if needed)
+	return GameCore.get_system("species")
+
 # === UTILITY METHODS ===
 
 static func _generate_unique_id() -> String:
@@ -364,10 +287,12 @@ static func _generate_unique_id() -> String:
 
 static func _generate_random_name(species_id: String) -> String:
 	"""Generate a random name for the species."""
-	if not SPECIES_DATA.has(species_id):
+	var species_system = _get_species_system()
+	if not species_system or not species_system.is_valid_species(species_id):
 		return "Unknown"
 
-	var name_pool: Array = SPECIES_DATA[species_id].name_pool
+	var species_info = species_system.get_species_info(species_id)
+	var name_pool: Array = species_info.get("name_pool", ["Unknown"])
 	var base_name: String = name_pool[randi() % name_pool.size()] as String
 	var number: int = randi_range(1, 999)
 	return "%s %d" % [base_name, number]
@@ -404,12 +329,18 @@ static func validate_creature_against_species(data: CreatureData) -> Dictionary:
 	var errors: Array[String] = []
 	var result: Dictionary = {"valid": true, "errors": errors}
 
-	if not SPECIES_DATA.has(data.species_id):
+	var species_system = _get_species_system()
+	if not species_system:
+		result.valid = false
+		errors.append("SpeciesSystem not available")
+		return result
+
+	if not species_system.is_valid_species(data.species_id):
 		result.valid = false
 		errors.append("Unknown species: %s" % data.species_id)
 		return result
 
-	var species: Dictionary = SPECIES_DATA[data.species_id]
+	var species: Dictionary = species_system.get_species_info(data.species_id)
 	var ranges: Dictionary = species.stat_ranges
 
 	# Validate stat ranges
@@ -479,13 +410,8 @@ static func get_available_species() -> Array[String]:
 	if species_system:
 		return species_system.get_all_species()
 
-	# Fallback to hardcoded data if SpeciesSystem not available
-	if _cached_species_keys.is_empty():
-		var keys = SPECIES_DATA.keys()
-		_cached_species_keys.clear()
-		for key in keys:
-			_cached_species_keys.append(key as String)
-	return _cached_species_keys
+	# Return empty array if SpeciesSystem not available
+	return []
 
 static func get_species_info(species_id: String) -> Dictionary:
 	"""Get complete species information."""
@@ -493,8 +419,8 @@ static func get_species_info(species_id: String) -> Dictionary:
 	if species_system:
 		return species_system.get_species_info(species_id)
 
-	# Fallback to hardcoded data if SpeciesSystem not available
-	return SPECIES_DATA.get(species_id, {})
+	# Return empty dict if SpeciesSystem not available
+	return {}
 
 static func is_valid_species(species_id: String) -> bool:
 	"""Check if species ID is valid."""
@@ -502,9 +428,6 @@ static func is_valid_species(species_id: String) -> bool:
 	if species_system:
 		return species_system.is_valid_species(species_id)
 
-	# Fallback to hardcoded data if SpeciesSystem not available
-	return SPECIES_DATA.has(species_id)
+	# Return false if SpeciesSystem not available
+	return false
 
-# TODO: Task 10 - Migrate to SpeciesSystem
-# This hardcoded species data will be moved to external resources
-# when implementing the SpeciesSystem in Stage 1 Task 10

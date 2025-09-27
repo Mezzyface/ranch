@@ -1,5 +1,7 @@
 # Task 05: Creature Generation System
 
+> **NOTE**: This document reflects the original implementation approach. As of Task 10 completion, the hardcoded SPECIES_DATA has been removed and the system now fully uses SpeciesSystem with .tres resource files. CreatureGenerator now dynamically loads species data through GameCore.get_system("species").
+
 ## Overview
 Implement the creature generation system that creates new creatures with randomized stats within defined ranges, appropriate tags, and species-specific characteristics using the improved CreatureData/CreatureEntity separation.
 
@@ -16,7 +18,7 @@ Implement the creature generation system that creates new creatures with randomi
 - Use TagSystem through GameCore for tag validation
 - All generation goes through GameCore subsystems
 - CreatureEntity created only when needed for behavior
-- Will be updated to use SpeciesSystem in Task 10
+- **UPDATED**: Now uses SpeciesSystem (Task 10 complete)
 
 From the design documents:
 - Creatures are generated from eggs with guaranteed stat ranges

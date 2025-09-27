@@ -74,14 +74,18 @@ func _ready() -> void:
 	else:
 		print("✅ CreatureGenerator integration works")
 
-	# Test 8: Lifespan Validation
-	var lifespan_expectations := {"scuttleguard":520,"stone_sentinel":780,"wind_dancer":390,"glow_grub":260}
+	# Test 8: Lifespan Validation (check consistency between SpeciesSystem and CreatureGenerator)
 	var lifespan_failed := false
-	for species_id in lifespan_expectations.keys():
-		var info: Dictionary = CreatureGenerator.get_species_info(species_id)
+	for species_id in all_species:
+		var info: Dictionary = species_system.get_species_info(species_id)
 		var generated: CreatureData = CreatureGenerator.generate_creature_data(species_id)
-		if info.is_empty() or not generated or generated.lifespan_weeks != lifespan_expectations[species_id]:
-			print("❌ Lifespan mismatch for %s" % species_id)
+		if info.is_empty() or not generated:
+			print("❌ Failed to get species info or generate creature for %s" % species_id)
+			details.append("Failed to get info for %s" % species_id)
+			success = false
+			lifespan_failed = true
+		elif info.get("lifespan_weeks", 0) != generated.lifespan_weeks:
+			print("❌ Lifespan mismatch for %s: system=%d, generated=%d" % [species_id, info.get("lifespan_weeks", 0), generated.lifespan_weeks])
 			details.append("Lifespan mismatch %s" % species_id)
 			success = false
 			lifespan_failed = true

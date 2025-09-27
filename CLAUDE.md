@@ -111,7 +111,7 @@ If exceeded, add timing + mitigation note in summary.
 - [ ] All arrays typed explicitly
 - [ ] Only `GameCore.get_system()` used for systems
 - [ ] No duplicated age/stat logic
-- [ ] Species edits via resources only (not Deprecated Hardcoded Species Map)
+- [ ] Species edits via resources only (SpeciesSystem fully operational)
 - [ ] **Resource validation**: All .tres files loadable with proper script_class and @tool annotation
 - [ ] **ItemManager integration**: Use GameCore.get_system("item_manager") for item operations
 - [ ] Tests updated/added for changed logic
@@ -148,10 +148,10 @@ Concise durable principles from Stage 1 (Tasks 1–10):
 - Validation-before-mutation for tags, age transitions, stats
 - Batch-first performance mindset (1k operations under stated thresholds)
 - Hybrid persistence (ConfigFile + ResourceSaver) orchestrated—not duplicated—by SaveSystem
-- Deprecated Hardcoded Species Map slated for removal after full migration verification
+- Resource-based species management fully operational (hardcoded data removed)
 - Active roster cap + invariants enforced at system boundary
 - Quiet/debug modes required for bulk operations & CI readability
-- Anti-patterns: duplicate age math, expanding deprecated species map, bespoke signal wrappers, property drift
+- Anti-patterns: duplicate age math, bespoke signal wrappers, property drift, hardcoded data patterns
 
 ## 13. SIGNAL EVENT ADDITION PROTOCOL
 1. Define event: name + payload param list (types) in a comment block
@@ -200,8 +200,8 @@ Rules:
 | INTERFACES.md | Interface contracts index | Append-only when adding or extending contracts |
 
 ## 17. DEPRECATED ARTIFACTS
-- **Hardcoded Species Map**: constant `SPECIES_DATA` in `scripts/generation/creature_generator.gd` (read‑only; do NOT extend; removal scheduled post-migration validation)
 - Legacy per-signal wrapper pattern (replaced by central validation + future generic emitter)
+- ~~Hardcoded Species Map~~ (REMOVED: was `SPECIES_DATA` constant - now fully replaced by SpeciesSystem resources)
 
 ## 18. COMMIT MESSAGE GUIDELINE (FOR AI-GENERATED PATCHES)
 Format: `type(scope): summary | invariants OK`

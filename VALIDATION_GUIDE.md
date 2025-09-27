@@ -110,7 +110,7 @@ var validation = tag_system.validate_tag_combination(creature.tags)
 
 #### **Before (Caused Errors)**:
 ```gdscript
-# ❌ This caused "Array assignment" errors:
+# ❌ This caused "Array assignment" errors (HISTORICAL - SPECIES_DATA removed):
 _cached_species_keys = SPECIES_DATA.keys()
 var tags: Array[String] = species.guaranteed_tags
 result.errors.append(error_message)
@@ -118,7 +118,7 @@ result.errors.append(error_message)
 
 #### **After (Type Safe)**:
 ```gdscript
-# ✅ Now properly typed:
+# ✅ Now properly typed (HISTORICAL EXAMPLE - now uses SpeciesSystem):
 for key in SPECIES_DATA.keys():
     _cached_species_keys.append(key as String)
 

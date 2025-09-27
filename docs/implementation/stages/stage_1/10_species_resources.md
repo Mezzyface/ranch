@@ -94,7 +94,7 @@ GameCore subsystem to manage all species:
 
 4. **Update Creature Generation**
    - Use SpeciesSystem for generation
-   - Remove hardcoded species data
+   - ✅ Remove hardcoded species data (COMPLETED)
    - Integrate with existing systems
 
 ## Test Criteria

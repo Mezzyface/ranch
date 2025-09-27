@@ -530,7 +530,7 @@ Invariants:
 
 ### 8.1 CreatureGenerator (Static Utility)
 Path: `scripts/generation/creature_generator.gd`
-Nature: Pure static methods on a `RefCounted` (NOT a GameCore-managed system). Transitional hardcoded species dictionary (SPECIES_DATA) retained until full migration to `SpeciesSystem` resources.
+Nature: Pure static methods on a `RefCounted` (NOT a GameCore-managed system). ~~Hardcoded species dictionary (SPECIES_DATA) removed~~ - now fully integrated with `SpeciesSystem` resources.
 
 Public Generation Methods:
 | Method | Signature | Returns | Notes |
@@ -543,9 +543,9 @@ Public Generation Methods:
 | validate_creature_against_species | `static func validate_creature_against_species(data: CreatureData) -> Dictionary` | `{valid: bool, errors: Array[String]}` | Verifies stats within species ranges + guaranteed tags present |
 | get_generation_statistics | `static func get_generation_statistics() -> Dictionary` | Snapshot copy | Aggregated counters (total, by_species, by_type) |
 | reset_generation_statistics | `static func reset_generation_statistics() -> void` | None | Clears counters |
-| get_available_species | `static func get_available_species() -> Array[String]` | Species IDs | Delegates to SpeciesSystem if loaded else hardcoded + cache |
-| get_species_info | `static func get_species_info(species_id: String) -> Dictionary` | Species info dict | Delegates to SpeciesSystem fallback to SPECIES_DATA |
-| is_valid_species | `static func is_valid_species(species_id: String) -> bool` | Bool | Delegates to SpeciesSystem fallback |
+| get_available_species | `static func get_available_species() -> Array[String]` | Species IDs | Delegates to SpeciesSystem (required) |
+| get_species_info | `static func get_species_info(species_id: String) -> Dictionary` | Species info dict | Delegates to SpeciesSystem (required) |
+| is_valid_species | `static func is_valid_species(species_id: String) -> bool` | Bool | Delegates to SpeciesSystem (required) |
 
 Generation Algorithms (internal helpers — names stable for test hooks, not external API): `_generate_uniform_stats`, `_generate_gaussian_stats`, `_generate_high_roll_stats`, `_generate_low_roll_stats`.
 
@@ -558,10 +558,10 @@ Statistic Tracking Structure (from `get_generation_statistics()`):
 }
 ```
 
-Hardcoded Species Data (SPECIES_DATA) Temporary Contract:
-- Keys: `scuttleguard`, `stone_sentinel`, `wind_dancer`, `glow_grub` (append-only until migrated; do NOT rename).
-- Each species dict keys: `display_name`, `category`, `rarity`, `price`, `lifespan_weeks`, `guaranteed_tags` (Array[String]), `optional_tags` (Array[String]), `stat_ranges` (per-stat {min,max}), `name_pool` (Array[String]).
-- After migration to `SpeciesSystem`, mark SPECIES_DATA section as `(DEPRECATED)` but retain shape for backward compatibility of old saves/tests.
+~~Hardcoded Species Data (SPECIES_DATA) Contract~~ (REMOVED):
+- ✅ **MIGRATED**: All species data now in SpeciesSystem .tres resource files
+- Species: `scuttleguard`, `stone_sentinel`, `wind_dancer`, `glow_grub` available through SpeciesSystem
+- Schema maintained in SpeciesResource class with proper validation
 
 Invariants:
 - All creature stat generation passes through `_generate_stats()` dispatch using `GenerationType`.
@@ -575,7 +575,7 @@ Misuse Patterns:
 |--------|---------|
 | Direct mutation of `_generation_stats` | Use `reset_generation_statistics()` + regenerate |
 | Bypassing TagSystem by manual `data.tags = [...]` | Let generator assign or run TagSystem validation externally |
-| Assuming SPECIES_DATA always present | Query `is_valid_species()` or rely on SpeciesSystem |
+| Assuming species data hardcoded | Always use SpeciesSystem through CreatureGenerator |
 
 Extension Guidance:
 1. Add new generation algorithm: extend `GlobalEnums.GenerationType`, implement `_generate_<name>_stats`, add case to `_generate_stats`, update tests & this section (append entry only).
