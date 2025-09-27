@@ -36,14 +36,8 @@ func _setup_orchestrator() -> void:
 	add_child(weekly_orchestrator)
 
 func _setup_default_events() -> void:
-	var aging_event = WeeklyEvent.new()
-	aging_event.event_id = "weekly_aging"
-	aging_event.event_type = WeeklyEvent.EventType.CREATURE_AGING
-	aging_event.event_name = "Weekly Creature Aging"
-	aging_event.is_recurring = true
-	aging_event.recurrence_interval = 1
-	aging_event.priority = 1
-	recurring_events.append(aging_event)
+	# Aging is now handled by WeeklyUpdateOrchestrator, not events
+	pass
 
 func advance_week() -> bool:
 	if is_processing_week:
@@ -194,10 +188,8 @@ func _trigger_system_updates() -> void:
 			if debug_mode:
 				print(summary.get_summary_text())
 	else:
-		if GameCore.has_system("age"):
-			var age_system = GameCore.get_system("age")
-			if age_system.has_method("process_weekly_aging"):
-				age_system.process_weekly_aging()
+		# Fallback: orchestrator not available, but don't duplicate aging
+		push_warning("TimeSystem: WeeklyUpdateOrchestrator not available, using fallback (aging skipped to avoid duplication)")
 
 		if GameCore.has_system("stamina"):
 			var stamina_system = GameCore.get_system("stamina")

@@ -203,6 +203,8 @@ Notes:
 | 2025-09-26 | Added CreatureGenerator & SpeciesResource contracts | Generation layer coverage |
 | 2025-09-26 | Added CreatureEntity contract with fail-fast dependency enforcement | Removed dangerous fallbacks |
 | 2025-09-26 | Updated GlobalEnums with fail-fast validation patterns | Replaced silent fallbacks with explicit error logging |
+| 2025-09-27 | Updated aging behavior documentation | Only active creatures age during weekly updates; stable creatures remain in stasis |
+| 2025-09-27 | Fixed double aging issue in TimeSystem | Removed redundant aging events; WeeklyUpdateOrchestrator now handles all aging |
 
 ---
 ## 5. Maintenance Rules
@@ -324,7 +326,9 @@ Public Methods:
 | save_collection_state | `func save_collection_state(slot_name: String="default") -> bool` | Persistence | Writes config |
 | load_collection_state | `func load_collection_state(slot_name: String="default") -> bool` | Persistence | Rebuilds caches |
 
-Invariants: Active roster size ≤ 6; metadata species counts non-negative; stats cache invalidated on structural change.
+Invariants:
+- Active roster size ≤ 6; metadata species counts non-negative; stats cache invalidated on structural change
+- **Weekly aging behavior**: Only active creatures age during weekly updates; stable creatures remain in stasis
 
 ### 6.4 StatSystem
 Path: `scripts/systems/stat_system.gd`
@@ -393,6 +397,7 @@ Invariants:
 - Stamina only changes through assigned activities
 - Activities must be explicitly assigned - IDLE maintains current stamina
 - Exhaustion threshold is 20 stamina
+- **Weekly aging behavior**: Only active creatures age during weekly updates; stable creatures remain in stasis
 
 ### 6.6 SpeciesSystem
 Path: `scripts/systems/species_system.gd`

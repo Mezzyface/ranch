@@ -4,6 +4,8 @@
 
 These systems manage creature aging, statistics, and tagging functionality. They work together to provide comprehensive creature state management while maintaining separation of concerns.
 
+**Important**: Only active creatures are affected by aging during weekly updates - stable creatures remain in stasis and do not age.
+
 ## AgeSystem (`scripts/systems/age_system.gd`)
 
 Manages creature aging and lifespan mechanics.
@@ -67,7 +69,7 @@ get_age_traits(creature: CreatureData) -> Array[String]
 var age_system = GameCore.get_system("age")
 var collection = GameCore.get_system("collection")
 
-# Age all active creatures weekly
+# Age all active creatures weekly (stable creatures remain in stasis)
 var active = collection.get_active_creatures()
 age_system.age_all_creatures(active, 1)
 

@@ -70,15 +70,16 @@ Each creature belongs to a species that determines:
 - **Purpose**: Storage for inactive creatures
 - **State**: Creatures in complete stasis
   - No stamina changes
-  - No aging (time still passes)
+  - **No aging** (remain frozen in time during weekly updates)
   - No stat changes
-- **Benefits**: Preserve creatures for later use
+- **Benefits**: Preserve creatures for later use without aging
 - **Restrictions**: Cannot participate in activities
 
 ### 2.3 Roster Strategy
-- Rotate exhausted creatures to stable
+- Rotate exhausted creatures to stable (they won't age while stored)
 - Keep balanced team for different activity types
 - Consider age and stat modifiers when selecting active roster
+- Use stable for long-term preservation of valuable creatures
 - Plan for breeding pairs
 
 ---
@@ -118,17 +119,17 @@ Each creature belongs to a species that determines:
 ### 4.1 Weekly Progression
 - **Manual Advancement**: Player chooses when to advance time
 - **Weekly Events**: Special occurrences based on schedule
-- **Aging**: All creatures age by 1 week
+- **Aging**: Only active creatures age by 1 week (stable creatures remain in stasis)
 - **No Auto-Save**: Player must save manually
 
 ### 4.2 Time-Based Mechanics
-- Creature aging and life stages
+- Creature aging and life stages (active creatures only)
 - Quest availability and deadlines
 - Breeding cooldowns
 - Seasonal events (every 4 weeks)
 
 ### 4.3 Weekly Processing Order
-1. Age all creatures (+1 week)
+1. Age active creatures only (+1 week) - stable creatures remain frozen
 2. Process scheduled events
 3. Update quest availability
 4. Check for creature milestones

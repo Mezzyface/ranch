@@ -4,6 +4,8 @@
 
 The TimeSystem provides weekly-based time progression for the game, handling creature aging, event scheduling, and system coordination.
 
+**Important**: Time progression now uses the WeeklyUpdateOrchestrator for all weekly updates to prevent duplicate aging and ensure proper system coordination. The legacy aging event system has been replaced.
+
 ## Core Components
 
 ### TimeSystem (`scripts/systems/time_system.gd`)
@@ -185,19 +187,19 @@ bus.weekly_update_completed.connect(_on_update_completed)
 
 ## System Integration
 
-### AgeSystem Integration
+### WeeklyUpdateOrchestrator Integration
 
-TimeSystem automatically triggers creature aging:
+TimeSystem now uses the WeeklyUpdateOrchestrator for all weekly updates:
 
 ```gdscript
-# In WeeklyEvent.execute() for CREATURE_AGING type:
-if GameCore.has_system("age") and GameCore.has_system("collection"):
-    var age_system = GameCore.get_system("age")
-    var collection_system = GameCore.get_system("collection")
-
-    var active_creatures = collection_system.get_active_creatures()
-    if not active_creatures.is_empty():
-        age_system.age_all_creatures(active_creatures, 1)
+# TimeSystem delegates to orchestrator for all updates
+func _trigger_system_updates() -> void:
+    if weekly_orchestrator:
+        var result = weekly_orchestrator.execute_weekly_update()
+        # Orchestrator handles aging, stamina, food, economy, etc.
+    else:
+        # Fallback system (aging excluded to prevent duplication)
+        push_warning("WeeklyUpdateOrchestrator not available")
 ```
 
 ### SaveSystem Integration
@@ -362,15 +364,7 @@ const MONTHS_PER_YEAR: int = 13
 
 ### Default Events
 
-TimeSystem automatically creates recurring aging events:
-
-```gdscript
-# Weekly creature aging (priority 1)
-aging_event.event_id = "weekly_aging"
-aging_event.event_type = WeeklyEvent.EventType.CREATURE_AGING
-aging_event.is_recurring = true
-aging_event.recurrence_interval = 1
-```
+**Note**: As of the latest update, TimeSystem no longer creates automatic aging events. All weekly updates including aging are now handled by the WeeklyUpdateOrchestrator to prevent duplication.
 
 ## Migration Notes
 

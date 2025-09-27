@@ -4,6 +4,8 @@
 
 The PlayerCollection system manages the player's creature roster, handling both active creatures (up to 6) and stable storage. It provides comprehensive creature management with performance optimization and milestone tracking.
 
+**Important**: Only active creatures are affected by weekly aging - stable creatures remain in stasis and do not age during weekly updates.
+
 ## Core Components
 
 ### PlayerCollection (`scripts/systems/player_collection.gd`)

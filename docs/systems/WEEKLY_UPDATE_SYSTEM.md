@@ -13,8 +13,8 @@ The Weekly Update System orchestrates all game systems during weekly time progre
 ### Update Pipeline
 Updates are processed in the following order:
 1. **PRE_UPDATE**: Validation and preparation
-2. **AGING**: Process creature aging
-3. **STAMINA**: Update stamina values
+2. **AGING**: Process creature aging (active creatures only; stable creatures remain in stasis)
+3. **STAMINA**: Update stamina values through activity system
 4. **FOOD**: Consume food resources
 5. **QUESTS**: Update quest progress
 6. **COMPETITIONS**: Process competition results
@@ -74,14 +74,13 @@ func _on_weekly_update() -> void:
 
 ### Stamina System Integration
 ```gdscript
-# Stamina updates automatically during weekly cycle
+# Stamina updates automatically during weekly cycle through activity system
 var stamina_system = GameCore.get_system("stamina")
 
-# Active creatures lose stamina
-stamina_system.deplete_weekly(creature)  # -5 stamina (modified by depletion_modifiers)
-
-# Stable creatures recover stamina
-stamina_system.restore_weekly(creature)  # +10 stamina (modified by recovery_modifiers)
+# Stamina changes only through assigned activities:
+# - Active creatures: process assigned activities (training, quests, etc.)
+# - Stable creatures: remain in stasis (no aging, no stamina changes)
+var activity_results = stamina_system.process_weekly_activities()
 ```
 
 ### Resource Consumption
