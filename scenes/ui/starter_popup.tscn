@@ -22,9 +22,9 @@
 [ext_resource type="Texture2D" uid="uid://bu8calineqpi1" path="res://ui/scrollbar_vertical_button_pressed.custom/scrollbar_vertical_button_pressed_0.png" id="20_vgsyx"]
 [ext_resource type="Texture2D" uid="uid://cerrcsotdadym" path="res://ui/scrollbar_vertical_bar.custom/scrollbar_vertical_bar_0.png" id="21_fnykx"]
 [ext_resource type="FontFile" uid="uid://dvfstigyyhaao" path="res://assets/honeyblot_caps.ttf" id="22_yin25"]
-[ext_resource type="Texture2D" uid="uid://dchuuujb3dmhs" path="res://assets/sprites/items/rpg_item_icon_wheat_51.png" id="22_yrlcr"]
+[ext_resource type="Texture2D" uid="uid://dchuuujb3dmhs" path="res://assets/sprites/items/food/rpg_item_icon_wheat_51.png" id="22_yrlcr"]
 [ext_resource type="SpriteFrames" uid="uid://sho2e26e2vhk" path="res://assets/sprites/creatures/scuttleguard/scutleguard.tres" id="24_ajmko"]
-[ext_resource type="Texture2D" uid="uid://bfsl8r5pdvf3j" path="res://assets/sprites/items/rpg_item_icon_coin_102.png" id="25_rqh4b"]
+[ext_resource type="Texture2D" uid="uid://bfsl8r5pdvf3j" path="res://assets/sprites/items/food/rpg_item_icon_coin_102.png" id="25_rqh4b"]
 
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_8"]
 texture = ExtResource("3_3kt64")
@@ -468,7 +468,8 @@ vertical_alignment = 2
 
 [node name="StartButton" type="Button" parent="Panel/MarginContainer/VBoxContainer"]
 layout_mode = 2
-theme = SubResource("Theme_2a8lp")
+theme_override_fonts/font = ExtResource("22_yin25")
+theme_override_font_sizes/font_size = 24
 text = "Start Adventure"
 
 [node name="Title" type="Panel" parent="."]

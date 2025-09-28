@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://chrbg0trln2fr"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_wine"]
+
+[resource]
+script = ExtResource("1_wine")
+item_id = "wine"
+display_name = "Fine Wine"
+item_type = 0
+base_price = 80
+sell_value = 40
+stack_size = 4
+stamina_restore = 8
+description = "A bottle of fine wine that relaxes creatures and improves their social interactions. Handle with care."
+flavor_text = "Rich and full-bodied with notes of berries and oak. Perfect for special occasions."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_wine_57.png"
+drop_sources = Array[String](["shop", "premium_quest"])

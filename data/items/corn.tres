@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://eu5p4fvevi40"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_corn"]
+
+[resource]
+script = ExtResource("1_corn")
+item_id = "corn"
+display_name = "Corn"
+item_type = 0
+base_price = 22
+sell_value = 11
+stack_size = 15
+stamina_restore = 6
+description = "Sweet corn kernels packed with energy. A favorite food for many creatures."
+flavor_text = "Golden kernels that burst with sweetness when eaten."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_corn_50.png"
+drop_sources = Array[String](["shop", "forage_quest"])

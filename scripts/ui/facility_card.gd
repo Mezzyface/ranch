@@ -6,10 +6,10 @@ extends Control
 
 # Note: Food items are now dynamically loaded from ItemManager
 
-signal assign_pressed(facility_id: String)
 signal remove_pressed(facility_id: String)
 signal unlock_pressed(facility_id: String)
 signal food_selection_requested(facility_id: String)
+signal activity_selection_requested(facility_id: String)
 
 @onready var background: PanelContainer = $Background
 @onready var facility_icon: TextureRect = $Background/VBoxContainer/FacilityIcon
@@ -34,6 +34,11 @@ var _missing_food: bool = false
 var _override_unlock_status: bool = false
 var _has_unlock_override: bool = false
 
+# Selected food/activity state for drag-drop assignments
+var _selected_food_type: int = -1
+var _selected_activity: int = -1
+var _is_drag_highlighted: bool = false
+
 func _ready() -> void:
 	if not Engine.is_editor_hint():
 		_setup_signals()
@@ -51,6 +56,9 @@ func _setup_signals() -> void:
 
 	if food_button:
 		food_button.pressed.connect(_on_food_button_pressed)
+
+	if activity_button:
+		activity_button.pressed.connect(_on_activity_button_pressed)
 
 func set_facility(facility: FacilityResource) -> void:
 	facility_resource = facility
@@ -132,12 +140,7 @@ func _update_assignment_info() -> void:
 
 	# Update activity info
 	if activity_button:
-		if is_assigned:
-			# Could update activity button appearance here
-			_load_activity_icon()
-		else:
-			# Reset activity button
-			pass
+		_update_activity_button()
 
 	# Update food info - always show food icon regardless of assignment status
 	if food_button:
@@ -169,11 +172,12 @@ func _update_action_button() -> void:
 	if is_locked:
 		action_button.visible = false
 	else:
-		action_button.visible = true
+		# Only show button if there's an assignment to remove
 		if is_assigned:
+			action_button.visible = true
 			action_button.text = "Remove"
 		else:
-			action_button.text = "Assign"
+			action_button.visible = false
 
 func _load_facility_icon() -> void:
 	if not facility_icon or not facility_resource:
@@ -212,17 +216,39 @@ func _load_creature_portrait() -> void:
 	# For now, use a fallback
 	_set_fallback_creature_portrait()
 
-func _load_activity_icon() -> void:
-	if not activity_icon or not current_assignment:
+func _update_activity_button() -> void:
+	if not activity_button:
 		return
 
-	# Create simple activity icons based on type
-	var activity_color = _get_activity_color(current_assignment.selected_activity)
-	var image = Image.create(16, 16, false, Image.FORMAT_RGBA8)
-	image.fill(activity_color)
-	var texture = ImageTexture.new()
-	texture.set_image(image)
-	activity_icon.texture = texture
+	# Get texture rect inside the activity button
+	var texture_rect = activity_button.get_node_or_null("MarginContainer/TextureRect")
+	if not texture_rect:
+		return
+
+	# Determine which activity to display
+	var activity_to_show: int = -1
+	if current_assignment and current_assignment.is_valid():
+		# Show assigned activity
+		activity_to_show = current_assignment.selected_activity
+	elif facility_resource and facility_resource.supported_activities.size() > 0:
+		# Show first supported activity as default
+		activity_to_show = facility_resource.supported_activities[0]
+
+	# Create activity icon based on type
+	if activity_to_show >= 0:
+		var activity_color = _get_activity_color(activity_to_show)
+		var image = Image.create(32, 32, false, Image.FORMAT_RGBA8)
+		image.fill(activity_color)
+		var texture = ImageTexture.new()
+		texture.set_image(image)
+		texture_rect.texture = texture
+	else:
+		# No activity - show gray
+		var image = Image.create(32, 32, false, Image.FORMAT_RGBA8)
+		image.fill(Color(0.5, 0.5, 0.5, 1))
+		var texture = ImageTexture.new()
+		texture.set_image(image)
+		texture_rect.texture = texture
 
 func _load_food_icon() -> void:
 	if not food_button:
@@ -319,7 +345,7 @@ func _get_food_type_name(food_type: int) -> String:
 	return item_resource.display_name if item_resource else item_id.capitalize()
 
 func _get_food_item_id(food_type: int) -> String:
-	# Get item ID from ItemManager (matches assignment dialog filtered logic)
+	# Get item ID from ItemManager (matches food selection logic)
 	var item_manager = GameCore.get_system("item_manager")
 	var resource_tracker = GameCore.get_system("resource")
 	if not item_manager or not resource_tracker:
@@ -327,7 +353,7 @@ func _get_food_item_id(food_type: int) -> String:
 
 	var inventory = resource_tracker.get_inventory()
 
-	# Get all consumable food items that are in stock (same logic as assignment dialog)
+	# Get all consumable food items that are in stock
 	var food_items = item_manager.get_items_by_type_enum(GlobalEnums.ItemType.FOOD)
 	var available_foods: Array[ItemResource] = []
 	for item_resource in food_items:
@@ -379,8 +405,6 @@ func _on_action_button_pressed() -> void:
 
 	if is_assigned:
 		remove_pressed.emit(facility_resource.facility_id)
-	else:
-		assign_pressed.emit(facility_resource.facility_id)
 
 func _on_unlock_button_pressed() -> void:
 	if facility_resource:
@@ -401,6 +425,21 @@ func _on_food_button_pressed() -> void:
 	if is_unlocked:
 		food_selection_requested.emit(facility_resource.facility_id)
 
+func _on_activity_button_pressed() -> void:
+	"""Handle activity button press - open activity selection popup"""
+	if not facility_resource:
+		return
+
+	# Only allow activity selection for unlocked facilities
+	var is_unlocked: bool
+	if _has_unlock_override:
+		is_unlocked = _override_unlock_status
+	else:
+		is_unlocked = facility_resource.is_unlocked
+
+	if is_unlocked:
+		activity_selection_requested.emit(facility_resource.facility_id)
+
 func get_facility_id() -> String:
 	return facility_resource.facility_id if facility_resource else ""
 
@@ -420,6 +459,24 @@ func is_assigned() -> bool:
 func set_food_warning(has_warning: bool) -> void:
 	_missing_food = has_warning
 	_update_visual_state()
+
+func get_selected_food_type() -> int:
+	"""Get the currently selected food type (for external access)"""
+	return _get_selected_food_type()
+
+func get_selected_activity() -> int:
+	"""Get the currently selected activity (for external access)"""
+	return _get_selected_activity()
+
+func set_selected_food_type(food_type: int) -> void:
+	"""Set the selected food type (called by food selection popup)"""
+	_selected_food_type = food_type
+	_update_food_display()
+
+func set_selected_activity(activity: int) -> void:
+	"""Set the selected activity (called by activity selection popup)"""
+	_selected_activity = activity
+	_update_activity_button()
 
 func can_accept_creature() -> bool:
 	"""Check if this facility can accept a new creature assignment"""
@@ -455,25 +512,124 @@ func _can_drop_data(position: Vector2, data: Variant) -> bool:
 	return false
 
 func _drop_data(position: Vector2, data: Variant) -> void:
-	"""Handle dropped data"""
+	"""Handle dropped data - create immediate assignment"""
+	if not _can_drop_data(position, data):
+		push_error("FacilityCard: Invalid drop attempted")
+		return
+
 	if data is Dictionary and data.has("creature_data"):
 		var creature = data.get("creature_data") as CreatureData
 		if creature:
-			# Show assignment dialog for this creature
-			_show_assignment_dialog_for_creature(creature)
+			# Use selected food/activity or defaults
+			var food_type = _get_selected_food_type()
+			var activity = _get_selected_activity()
 
-func _show_assignment_dialog_for_creature(creature_data: CreatureData) -> void:
-	"""Open assignment dialog with pre-selected creature"""
+			# Create assignment immediately via FacilitySystem
+			var success = _create_immediate_assignment(creature, activity, food_type)
+			if success:
+				print("[FacilityCard] Drag-drop assignment created for ", creature.creature_name)
+			else:
+				print("[FacilityCard] Failed to create assignment for ", creature.creature_name)
+
+func _create_immediate_assignment(creature_data: CreatureData, activity: int, food_type: int) -> bool:
+	"""Create facility assignment immediately via FacilitySystem"""
 	if not facility_resource or not creature_data:
-		return
+		push_error("FacilityCard: Invalid parameters for assignment creation")
+		return false
 
-	# Emit the signal to open dialog (handled by facility_view_controller)
-	# The controller will handle opening the dialog and pre-selecting the creature
-	assign_pressed.emit(facility_resource.facility_id)
+	# Get FacilitySystem
+	var facility_system = GameCore.get_system("facility")
+	if not facility_system:
+		push_error("FacilityCard: FacilitySystem not available")
+		return false
 
-	# Store dropped creature data for the controller to use
-	# This approach uses a temporary property that the controller can check
-	set_meta("dropped_creature_id", creature_data.id)
+	# Create assignment through facility system
+	var success = facility_system.assign_creature(
+		facility_resource.facility_id,
+		creature_data.id,
+		activity,
+		food_type
+	)
+
+	if not success:
+		push_error("FacilityCard: Failed to assign creature ", creature_data.creature_name, " to facility ", facility_resource.facility_id)
+		return false
+
+	# Assignment successful - signals will be emitted by FacilitySystem
+	return true
+
+func _get_first_available_food_type() -> int:
+	"""Get the index of the first available food item"""
+	var item_manager = GameCore.get_system("item_manager")
+	var resource_tracker = GameCore.get_system("resource")
+	if not item_manager or not resource_tracker:
+		return -1
+
+	var inventory = resource_tracker.get_inventory()
+	var food_items = item_manager.get_items_by_type_enum(GlobalEnums.ItemType.FOOD)
+
+	for i in range(food_items.size()):
+		var item_resource = food_items[i]
+		if item_resource.is_consumable:
+			var quantity = inventory.get(item_resource.item_id, 0)
+			if quantity > 0:
+				return i
+
+	return -1
+
+func _get_selected_food_type() -> int:
+	"""Get currently selected food type or first available default"""
+	if _selected_food_type >= 0:
+		return _selected_food_type
+
+	# Use assignment food if available
+	if current_assignment and current_assignment.food_type >= 0:
+		return current_assignment.food_type
+
+	# Fall back to first available food
+	return _get_first_available_food_type()
+
+func _get_selected_activity() -> int:
+	"""Get currently selected activity or first supported default"""
+	if _selected_activity >= 0:
+		return _selected_activity
+
+	# Use assignment activity if available
+	if current_assignment and current_assignment.selected_activity >= 0:
+		return current_assignment.selected_activity
+
+	# Fall back to first supported activity
+	if facility_resource and facility_resource.supported_activities.size() > 0:
+		return facility_resource.supported_activities[0]
+
+	return -1
+
+func _show_valid_drop_highlight() -> void:
+	"""Show visual feedback for valid drop target"""
+	_is_drag_highlighted = true
+	# Green highlight for valid drop
+	modulate = Color(0.8, 1.2, 0.8, 1.0)
+	if background:
+		var tween = create_tween()
+		tween.tween_property(background, "scale", Vector2(1.05, 1.05), 0.1)
+
+func _show_invalid_drop_highlight() -> void:
+	"""Show visual feedback for invalid drop target"""
+	_is_drag_highlighted = true
+	# Red highlight for invalid drop
+	modulate = Color(1.2, 0.8, 0.8, 1.0)
+	if background:
+		var tween = create_tween()
+		tween.tween_property(background, "scale", Vector2(0.95, 0.95), 0.1)
+
+func _clear_drag_highlight() -> void:
+	"""Clear drag visual feedback"""
+	if _is_drag_highlighted:
+		_is_drag_highlighted = false
+		modulate = Color.WHITE
+		if background:
+			var tween = create_tween()
+			tween.tween_property(background, "scale", Vector2.ONE, 0.1)
 
 func _notification(what: int) -> void:
 	"""Handle drag and drop visual feedback"""
@@ -484,30 +640,24 @@ func _notification(what: int) -> void:
 			if viewport:
 				var drag_data = viewport.gui_get_drag_data()
 				if _can_drop_data(Vector2.ZERO, drag_data):
-					# Highlight as valid drop target
-					modulate = Color(1.1, 1.1, 1.1, 1.0)
-					if background:
-						var tween = create_tween()
-						tween.tween_property(background, "scale", Vector2(1.05, 1.05), 0.1)
+					_show_valid_drop_highlight()
+				else:
+					_show_invalid_drop_highlight()
 		NOTIFICATION_DRAG_END:
 			# Reset visual state
-			modulate = Color.WHITE
-			if background:
-				var tween = create_tween()
-				tween.tween_property(background, "scale", Vector2.ONE, 0.1)
+			_clear_drag_highlight()
 
-func get_dropped_creature_id() -> String:
-	"""Get and clear any dropped creature ID"""
-	if has_meta("dropped_creature_id"):
-		var id = get_meta("dropped_creature_id")
-		remove_meta("dropped_creature_id")
-		return id
-	return ""
 
 func update_food_selection(food_type: int) -> void:
 	"""Update the food selection for this facility"""
-	if not current_assignment:
-		return
-
-	current_assignment.food_type = food_type
+	_selected_food_type = food_type
+	if current_assignment:
+		current_assignment.food_type = food_type
 	_update_food_display()
+
+func update_activity_selection(activity: int) -> void:
+	"""Update the activity selection for this facility"""
+	_selected_activity = activity
+	if current_assignment:
+		current_assignment.selected_activity = activity
+	_update_activity_button()

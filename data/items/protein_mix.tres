@@ -18,5 +18,5 @@ stat_boosts = {
 stat_boost_duration_hours = 24
 description = "High-quality protein blend designed to enhance muscle development and strength."
 flavor_text = "A carefully crafted mix of proteins that builds stronger, more powerful creatures."
-icon_path = "res://assets/sprites/items/all-svgs_soda-bottle.svg"
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_big_empty_potion_147.png"
 drop_sources = Array[String](["shop", "training_quest"])

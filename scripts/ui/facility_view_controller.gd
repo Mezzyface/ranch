@@ -14,6 +14,7 @@ extends Control
 @onready var creature_area: Control = $MarginContainer/VBoxContainer/CreaturePanel/VBoxContainer/CreatureArea
 @onready var next_week_button: Button = $NextWeekButtonOverlay/NextWeekButton
 @onready var food_selection_popup: Control = $FoodSelectionPopup
+@onready var activity_selection_popup: Control = $ActivitySelectionPopup
 
 var facility_system: Node
 var resource_tracker: Node
@@ -110,6 +111,11 @@ func _setup_signals() -> void:
 		food_selection_popup.food_selected.connect(_on_food_selected)
 		food_selection_popup.popup_closed.connect(_on_food_popup_closed)
 
+	# Setup activity selection popup
+	if activity_selection_popup:
+		activity_selection_popup.activity_selected.connect(_on_activity_selected)
+		activity_selection_popup.popup_closed.connect(_on_activity_popup_closed)
+
 func _load_facilities() -> void:
 	if not facility_system:
 		return
@@ -155,7 +161,7 @@ func load_unassigned_creatures() -> void:
 	if unassigned_creatures.is_empty():
 		var label = Label.new()
 		label.text = "All creatures are assigned to facilities"
-		label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+		# Using default theme color
 		label.anchor_left = 0.5
 		label.anchor_top = 0.5
 		label.anchor_right = 0.5
@@ -219,15 +225,9 @@ func _on_creature_entity_drag_ended(creature: CreatureData, dropped: bool) -> vo
 	Input.set_default_cursor_shape(Input.CURSOR_ARROW)
 
 	if dropped:
-		# Check if dropped on a facility card
-		var dropped_on_facility = _get_facility_under_mouse()
-		if dropped_on_facility and creature:
-			# Check if facility is unlocked
-			if facility_system and facility_system.is_facility_unlocked(dropped_on_facility):
-				# Show assignment dialog for this creature and facility
-				_show_assignment_dialog_for_creature(dropped_on_facility, creature.id)
-			else:
-				_show_notification("Facility is locked")
+		# Drag-drop assignment is now handled directly by the facility card
+		# No need for controller intervention - the card creates the assignment directly
+		print("[FacilityView] Drag operation completed - assignment handled by facility card")
 
 	print("[FacilityView] Drag ended for creature: ", creature.creature_name if creature else "null", " dropped: ", dropped)
 
@@ -286,10 +286,10 @@ func _create_facility_card(facility_resource) -> void:
 		facility_card.set_assignment(assignment)
 
 	# Connect card signals
-	facility_card.assign_pressed.connect(_on_assign_pressed)
 	facility_card.remove_pressed.connect(_on_remove_pressed)
 	facility_card.unlock_pressed.connect(_on_unlock_pressed)
 	facility_card.food_selection_requested.connect(_on_food_selection_requested)
+	facility_card.activity_selection_requested.connect(_on_activity_selection_requested)
 
 	# Add to grid and tracking array
 	facility_grid.add_child(facility_card)
@@ -375,19 +375,6 @@ func _get_food_item_id(food_type: int) -> String:
 		return available_foods[food_type].item_id
 	return ""
 
-func _on_assign_pressed(facility_id: String) -> void:
-	# Check if a creature was dropped onto the facility card
-	var dropped_creature_id: String = ""
-	for card in facility_cards:
-		if is_instance_valid(card) and card.get_facility_id() == facility_id:
-			dropped_creature_id = card.get_dropped_creature_id()
-			break
-
-	# Open assignment dialog with or without pre-selected creature
-	if not dropped_creature_id.is_empty():
-		_show_assignment_dialog_for_creature(facility_id, dropped_creature_id)
-	else:
-		_show_assignment_dialog(facility_id)
 
 func _on_remove_pressed(facility_id: String) -> void:
 	if not facility_system:
@@ -561,39 +548,7 @@ func _on_time_advance_blocked(reasons: Array[String]) -> void:
 	else:
 		_show_notification("Time advancement blocked")
 
-func _show_assignment_dialog(facility_id: String) -> void:
-	"""Show the creature assignment dialog for the specified facility"""
-	if not facility_system:
-		return
 
-	# Get the facility resource
-	var facility_resource = facility_system.get_facility(facility_id)
-	if not facility_resource:
-		_show_notification("Facility not found")
-		return
-
-	# Load and instantiate the dialog
-	var dialog_scene = preload("res://scenes/ui/facility_assignment_dialog.tscn")
-	var dialog = dialog_scene.instantiate()
-
-	# Add to scene tree
-	get_tree().root.add_child(dialog)
-
-	# Setup the dialog with facility data
-	dialog.setup(facility_resource)
-
-	# Connect to assignment confirmation
-	dialog.assignment_confirmed.connect(_on_assignment_confirmed)
-
-	# Show the dialog
-	dialog.popup_centered()
-
-func _on_assignment_confirmed(facility_id: String, creature_id: String, activity: int, food_type: int) -> void:
-	"""Handle successful creature assignment from dialog"""
-	_show_notification("Creature assigned successfully!")
-
-	# Refresh the facility display to show the new assignment
-	refresh_facilities()
 
 func get_facility_cards() -> Array[Control]:
 	return facility_cards.duplicate()
@@ -741,33 +696,118 @@ func _on_visibility_changed() -> void:
 		# Also refresh facilities in case assignments changed
 		refresh_facilities()
 
-func _show_assignment_dialog_for_creature(facility_id: String, creature_id: String) -> void:
-	"""Show the assignment dialog with a pre-selected creature"""
-	if not facility_system:
+
+# Food selection handlers
+var _current_food_selection_facility: String = ""
+
+func _on_food_selection_requested(facility_id: String) -> void:
+	"""Handle request to open food selection popup"""
+	if not food_selection_popup or not facility_system:
 		return
 
-	# Get the facility resource
-	var facility_resource = facility_system.get_facility(facility_id)
+	_current_food_selection_facility = facility_id
+
+	# Get current assignment to show current food selection
+	var assignment = facility_system.get_assignment(facility_id)
+	var current_food_type = assignment.food_type if assignment else -1
+
+	# Show the popup
+	food_selection_popup.show_popup(facility_id, current_food_type)
+
+func _on_food_selected(food_type: int) -> void:
+	"""Handle food selection from popup"""
+	if _current_food_selection_facility.is_empty() or not facility_system:
+		return
+
+	# Update the facility card's selected food
+	var card = _get_facility_card(_current_food_selection_facility)
+	if card:
+		card.set_selected_food_type(food_type)
+
+	# Get the current assignment
+	var assignment = facility_system.get_assignment(_current_food_selection_facility)
+	if assignment:
+		# Update the assignment's food type
+		assignment.food_type = food_type
+		# Save the assignment
+		facility_system.set_assignment(assignment)
+		# Update the facility card display
+		_update_facility_card(_current_food_selection_facility)
+		# Emit signal for other systems
+		if signal_bus and signal_bus.has_signal("facility_food_changed"):
+			signal_bus.facility_food_changed.emit(_current_food_selection_facility, food_type)
+		_show_notification("Food selection updated")
+	else:
+		# No assignment yet, just store selection on card for later drag-drop
+		_show_notification("Food selection ready for next creature assignment")
+
+func _on_food_popup_closed() -> void:
+	"""Handle food popup being closed"""
+	_current_food_selection_facility = ""
+
+# Activity selection handlers
+var _current_activity_selection_facility: String = ""
+
+func _on_activity_selection_requested(facility_id: String) -> void:
+	"""Handle request to open activity selection popup"""
+	if not activity_selection_popup or not facility_system:
+		return
+
+	_current_activity_selection_facility = facility_id
+
+	# Get facility resource and current assignment to show current activity selection
+	var facility_resource = facility_system.get_facility_resource(facility_id)
 	if not facility_resource:
 		_show_notification("Facility not found")
 		return
 
-	# Load and instantiate the dialog
-	var dialog_scene = preload("res://scenes/ui/facility_assignment_dialog.tscn")
-	var dialog = dialog_scene.instantiate()
+	var assignment = facility_system.get_assignment(facility_id)
+	var current_activity = assignment.selected_activity if assignment else -1
 
-	# Add to scene tree
-	get_tree().root.add_child(dialog)
+	# Show the popup
+	activity_selection_popup.show_popup(facility_id, facility_resource, current_activity)
 
-	# Setup the dialog with facility data
-	dialog.setup(facility_resource)
+func _on_activity_selected(activity: int) -> void:
+	"""Handle activity selection from popup"""
+	if _current_activity_selection_facility.is_empty() or not facility_system:
+		return
 
-	# Pre-select the creature if the dialog supports it
-	if dialog.has_method("set_selected_creature"):
-		dialog.set_selected_creature(creature_id)
+	# Update the facility card's selected activity
+	var card = _get_facility_card(_current_activity_selection_facility)
+	if card:
+		card.set_selected_activity(activity)
 
-	# Connect to assignment confirmation
-	dialog.assignment_confirmed.connect(_on_assignment_confirmed)
+	# Get the current assignment
+	var assignment = facility_system.get_assignment(_current_activity_selection_facility)
+	if assignment:
+		# Update the assignment's selected activity
+		assignment.selected_activity = activity
+		# Update the facility card display
+		_update_facility_card(_current_activity_selection_facility)
+		# Emit signal for any other systems that need to know
+		if signal_bus and signal_bus.has_signal("facility_activity_changed"):
+			signal_bus.facility_activity_changed.emit(_current_activity_selection_facility, activity)
+		_show_notification("Activity selection updated")
+	else:
+		# No assignment yet, just store selection on card for later drag-drop
+		_show_notification("Activity selection ready for next creature assignment")
 
-	# Show the dialog
-	dialog.popup_centered()
+func _on_activity_popup_closed() -> void:
+	"""Handle activity popup being closed"""
+	_current_activity_selection_facility = ""
+
+func _update_facility_card(facility_id: String) -> void:
+	"""Update a specific facility card display"""
+	var card = _get_facility_card(facility_id)
+	if card:
+		var assignment = facility_system.get_assignment(facility_id)
+		if assignment:
+			card.set_assignment(assignment)
+			card.update_display()
+
+func _get_facility_card(facility_id: String) -> Control:
+	"""Get facility card by facility ID"""
+	for card in facility_cards:
+		if card.get_facility_id() == facility_id:
+			return card
+	return null

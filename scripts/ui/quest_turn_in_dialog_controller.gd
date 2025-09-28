@@ -94,7 +94,7 @@ func _display_objectives() -> void:
 	for i in range(current_objectives.size()):
 		var objective: QuestObjective = current_objectives[i]
 		var obj_container: VBoxContainer = VBoxContainer.new()
-		obj_container.add_theme_constant_override("separation", 3)
+		obj_container.set("theme_override_constants/separation", 3)  # Will use theme if available
 
 		# Objective description
 		var desc_label: Label = Label.new()
@@ -107,7 +107,7 @@ func _display_objectives() -> void:
 			var tags_label: Label = Label.new()
 			tags_label.text = "  Tags: " + ", ".join(objective.required_tags)
 			tags_label.modulate = Color(0.8, 0.8, 1.0)
-			tags_label.add_theme_font_size_override("font_size", 12)
+			# Using default theme font size
 			obj_container.add_child(tags_label)
 
 		# Required stats
@@ -118,7 +118,7 @@ func _display_objectives() -> void:
 				stat_strings.append("%s ≥ %d" % [stat_name.capitalize(), objective.required_stats[stat_name]])
 			stats_label.text = "  Stats: " + ", ".join(stat_strings)
 			stats_label.modulate = Color(1.0, 0.8, 0.8)
-			stats_label.add_theme_font_size_override("font_size", 12)
+			# Using default theme font size
 			obj_container.add_child(stats_label)
 
 		# Quantity
@@ -126,7 +126,7 @@ func _display_objectives() -> void:
 			var quantity_label: Label = Label.new()
 			quantity_label.text = "  Required: %d creatures" % objective.quantity
 			quantity_label.modulate = Color(0.8, 1.0, 0.8)
-			quantity_label.add_theme_font_size_override("font_size", 12)
+			# Using default theme font size
 			obj_container.add_child(quantity_label)
 
 		objectives_list.add_child(obj_container)

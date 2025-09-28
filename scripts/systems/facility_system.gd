@@ -136,8 +136,8 @@ func assign_creature(facility_id: String, creature_id: String, activity: int, fo
 		push_error("FacilitySystem: Facility not unlocked: %s" % facility_id)
 		return false
 
-	# Validate activity is supported
-	if not facility.supports_activity(activity):
+	# Validate activity is supported (allow -1 for unset activity)
+	if activity >= 0 and not facility.supports_activity(activity):
 		push_error("FacilitySystem: Facility %s does not support activity %d" % [facility_id, activity])
 		return false
 
@@ -206,6 +206,23 @@ func remove_creature(facility_id: String) -> bool:
 func get_assignment(facility_id: String) -> FacilityAssignmentData:
 	"""Get assignment data for a facility."""
 	return facility_assignments.get(facility_id, null)
+
+func set_assignment(assignment: FacilityAssignmentData) -> bool:
+	"""Update an existing assignment."""
+	if not assignment or not assignment.is_valid():
+		push_error("FacilitySystem: Invalid assignment data")
+		return false
+
+	if not facility_assignments.has(assignment.facility_id):
+		push_error("FacilitySystem: No existing assignment for facility %s" % assignment.facility_id)
+		return false
+
+	facility_assignments[assignment.facility_id] = assignment
+	return true
+
+func get_facility_resource(facility_id: String) -> FacilityResource:
+	"""Get facility resource by ID (alias for get_facility)."""
+	return get_facility(facility_id)
 
 func get_creature_facility(creature_id: String) -> String:
 	"""Get facility ID where creature is assigned, or empty string if none."""

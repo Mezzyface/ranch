@@ -14,5 +14,5 @@ stamina_restore = 50
 healing_amount = 100
 description = "Rare elixir that restores vitality and can slow the effects of aging. The most precious consumable known."
 flavor_text = "A mysterious elixir that glows with life-giving energy, said to turn back time itself."
-icon_path = "res://assets/sprites/items/all-svgs_milk-carton.svg"
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_big_health_potion_148.png"
 drop_sources = Array[String](["legendary_quest", "rare_event"])

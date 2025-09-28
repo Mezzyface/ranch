@@ -1,0 +1,166 @@
+[gd_scene load_steps=5 format=3 uid="uid://ch2xurqeo7j6g"]
+
+[ext_resource type="Script" uid="uid://bo5hrcoc0hg3m" path="res://scripts/ui/food_selection_popup_controller.gd" id="1_iey3k"]
+[ext_resource type="FontFile" uid="uid://dvfstigyyhaao" path="res://assets/honeyblot_caps.ttf" id="2_lkrjr"]
+[ext_resource type="Texture2D" uid="uid://c40qqu4j8ei5a" path="res://assets/sprites/items/food/rpg_item_icon_apple_44.png" id="3_lkrjr"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_ffik7"]
+font = ExtResource("2_lkrjr")
+font_size = 24
+
+[node name="FoodSelectionPopup" type="Control"]
+z_index = 1000
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+script = ExtResource("1_iey3k")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+color = Color(0, 0, 0, 0.5)
+
+[node name="PopupPanel" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_type_variation = &"DefaultPanelContainer"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PopupPanel"]
+layout_mode = 2
+
+[node name="HeaderContainer" type="HBoxContainer" parent="PopupPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="PopupPanel/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_fonts/font = ExtResource("2_lkrjr")
+theme_override_font_sizes/font_size = 36
+text = "Title Text"
+horizontal_alignment = 1
+
+[node name="CloseButton" type="Button" parent="PopupPanel/VBoxContainer/HeaderContainer"]
+custom_minimum_size = Vector2(30, 30)
+layout_mode = 2
+theme_type_variation = &"XButton"
+
+[node name="Label" type="Label" parent="PopupPanel/VBoxContainer/HeaderContainer/CloseButton"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -7.5
+offset_right = 20.0
+offset_bottom = 7.5
+grow_horizontal = 2
+grow_vertical = 2
+text = "X"
+label_settings = SubResource("LabelSettings_ffik7")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="PopupPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="PopupPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="FoodGrid" type="GridContainer" parent="PopupPanel/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+columns = 4
+
+[node name="GridItem" type="MarginContainer" parent="PopupPanel/VBoxContainer/ScrollContainer/FoodGrid"]
+layout_mode = 2
+theme_override_constants/margin_left = 6
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 6
+theme_override_constants/margin_bottom = 6
+
+[node name="MarginContainer" type="Panel" parent="PopupPanel/VBoxContainer/ScrollContainer/FoodGrid/GridItem"]
+visible = false
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+theme_type_variation = &"InventorySlot"
+
+[node name="ItemButton" type="TextureButton" parent="PopupPanel/VBoxContainer/ScrollContainer/FoodGrid/GridItem/MarginContainer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -20.0
+offset_top = -22.0
+offset_right = 20.0
+offset_bottom = 18.0
+grow_horizontal = 2
+grow_vertical = 2
+texture_normal = ExtResource("3_lkrjr")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="MarginContainer2" type="MarginContainer" parent="PopupPanel/VBoxContainer/ScrollContainer/FoodGrid/GridItem"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+theme_override_constants/margin_left = 4
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 4
+theme_override_constants/margin_bottom = 2
+
+[node name="Button" type="Button" parent="PopupPanel/VBoxContainer/ScrollContainer/FoodGrid/GridItem/MarginContainer2"]
+layout_mode = 2
+theme_type_variation = &"GridSlotToggle"
+toggle_mode = true
+
+[node name="TextureRect" type="TextureRect" parent="PopupPanel/VBoxContainer/ScrollContainer/FoodGrid/GridItem/MarginContainer2/Button"]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_lkrjr")
+expand_mode = 1
+
+[node name="HSeparator2" type="HSeparator" parent="PopupPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonContainer" type="HBoxContainer" parent="PopupPanel/VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="CancelButton" type="Button" parent="PopupPanel/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Cancel"
+
+[node name="ConfirmButton" type="Button" parent="PopupPanel/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Confirm"

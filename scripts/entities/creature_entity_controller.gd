@@ -32,6 +32,13 @@ var signal_bus: Node
 var facility_system: Node
 var collection_system: Node
 
+# Detail popup management
+var detail_popup_scene: PackedScene = preload("res://scenes/ui/components/creature_detail_card.tscn")
+var current_detail_popup: Control = null
+var click_start_position: Vector2
+var click_threshold: float = 5.0  # Pixels of movement before it's considered a drag
+var is_click_valid: bool = false
+
 func _ready() -> void:
 	_initialize_systems()
 	_setup_signals()
@@ -75,6 +82,13 @@ func _setup_signals() -> void:
 
 	if signal_bus.has_signal("facility_assignment_removed"):
 		signal_bus.facility_assignment_removed.connect(_on_facility_assignment_removed)
+
+	# Connect to detail popup signals for global coordination
+	if signal_bus.has_signal("detail_popup_requested"):
+		signal_bus.detail_popup_requested.connect(_on_detail_popup_requested)
+
+	if signal_bus.has_signal("detail_popup_closed"):
+		signal_bus.detail_popup_closed.connect(_on_detail_popup_closed)
 
 func _setup_control() -> void:
 	# Set minimum size to accommodate sprite
@@ -172,21 +186,37 @@ func _gui_input(event: InputEvent) -> void:
 		var mouse_event = event as InputEventMouseButton
 		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
 			if mouse_event.pressed:
-				# Start drag - check if we're not already assigned
-				if current_state != State.ASSIGNED:
-					_start_drag()
-					get_viewport().set_input_as_handled()
+				# Record click start position for click vs drag detection
+				click_start_position = event.global_position
+				is_click_valid = true
+
+				# Don't start drag immediately - wait to see if it's a click or drag
+				get_viewport().set_input_as_handled()
 			else:
-				# End drag
+				# Mouse button released
 				if is_dragging:
 					_end_drag()
-					get_viewport().set_input_as_handled()
+				elif is_click_valid:
+					# This was a click, not a drag
+					_handle_click()
 
-	elif event is InputEventMouseMotion and is_dragging:
-		global_position = event.global_position + drag_offset
-		# Clamp to bounds if needed
-		if area_bounds.size != Vector2.ZERO:
-			global_position = _clamp_to_bounds(global_position)
+				is_click_valid = false
+				get_viewport().set_input_as_handled()
+
+	elif event is InputEventMouseMotion:
+		if is_click_valid and not is_dragging:
+			# Check if we've moved enough to start a drag
+			var movement_distance = event.global_position.distance_to(click_start_position)
+			if movement_distance > click_threshold and current_state != State.ASSIGNED:
+				# Start dragging
+				is_click_valid = false
+				_start_drag()
+
+		if is_dragging:
+			global_position = event.global_position + drag_offset
+			# Clamp to bounds if needed
+			if area_bounds.size != Vector2.ZERO:
+				global_position = _clamp_to_bounds(global_position)
 
 func _start_drag() -> void:
 	"""Start the drag operation"""
@@ -206,6 +236,149 @@ func _end_drag() -> void:
 	# Restore visual state
 	if sprite:
 		sprite.modulate = Color.WHITE
+
+func _handle_click() -> void:
+	"""Handle creature click to show detail popup"""
+	if not creature_data:
+		return
+
+	# Signal that we want to show a detail popup (this will close any existing ones)
+	if signal_bus:
+		signal_bus.emit_detail_popup_requested(creature_data.id)
+
+func _show_detail_popup() -> void:
+	"""Create and display the creature detail popup"""
+	if not detail_popup_scene:
+		push_error("CreatureEntityController: Detail popup scene not found")
+		return
+
+	# Instantiate the popup
+	current_detail_popup = detail_popup_scene.instantiate()
+	if not current_detail_popup:
+		push_error("CreatureEntityController: Failed to instantiate detail popup")
+		return
+
+	# Get the popup controller and populate with creature data
+	if current_detail_popup.has_method("populate"):
+		current_detail_popup.populate(creature_data)
+	else:
+		push_error("CreatureEntityController: Detail popup missing populate method")
+		current_detail_popup.queue_free()
+		current_detail_popup = null
+		return
+
+	# Position the popup (center of screen)
+	_position_popup()
+
+	# Add popup to scene tree with high z-index
+	var main_scene = get_tree().current_scene
+	if main_scene:
+		main_scene.add_child(current_detail_popup)
+		# Set z-index to appear above other UI
+		current_detail_popup.z_index = 100
+
+		# Connect close signal if the popup has one
+		if current_detail_popup.has_signal("popup_closed"):
+			current_detail_popup.popup_closed.connect(_on_popup_closed)
+
+		# Add background dimming/click to close
+		_setup_popup_background_close()
+	else:
+		push_error("CreatureEntityController: Could not find main scene")
+		current_detail_popup.queue_free()
+		current_detail_popup = null
+
+func _position_popup() -> void:
+	"""Position the popup in the center of the screen"""
+	if not current_detail_popup:
+		return
+
+	var viewport = get_viewport()
+	if not viewport:
+		return
+
+	var screen_size = viewport.get_visible_rect().size
+	var popup_size = current_detail_popup.size
+
+	# If popup size is not set yet, use a default
+	if popup_size == Vector2.ZERO:
+		popup_size = Vector2(300, 400)  # Default size based on the scene structure
+
+	# Center the popup
+	var center_position = (screen_size - popup_size) / 2
+	current_detail_popup.position = center_position
+
+func _setup_popup_background_close() -> void:
+	"""Add a background panel that closes the popup when clicked"""
+	if not current_detail_popup:
+		return
+
+	# Create a transparent background that captures clicks
+	var background = Control.new()
+	background.name = "PopupBackground"
+	background.mouse_filter = Control.MOUSE_FILTER_PASS
+	background.anchors_preset = Control.PRESET_FULL_RECT
+	background.z_index = 99  # Just below the popup
+
+	# Add to main scene first, then move popup to be its sibling
+	var main_scene = get_tree().current_scene
+	if main_scene:
+		main_scene.add_child(background)
+
+		# Connect background click to close popup
+		background.gui_input.connect(_on_background_clicked)
+
+func _on_background_clicked(event: InputEvent) -> void:
+	"""Close popup when background is clicked"""
+	if event is InputEventMouseButton:
+		var mouse_event = event as InputEventMouseButton
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			_close_current_popup()
+
+func _close_current_popup() -> void:
+	"""Close the current detail popup if it exists"""
+	if current_detail_popup:
+		# Remove background if it exists
+		var main_scene = get_tree().current_scene
+		if main_scene:
+			var background = main_scene.find_child("PopupBackground")
+			if background:
+				background.queue_free()
+
+		current_detail_popup.queue_free()
+		current_detail_popup = null
+
+		# Signal that the popup was closed
+		if signal_bus:
+			signal_bus.emit_detail_popup_closed()
+
+func _on_popup_closed() -> void:
+	"""Handle popup closed signal"""
+	_close_current_popup()
+
+func _on_detail_popup_requested(requested_creature_id: String) -> void:
+	"""Handle detail popup request from any creature entity"""
+	if not creature_data:
+		return
+
+	# If the request is for this creature, show our popup
+	if requested_creature_id == creature_data.id:
+		# Close any existing popup first
+		_close_current_popup()
+		# Show our popup
+		_show_detail_popup()
+		# Signal that we opened the popup
+		if signal_bus:
+			signal_bus.emit_detail_popup_opened(creature_data.id)
+	else:
+		# Close our popup if it's open (another creature is requesting to show theirs)
+		if current_detail_popup:
+			_close_current_popup()
+
+func _on_detail_popup_closed() -> void:
+	"""Handle global popup closed signal"""
+	# Don't need to do anything specific here as this signal is emitted by us
+	pass
 
 func _play_safe_animation(anim_name: String) -> void:
 	"""Play an animation, falling back to alternatives if it doesn't exist"""

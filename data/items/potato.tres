@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://c7y8m5n3k2bvq"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_potato"]
+
+[resource]
+script = ExtResource("1_potato")
+item_id = "potato"
+display_name = "Potato"
+item_type = 0
+base_price = 20
+sell_value = 10
+stack_size = 12
+stamina_restore = 7
+description = "A hearty potato that provides substantial nutrition. Filling and satisfying for most creatures."
+flavor_text = "A perfectly round potato with a fluffy interior when cooked."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_potato_49.png"
+drop_sources = Array[String](["shop", "basic_quest"])

@@ -137,6 +137,11 @@ signal window_closed(window_name: String)
 signal transition_started()
 signal transition_completed()
 
+# Detail popup management signals
+signal detail_popup_requested(creature_id: String)
+signal detail_popup_opened(creature_id: String)
+signal detail_popup_closed()
+
 # === SIGNAL MANAGEMENT ===
 # Connection tracking for debugging and cleanup
 var _signal_connections: Dictionary = {}
@@ -862,6 +867,30 @@ func emit_transition_completed() -> void:
 	if _debug_mode:
 		print("SignalBus: Emitting transition_completed")
 	transition_completed.emit()
+
+func emit_detail_popup_requested(creature_id: String) -> void:
+	"""Emit detail_popup_requested signal with validation."""
+	if creature_id.is_empty():
+		push_error("SignalBus: Cannot emit detail_popup_requested with empty creature_id")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting detail_popup_requested: %s" % creature_id)
+	detail_popup_requested.emit(creature_id)
+
+func emit_detail_popup_opened(creature_id: String) -> void:
+	"""Emit detail_popup_opened signal with validation."""
+	if creature_id.is_empty():
+		push_error("SignalBus: Cannot emit detail_popup_opened with empty creature_id")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting detail_popup_opened: %s" % creature_id)
+	detail_popup_opened.emit(creature_id)
+
+func emit_detail_popup_closed() -> void:
+	"""Emit detail_popup_closed signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting detail_popup_closed")
+	detail_popup_closed.emit()
 
 # === QUEST SIGNAL EMISSION ===
 func emit_quest_started(quest_id: String) -> void:

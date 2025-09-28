@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://gpjdxqnjt0gq"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_meat"]
+
+[resource]
+script = ExtResource("1_meat")
+item_id = "meat"
+display_name = "Leg of Meat"
+item_type = 0
+base_price = 60
+sell_value = 30
+stack_size = 5
+stamina_restore = 15
+description = "A hearty leg of meat perfect for carnivorous creatures. Rich in protein and very filling."
+flavor_text = "A juicy piece of meat that satisfies even the hungriest predators."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_leg_of_meat_73.png"
+drop_sources = Array[String](["shop", "hunting_quest"])

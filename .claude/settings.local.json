@@ -183,7 +183,13 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_creature_entity.tscn --quit-after 12)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script test_facility_drop.gd)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_drop.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/test_creature_entity.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/test_creature_entity.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_food_selection.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_food_selection_integration.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_activity_button.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script test_drag_drop_assignment.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_drag_drop_assignment.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_drag_drop_integration.tscn)"
     ],
     "deny": [],
     "ask": []

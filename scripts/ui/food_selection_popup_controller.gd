@@ -139,7 +139,7 @@ func _create_food_button(item_resource: ItemResource, quantity: int, food_type: 
 	var quantity_label = Label.new()
 	quantity_label.text = "(%d available)" % quantity
 	quantity_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	quantity_label.add_theme_font_size_override("font_size", 12)
+	# Using default theme font size
 	vbox.add_child(quantity_label)
 
 	# Set initial state

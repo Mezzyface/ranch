@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://da3dxynu20t68"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_wheat"]
+
+[resource]
+script = ExtResource("1_wheat")
+item_id = "wheat"
+display_name = "Wheat Grain"
+item_type = 0
+base_price = 18
+sell_value = 9
+stack_size = 25
+stamina_restore = 3
+description = "Raw wheat grains that can be used to make various foods. A basic ingredient."
+flavor_text = "Golden wheat grains ready for processing into meals."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_wheat_51.png"
+drop_sources = Array[String](["shop", "farming_quest"])

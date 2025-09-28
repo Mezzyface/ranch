@@ -131,7 +131,7 @@ func populate_creatures() -> void:
 		var no_creatures_label = Label.new()
 		no_creatures_label.text = "No available creatures for assignment"
 		no_creatures_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		no_creatures_label.add_theme_color_override("font_color", Color(0.7, 0.7, 0.7))
+		# Using default theme color
 		creature_list.add_child(no_creatures_label)
 
 func _is_creature_assigned_to_facility(creature_id: String) -> bool:

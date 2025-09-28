@@ -1,9 +1,15 @@
-[gd_scene load_steps=5 format=3 uid="uid://bqf7x8e2m4oap"]
+[gd_scene load_steps=7 format=3 uid="uid://bqf7x8e2m4oap"]
 
 [ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
 [ext_resource type="Script" uid="uid://b84gyi0x8hgqp" path="res://scripts/ui/facility_card.gd" id="2_script"]
 [ext_resource type="Texture2D" uid="uid://bajj46ftm04ng" path="res://assets/sprites/enviornment/House.png" id="3_oq6nk"]
-[ext_resource type="Texture2D" uid="uid://c40qqu4j8ei5a" path="res://assets/sprites/items/rpg_item_icon_apple_44.png" id="4_l7pcp"]
+[ext_resource type="Texture2D" uid="uid://c40qqu4j8ei5a" path="res://assets/sprites/items/food/rpg_item_icon_apple_44.png" id="4_l7pcp"]
+[ext_resource type="FontFile" uid="uid://dvfstigyyhaao" path="res://assets/honeyblot_caps.ttf" id="5_l7pcp"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_6bmvd"]
+font = ExtResource("5_l7pcp")
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+shadow_size = 0
 
 [node name="FacilityCard" type="Control"]
 custom_minimum_size = Vector2(200, 250)
@@ -49,15 +55,6 @@ size_flags_vertical = 3
 size_flags_stretch_ratio = 0.5
 alignment = 1
 
-[node name="ActivityIcon" type="TextureRect" parent="Background/VBoxContainer/HBoxContainer"]
-visible = false
-custom_minimum_size = Vector2(50, 50)
-layout_mode = 2
-size_flags_horizontal = 3
-texture = ExtResource("4_l7pcp")
-expand_mode = 1
-stretch_mode = 5
-
 [node name="Food" type="Button" parent="Background/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
@@ -81,25 +78,16 @@ expand_mode = 1
 [node name="VSeparator" type="VSeparator" parent="Background/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 
-[node name="Activity" type="Button" parent="Background/VBoxContainer/HBoxContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="Background/VBoxContainer/HBoxContainer"]
 layout_mode = 2
 size_flags_horizontal = 3
-theme_type_variation = &"FlatButton"
 
-[node name="MarginContainer" type="MarginContainer" parent="Background/VBoxContainer/HBoxContainer/Activity"]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -20.0
-offset_right = 20.0
-offset_bottom = 40.0
-grow_horizontal = 2
-
-[node name="TextureRect" type="TextureRect" parent="Background/VBoxContainer/HBoxContainer/Activity/MarginContainer"]
+[node name="StatChanges" type="Label" parent="Background/VBoxContainer/HBoxContainer/MarginContainer"]
 layout_mode = 2
-texture = ExtResource("4_l7pcp")
-expand_mode = 1
+text = "Stat +1
+Stat +2
+Stat +3"
+label_settings = SubResource("LabelSettings_6bmvd")
 
 [node name="Control" type="Control" parent="Background/VBoxContainer"]
 layout_mode = 2

@@ -1,0 +1,201 @@
+[gd_scene load_steps=6 format=3 uid="uid://bnli23ckc6spo"]
+
+[ext_resource type="FontFile" uid="uid://dvfstigyyhaao" path="res://assets/honeyblot_caps.ttf" id="1_p2r7f"]
+
+[sub_resource type="LabelSettings" id="LabelSettings_p2r7f"]
+font = ExtResource("1_p2r7f")
+font_size = 26
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_iydrf"]
+font_size = 12
+font_color = Color(0.32941177, 0.30588236, 0.40784314, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_rsw1e"]
+font_size = 14
+font_color = Color(0.1254902, 0.23529412, 0.3372549, 1)
+
+[sub_resource type="LabelSettings" id="LabelSettings_m18yg"]
+font = ExtResource("1_p2r7f")
+font_color = Color(0.050980393, 0.16862746, 0.27058825, 1)
+shadow_size = 0
+
+[node name="CreatureDetailCard" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Panel" type="Panel" parent="."]
+custom_minimum_size = Vector2(259, 300)
+layout_mode = 0
+offset_right = 200.0
+offset_bottom = 300.0
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel"]
+layout_mode = 1
+anchors_preset = 13
+anchor_left = 0.5
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -30.5
+offset_right = 30.5
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CreatureContainer" type="Control" parent="Panel/VBoxContainer"]
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+
+[node name="GridContainer" type="GridContainer" parent="Panel/VBoxContainer"]
+layout_mode = 2
+columns = 3
+
+[node name="STRENGTH" type="MarginContainer" parent="Panel/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/GridContainer/STRENGTH"]
+layout_mode = 2
+
+[node name="Number" type="Label" parent="Panel/VBoxContainer/GridContainer/STRENGTH/VBoxContainer"]
+layout_mode = 2
+text = "25"
+label_settings = SubResource("LabelSettings_p2r7f")
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/GridContainer/STRENGTH/VBoxContainer"]
+layout_mode = 2
+text = "STRENGTH"
+label_settings = SubResource("LabelSettings_iydrf")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="CONSTITUTION" type="MarginContainer" parent="Panel/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/GridContainer/CONSTITUTION"]
+layout_mode = 2
+
+[node name="Number" type="Label" parent="Panel/VBoxContainer/GridContainer/CONSTITUTION/VBoxContainer"]
+layout_mode = 2
+text = "25"
+label_settings = SubResource("LabelSettings_p2r7f")
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/GridContainer/CONSTITUTION/VBoxContainer"]
+layout_mode = 2
+text = "CONSTITUTION"
+label_settings = SubResource("LabelSettings_iydrf")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="DEXTERITY" type="MarginContainer" parent="Panel/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/GridContainer/DEXTERITY"]
+layout_mode = 2
+
+[node name="Number" type="Label" parent="Panel/VBoxContainer/GridContainer/DEXTERITY/VBoxContainer"]
+layout_mode = 2
+text = "25"
+label_settings = SubResource("LabelSettings_p2r7f")
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/GridContainer/DEXTERITY/VBoxContainer"]
+layout_mode = 2
+text = "DEXTERITY"
+label_settings = SubResource("LabelSettings_iydrf")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="INTELLIGENCE" type="MarginContainer" parent="Panel/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/GridContainer/INTELLIGENCE"]
+layout_mode = 2
+
+[node name="Number" type="Label" parent="Panel/VBoxContainer/GridContainer/INTELLIGENCE/VBoxContainer"]
+layout_mode = 2
+text = "25"
+label_settings = SubResource("LabelSettings_p2r7f")
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/GridContainer/INTELLIGENCE/VBoxContainer"]
+layout_mode = 2
+text = "INTELLIGENCE"
+label_settings = SubResource("LabelSettings_iydrf")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="DISCIPLINE" type="MarginContainer" parent="Panel/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/GridContainer/DISCIPLINE"]
+layout_mode = 2
+
+[node name="Number" type="Label" parent="Panel/VBoxContainer/GridContainer/DISCIPLINE/VBoxContainer"]
+layout_mode = 2
+text = "25"
+label_settings = SubResource("LabelSettings_p2r7f")
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/GridContainer/DISCIPLINE/VBoxContainer"]
+layout_mode = 2
+text = "DISCIPLINE"
+label_settings = SubResource("LabelSettings_iydrf")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="STAMINA" type="MarginContainer" parent="Panel/VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/VBoxContainer/GridContainer/STAMINA"]
+layout_mode = 2
+
+[node name="Number" type="Label" parent="Panel/VBoxContainer/GridContainer/STAMINA/VBoxContainer"]
+layout_mode = 2
+text = "25"
+label_settings = SubResource("LabelSettings_p2r7f")
+horizontal_alignment = 1
+
+[node name="Label" type="Label" parent="Panel/VBoxContainer/GridContainer/STAMINA/VBoxContainer"]
+layout_mode = 2
+text = "STAMINA"
+label_settings = SubResource("LabelSettings_iydrf")
+horizontal_alignment = 1
+vertical_alignment = 2
+
+[node name="HSeparator" type="HSeparator" parent="Panel/VBoxContainer"]
+layout_mode = 2
+
+[node name="Tags" type="Label" parent="Panel/VBoxContainer"]
+layout_mode = 2
+text = "[Night Sight], [Agressive]"
+label_settings = SubResource("LabelSettings_rsw1e")
+autowrap_mode = 3
+
+[node name="Panel2" type="Panel" parent="."]
+custom_minimum_size = Vector2(325, 50)
+layout_mode = 0
+offset_left = -33.0
+offset_right = 292.0
+offset_bottom = 50.0
+theme_type_variation = &"Banner"
+
+[node name="Label" type="Label" parent="Panel2"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -51.0
+offset_top = -8.0
+offset_right = 51.0
+offset_bottom = 8.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Creature Name"
+label_settings = SubResource("LabelSettings_m18yg")

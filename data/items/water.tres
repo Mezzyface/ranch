@@ -13,5 +13,5 @@ stack_size = 15
 stamina_restore = 3
 description = "Clean, refreshing water essential for all creature health. Basic hydration needs."
 flavor_text = "Crystal clear water from mountain springs."
-icon_path = "res://assets/sprites/items/all-svgs_coffee-cup.svg"
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_water_37.png"
 drop_sources = Array[String](["shop", "basic_quest"])

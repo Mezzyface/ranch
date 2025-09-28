@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://b82cw7ms1xr57"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_salad"]
+
+[resource]
+script = ExtResource("1_salad")
+item_id = "salad"
+display_name = "Fresh Salad"
+item_type = 0
+base_price = 40
+sell_value = 20
+stack_size = 6
+stamina_restore = 9
+description = "A nutritious mix of fresh greens and vegetables. Perfect for health-conscious creatures."
+flavor_text = "Crisp lettuce and vegetables tossed together in a healthy medley."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_salad_52.png"
+drop_sources = Array[String](["shop", "premium_quest"])

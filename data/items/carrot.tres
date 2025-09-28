@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://b8yan2k4l1cvp"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_mkd6g"]
+
+[resource]
+script = ExtResource("1_mkd6g")
+item_id = "carrot"
+display_name = "Carrot"
+item_type = 0
+base_price = 25
+sell_value = 12
+stack_size = 10
+stamina_restore = 6
+description = "A crunchy orange carrot packed with nutrients. Great for herbivorous creatures."
+flavor_text = "Fresh from the garden, this carrot is both sweet and nutritious."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_carrot_47.png"
+drop_sources = Array[String](["shop", "forage_quest"])

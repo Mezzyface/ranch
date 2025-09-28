@@ -1,14 +1,12 @@
 [gd_resource type="Resource" script_class="FacilityResource" load_steps=2 format=3 uid="uid://bq8nv7w2x1m4p"]
 
-[ext_resource type="Script" path="res://scripts/resources/facility_resource.gd" id="1_gym_facility"]
+[ext_resource type="Script" uid="uid://osr6gswsf2fs" path="res://scripts/resources/facility_resource.gd" id="1_gym_facility"]
 
 [resource]
 script = ExtResource("1_gym_facility")
 facility_id = "gym"
 display_name = "Training Gym"
 description = "Train strength and agility"
-icon_path = ""
-unlock_cost = 0
+icon_path = "res://assets/sprites/enviornment/House.png"
 is_unlocked = true
 supported_activities = Array[int]([0, 1])
-max_creatures = 1

@@ -1,14 +1,8 @@
 [gd_scene load_steps=3 format=3 uid="uid://bqr7k8ymhs7yt"]
 
-[ext_resource type="Script" path="res://scripts/entities/creature_entity_controller.gd" id="1_m3m8a"]
+[ext_resource type="Script" uid="uid://qa303i3ernnp" path="res://scripts/entities/creature_entity_controller.gd" id="1_m3m8a"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_1rlhv"]
-animations = [{
-"frames": [],
-"loop": true,
-"name": &"default",
-"speed": 5.0
-}]
 
 [node name="CreatureEntity" type="Control"]
 layout_mode = 3

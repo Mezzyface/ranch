@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://c1asq7esno7tp"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_rt0as"]
+
+[resource]
+script = ExtResource("1_rt0as")
+item_id = "bread"
+display_name = "Bread"
+item_type = 0
+base_price = 25
+sell_value = 12
+stack_size = 10
+stamina_restore = 5
+description = "Freshly baked bread that provides good sustenance. A staple food for many creatures."
+flavor_text = "Warm, wholesome bread with a delightful aroma."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_bread_55.png"
+drop_sources = Array[String](["shop", "basic_quest"])

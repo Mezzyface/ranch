@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://61av6mw02p56"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_garlic"]
+
+[resource]
+script = ExtResource("1_garlic")
+item_id = "garlic"
+display_name = "Garlic"
+item_type = 0
+base_price = 35
+sell_value = 17
+stack_size = 8
+stamina_restore = 4
+description = "Pungent garlic cloves with medicinal properties. Some creatures love it, others avoid it."
+flavor_text = "A strong-smelling bulb with powerful flavor and health benefits."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_garlic_53.png"
+drop_sources = Array[String](["shop", "herb_quest"])

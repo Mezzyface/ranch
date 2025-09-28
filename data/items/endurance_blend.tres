@@ -18,5 +18,5 @@ stat_boosts = {
 stat_boost_duration_hours = 24
 description = "Specialized nutritional blend that improves stamina and physical resilience."
 flavor_text = "A hearty mixture that builds endurance and helps creatures push their limits."
-icon_path = "res://assets/sprites/items/all-svgs_soda-can.svg"
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_small_health_potion_145.png"
 drop_sources = Array[String](["shop", "training_quest"])

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://bxxn7j241gcvl"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_dkr2t"]
+
+[resource]
+script = ExtResource("1_dkr2t")
+item_id = "apple"
+display_name = "Apple"
+item_type = 0
+base_price = 30
+sell_value = 15
+stack_size = 8
+stamina_restore = 8
+description = "A crisp, fresh apple that provides good nutrition. Loved by most creatures."
+flavor_text = "A perfectly ripe apple with a satisfying crunch."
+icon_path = "res://assets/sprites/items/food/rpg_item_icon_apple_44.png"
+drop_sources = Array[String](["shop", "forage_quest"])
