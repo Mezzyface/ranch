@@ -9,6 +9,7 @@ extends Control
 signal assign_pressed(facility_id: String)
 signal remove_pressed(facility_id: String)
 signal unlock_pressed(facility_id: String)
+signal food_selection_requested(facility_id: String)
 
 @onready var background: PanelContainer = $Background
 @onready var facility_icon: TextureRect = $Background/VBoxContainer/FacilityIcon
@@ -47,6 +48,9 @@ func _setup_signals() -> void:
 
 	if unlock_button:
 		unlock_button.pressed.connect(_on_unlock_button_pressed)
+
+	if food_button:
+		food_button.pressed.connect(_on_food_button_pressed)
 
 func set_facility(facility: FacilityResource) -> void:
 	facility_resource = facility
@@ -135,22 +139,18 @@ func _update_assignment_info() -> void:
 			# Reset activity button
 			pass
 
-	# Update food info
+	# Update food info - always show food icon regardless of assignment status
 	if food_button:
-		if is_assigned:
-			_update_food_display()
-		else:
-			# Reset food button
-			pass
+		_update_food_display()
 
 func _update_food_display() -> void:
-	if not current_assignment:
-		return
+	# Check if food is available for assigned facilities
+	if current_assignment:
+		_missing_food = not _has_required_food()
+	else:
+		_missing_food = false
 
-	# Check if food is available
-	_missing_food = not _has_required_food()
-
-	# Update food button icon if needed
+	# Always update food button icon
 	if food_button:
 		_load_food_icon()
 
@@ -225,20 +225,31 @@ func _load_activity_icon() -> void:
 	activity_icon.texture = texture
 
 func _load_food_icon() -> void:
-	if not food_button or not current_assignment:
+	if not food_button:
 		return
 
 	var item_manager = GameCore.get_system("item_manager")
 	if not item_manager:
+		_set_fallback_food_icon()
 		return
 
-	# Get food item based on food type
-	var food_item_id = _get_food_item_id(current_assignment.food_type)
+	# Get food item based on assignment or show default
+	var food_item_id: String
+	if current_assignment:
+		food_item_id = _get_food_item_id(current_assignment.food_type)
+	else:
+		# Show default food icon when no assignment
+		var default_foods = item_manager.get_items_by_type_enum(GlobalEnums.ItemType.FOOD)
+		if default_foods.size() > 0:
+			food_item_id = default_foods[0].item_id
+
 	if food_item_id.is_empty():
+		_set_fallback_food_icon()
 		return
 
 	var item_resource = item_manager.get_item_resource(food_item_id)
 	if not item_resource:
+		_set_fallback_food_icon()
 		return
 
 	var icon_path = item_resource.icon_path
@@ -249,6 +260,10 @@ func _load_food_icon() -> void:
 			var texture_rect = food_button.get_node_or_null("MarginContainer/TextureRect")
 			if texture_rect:
 				texture_rect.texture = texture
+		else:
+			_set_fallback_food_icon()
+	else:
+		_set_fallback_food_icon()
 
 func _set_fallback_facility_icon() -> void:
 	if not facility_icon:
@@ -371,6 +386,21 @@ func _on_unlock_button_pressed() -> void:
 	if facility_resource:
 		unlock_pressed.emit(facility_resource.facility_id)
 
+func _on_food_button_pressed() -> void:
+	"""Handle food button press - open food selection popup"""
+	if not facility_resource:
+		return
+
+	# Only allow food selection for unlocked facilities
+	var is_unlocked: bool
+	if _has_unlock_override:
+		is_unlocked = _override_unlock_status
+	else:
+		is_unlocked = facility_resource.is_unlocked
+
+	if is_unlocked:
+		food_selection_requested.emit(facility_resource.facility_id)
+
 func get_facility_id() -> String:
 	return facility_resource.facility_id if facility_resource else ""
 
@@ -473,3 +503,11 @@ func get_dropped_creature_id() -> String:
 		remove_meta("dropped_creature_id")
 		return id
 	return ""
+
+func update_food_selection(food_type: int) -> void:
+	"""Update the food selection for this facility"""
+	if not current_assignment:
+		return
+
+	current_assignment.food_type = food_type
+	_update_food_display()

@@ -13,6 +13,7 @@ extends Control
 @onready var notification_label: Label = $NotificationPanel/VBoxContainer/NotificationLabel
 @onready var creature_area: Control = $MarginContainer/VBoxContainer/CreaturePanel/VBoxContainer/CreatureArea
 @onready var next_week_button: Button = $NextWeekButtonOverlay/NextWeekButton
+@onready var food_selection_popup: Control = $FoodSelectionPopup
 
 var facility_system: Node
 var resource_tracker: Node
