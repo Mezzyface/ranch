@@ -1,12 +1,13 @@
 [gd_scene load_steps=3 format=3 uid="uid://bqf7x8e2m4oap"]
 
 [ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
-[ext_resource type="Script" path="res://scripts/ui/facility_card.gd" id="2_script"]
+[ext_resource type="Script" uid="uid://b84gyi0x8hgqp" path="res://scripts/ui/facility_card.gd" id="2_script"]
 
 [node name="FacilityCard" type="Control"]
 custom_minimum_size = Vector2(200, 250)
 layout_mode = 3
 anchors_preset = 0
+mouse_filter = 1
 theme = ExtResource("1_theme")
 script = ExtResource("2_script")
 
@@ -17,6 +18,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 
 [node name="VBoxContainer" type="VBoxContainer" parent="Background"]
 layout_mode = 2
@@ -110,12 +112,8 @@ text = "Assign"
 
 [node name="LockOverlay" type="ColorRect" parent="Background"]
 visible = false
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
+layout_mode = 2
+mouse_filter = 1
 color = Color(0, 0, 0, 0.7)
 
 [node name="LockContainer" type="VBoxContainer" parent="Background/LockOverlay"]
@@ -146,14 +144,6 @@ horizontal_alignment = 1
 layout_mode = 2
 text = "Unlock"
 
-[node name="HoverArea" type="Button" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-flat = true
 
 [node name="NoFoodWarning" type="ColorRect" parent="."]
 visible = false
@@ -167,5 +157,5 @@ offset_right = -2.0
 offset_bottom = -2.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(1, 0, 0, 0)
 mouse_filter = 2
+color = Color(1, 0, 0, 0)

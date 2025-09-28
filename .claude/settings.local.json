@@ -112,7 +112,18 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_card_debug.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_overlay_facility_debug.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_unlock_button.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_unlock_flow.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_unlock_flow.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_assignment_dialog.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_assignment_flow.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script test_facility_card_hover.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_card_hover.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_card_buttons.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script test_assignment_dialog.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_starting_setup.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_dynamic_food_system.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_filtered_food_system.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_removal.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_card_updates.tscn)"
     ],
     "deny": [],
     "ask": []

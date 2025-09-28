@@ -113,6 +113,7 @@ signal training_food_consumed(creature_id: String, food_name: String, expires_we
 signal facility_unlocked(facility_id: String)
 signal creature_assigned_to_facility(creature_id: String, facility_id: String, activity: int, food_type: int)
 signal facility_assignment_removed(facility_id: String, creature_id: String)
+signal facility_assignment_requested(facility_id: String)
 
 # === GAME STATE SIGNALS ===
 # GameController state signals (migrated from GameController)

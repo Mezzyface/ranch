@@ -1,7 +1,7 @@
 [gd_scene load_steps=3 format=3 uid="uid://bx7k8l2v6gaj1"]
 
 [ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
-[ext_resource type="Script" path="res://scripts/ui/facility_view_controller.gd" id="2_script"]
+[ext_resource type="Script" uid="uid://bw67b6coboq7u" path="res://scripts/ui/facility_view_controller.gd" id="2_script"]
 
 [node name="FacilityView" type="Control"]
 layout_mode = 3
@@ -10,6 +10,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 theme = ExtResource("1_theme")
 script = ExtResource("2_script")
 
@@ -42,8 +43,8 @@ layout_mode = 2
 
 [node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer/Header"]
 layout_mode = 2
-text = "Training Facilities"
 theme_override_font_sizes/font_size = 32
+text = "Training Facilities"
 horizontal_alignment = 1
 
 [node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/Header"]
@@ -62,8 +63,8 @@ text = "⚠️"
 
 [node name="WarningLabel" type="Label" parent="MarginContainer/VBoxContainer/Header/StatusBar/WarningContainer"]
 layout_mode = 2
-text = "Some facilities are missing food and cannot advance to next week"
 theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
+text = "Some facilities are missing food and cannot advance to next week"
 
 [node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/Header/StatusBar"]
 layout_mode = 2
@@ -72,8 +73,8 @@ size_flags_horizontal = 3
 [node name="ProcessingLabel" type="Label" parent="MarginContainer/VBoxContainer/Header/StatusBar"]
 visible = false
 layout_mode = 2
-text = "Processing week advance..."
 theme_override_colors/font_color = Color(0.6, 0.8, 1, 1)
+text = "Processing week advance..."
 
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2

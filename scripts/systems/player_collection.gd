@@ -51,6 +51,9 @@ func _ready() -> void:
 
 	print("PlayerCollection initialized with active/stable roster management")
 
+	# Initialize starting creature if collection is empty (new game)
+	call_deferred("_initialize_starting_creature")
+
 # === QUIET MODE CONTROL ===
 func set_quiet_mode(enabled: bool) -> void:
 	"""Enable or disable quiet mode to reduce logging during bulk operations."""
@@ -544,6 +547,28 @@ func _on_creature_created(creature_data: CreatureData) -> void:
 	# Currently just logs the event
 	if creature_data != null:
 		print("PlayerCollection: Detected creature creation: '%s'" % creature_data.creature_name)
+
+# === STARTING GAME INITIALIZATION ===
+func _initialize_starting_creature() -> void:
+	"""Initialize starting creature for new players."""
+	# Only initialize if collection is completely empty (indicating a new game)
+	if active_roster.is_empty() and stable_collection.is_empty():
+		print("PlayerCollection: Initializing starting creature for new game")
+
+		# Generate a proper starting creature using CreatureGenerator
+		var starter_entity = CreatureGenerator.generate_starter_creature("scuttleguard")
+		if not starter_entity:
+			push_error("PlayerCollection: Failed to generate starting creature")
+			return
+
+		# Set a friendly name for the starter
+		starter_entity.data.creature_name = "Starter"
+
+		# Acquire the creature
+		if acquire_creature(starter_entity.data, "starting_gift"):
+			print("PlayerCollection: Starting scuttleguard 'Starter' added to collection")
+		else:
+			push_error("PlayerCollection: Failed to add starting creature")
 
 # === SAVE/LOAD INTEGRATION ===
 func save_collection_state(slot_name: String = "default") -> bool:

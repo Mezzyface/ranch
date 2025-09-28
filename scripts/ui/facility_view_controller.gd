@@ -3,6 +3,8 @@ extends Control
 # Facility View Controller - Main facility management screen
 # Displays all facilities in a grid, handles assignment/removal, unlock flow
 
+# Note: Food items are now dynamically loaded from ItemManager
+
 @onready var facility_grid: GridContainer = $MarginContainer/VBoxContainer/ScrollContainer/FacilityGrid
 @onready var warning_container: HBoxContainer = $MarginContainer/VBoxContainer/Header/StatusBar/WarningContainer
 @onready var warning_label: Label = $MarginContainer/VBoxContainer/Header/StatusBar/WarningContainer/WarningLabel
@@ -161,25 +163,41 @@ func _has_required_food_for_assignment(assignment) -> bool:
 	return resource_tracker.get_item_count(food_item_id) > 0
 
 func _get_food_item_id(food_type: int) -> String:
-	# Map food types to actual item IDs - matches facility_card.gd
-	match food_type:
-		0: return "food_basic"
-		1: return "food_premium"
-		2: return "food_special"
-		_: return ""
+	# Get item ID from ItemManager (matches assignment dialog filtered logic)
+	var item_manager = GameCore.get_system("item_manager")
+	var resource_tracker = GameCore.get_system("resource")
+	if not item_manager or not resource_tracker:
+		return ""
+
+	var inventory = resource_tracker.get_inventory()
+
+	# Get all consumable food items that are in stock (same logic as assignment dialog)
+	var food_items = item_manager.get_items_by_type_enum(GlobalEnums.ItemType.FOOD)
+	var available_foods: Array[ItemResource] = []
+	for item_resource in food_items:
+		if item_resource.is_consumable:
+			var quantity = inventory.get(item_resource.item_id, 0)
+			if quantity > 0:  # Only include items we have in stock
+				available_foods.append(item_resource)
+
+	# Return item ID at the specified index
+	if food_type >= 0 and food_type < available_foods.size():
+		return available_foods[food_type].item_id
+	return ""
 
 func _on_assign_pressed(facility_id: String) -> void:
-	# Open creature selection UI or directly assign if only one option
-	# For now, emit a signal that UI manager can handle
-	if signal_bus and signal_bus.has_signal("facility_assignment_requested"):
-		signal_bus.facility_assignment_requested.emit(facility_id)
+	# Open assignment dialog
+	_show_assignment_dialog(facility_id)
 
 func _on_remove_pressed(facility_id: String) -> void:
 	if not facility_system:
 		return
 
-	var success = facility_system.unassign_creature(facility_id)
-	if not success:
+	var success = facility_system.remove_creature(facility_id)
+	if success:
+		# Refresh facility cards to show the change
+		refresh_facilities()
+	else:
 		_show_notification("Failed to remove creature from facility")
 
 func _on_unlock_pressed(facility_id: String) -> void:
@@ -304,6 +322,40 @@ func _on_week_advance_blocked(reason: String, missing_food_facilities: Array[Str
 		warning_label.text = reason
 
 	_show_notification("Week advance blocked: " + reason)
+
+func _show_assignment_dialog(facility_id: String) -> void:
+	"""Show the creature assignment dialog for the specified facility"""
+	if not facility_system:
+		return
+
+	# Get the facility resource
+	var facility_resource = facility_system.get_facility(facility_id)
+	if not facility_resource:
+		_show_notification("Facility not found")
+		return
+
+	# Load and instantiate the dialog
+	var dialog_scene = preload("res://scenes/ui/facility_assignment_dialog.tscn")
+	var dialog = dialog_scene.instantiate()
+
+	# Add to scene tree
+	get_tree().root.add_child(dialog)
+
+	# Setup the dialog with facility data
+	dialog.setup(facility_resource)
+
+	# Connect to assignment confirmation
+	dialog.assignment_confirmed.connect(_on_assignment_confirmed)
+
+	# Show the dialog
+	dialog.popup_centered()
+
+func _on_assignment_confirmed(facility_id: String, creature_id: String, activity: int, food_type: int) -> void:
+	"""Handle successful creature assignment from dialog"""
+	_show_notification("Creature assigned successfully!")
+
+	# Refresh the facility display to show the new assignment
+	refresh_facilities()
 
 func get_facility_cards() -> Array[Control]:
 	return facility_cards.duplicate()

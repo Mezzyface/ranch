@@ -29,6 +29,25 @@ func _ready() -> void:
 		if signal_bus.has_signal("item_purchased"):
 			signal_bus.item_purchased.connect(_on_item_purchased)
 
+	# Initialize starting items if inventory is empty (new game)
+	_initialize_starting_items()
+
+func _initialize_starting_items() -> void:
+	"""Initialize starting items for new players."""
+	# Only initialize if inventory is empty (indicating a new game)
+	if inventory.is_empty():
+		print("ResourceTracker: Initializing starting items for new game")
+
+		# Add 5 grain as starting food
+		inventory["grain"] = 5
+
+		# Emit signal for starting grain
+		var signal_bus = GameCore.get_signal_bus()
+		if signal_bus:
+			signal_bus.emit_item_added("grain", 5, 5)
+
+		print("ResourceTracker: Added 5x grain as starting food")
+
 # Currency management
 func add_gold(amount: int, source: String = "unknown") -> bool:
 	if amount <= 0:

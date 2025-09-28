@@ -4,6 +4,8 @@ extends Control
 # Facility Card - Individual facility display component
 # Visual states: Locked, Empty, Occupied, No Food Warning
 
+# Note: Food items are now dynamically loaded from ItemManager
+
 signal assign_pressed(facility_id: String)
 signal remove_pressed(facility_id: String)
 signal unlock_pressed(facility_id: String)
@@ -24,7 +26,6 @@ signal unlock_pressed(facility_id: String)
 @onready var lock_overlay: ColorRect = $Background/LockOverlay
 @onready var cost_label: Label = $Background/LockOverlay/LockContainer/CostLabel
 @onready var unlock_button: Button = $Background/LockOverlay/LockContainer/UnlockButton
-@onready var hover_area: Button = $HoverArea
 @onready var no_food_warning: ColorRect = $NoFoodWarning
 
 var facility_resource: FacilityResource
@@ -39,9 +40,9 @@ func _ready() -> void:
 		_setup_signals()
 
 func _setup_signals() -> void:
-	if hover_area:
-		hover_area.mouse_entered.connect(_on_mouse_entered)
-		hover_area.mouse_exited.connect(_on_mouse_exited)
+	# Use the main card for hover detection instead of a separate hover area
+	mouse_entered.connect(_on_mouse_entered)
+	mouse_exited.connect(_on_mouse_exited)
 
 	if action_button:
 		action_button.pressed.connect(_on_action_button_pressed)
@@ -102,9 +103,6 @@ func _update_visual_state() -> void:
 		if is_locked and cost_label:
 			cost_label.text = "%d g" % facility_resource.unlock_cost
 
-		# Disable hover area when locked so unlock button can be clicked
-		if hover_area:
-			hover_area.mouse_filter = Control.MOUSE_FILTER_IGNORE if is_locked else Control.MOUSE_FILTER_PASS
 	# Note: lock_overlay might not be ready during early initialization
 
 	# Handle food warning
@@ -307,20 +305,40 @@ func _get_activity_color(activity: int) -> Color:
 		_: return Color(0.5, 0.5, 0.5, 1)  # Gray for unknown
 
 func _get_food_type_name(food_type: int) -> String:
-	# This should map to actual FoodSystem food type names
-	match food_type:
-		0: return "Basic Food"
-		1: return "Premium Food"
-		2: return "Special Food"
-		_: return "Unknown Food"
+	# Get display name from item resource
+	var item_id = _get_food_item_id(food_type)
+	if item_id.is_empty():
+		return "Unknown Food"
+
+	var item_manager = GameCore.get_system("item_manager")
+	if not item_manager:
+		return item_id.capitalize()
+
+	var item_resource = item_manager.get_item_resource(item_id)
+	return item_resource.display_name if item_resource else item_id.capitalize()
 
 func _get_food_item_id(food_type: int) -> String:
-	# This should map food types to actual item IDs
-	match food_type:
-		0: return "food_basic"
-		1: return "food_premium"
-		2: return "food_special"
-		_: return ""
+	# Get item ID from ItemManager (matches assignment dialog filtered logic)
+	var item_manager = GameCore.get_system("item_manager")
+	var resource_tracker = GameCore.get_system("resource")
+	if not item_manager or not resource_tracker:
+		return ""
+
+	var inventory = resource_tracker.get_inventory()
+
+	# Get all consumable food items that are in stock (same logic as assignment dialog)
+	var food_items = item_manager.get_items_by_type_enum(GlobalEnums.ItemType.FOOD)
+	var available_foods: Array[ItemResource] = []
+	for item_resource in food_items:
+		if item_resource.is_consumable:
+			var quantity = inventory.get(item_resource.item_id, 0)
+			if quantity > 0:  # Only include items we have in stock
+				available_foods.append(item_resource)
+
+	# Return item ID at the specified index
+	if food_type >= 0 and food_type < available_foods.size():
+		return available_foods[food_type].item_id
+	return ""
 
 func _has_required_food() -> bool:
 	if not current_assignment:
