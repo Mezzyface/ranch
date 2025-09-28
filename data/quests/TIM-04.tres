@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/quest_resource.gd" id="1_0"]
+
+[resource]
+script = ExtResource("1_0")
+quest_id = "TIM-04"
+title = "Mental Mastery"
+description = "Develop a creature's intelligence to at least 12 points. Mental training is just as important as physical development."
+prerequisites = Array[String](["TIM-03"])
+dialogue_snippet = "The mind is a powerful thing. Let's see how well you can nurture intellectual growth."
+rewards = {
+"gold": 125,
+"items": Array[String](["intelligence_book"]),
+"unlocks": Array[String](["mental_exercises"]),
+"xp": 80
+}

@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="QuestResource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/resources/quest_resource.gd" id="1_0"]
+
+[resource]
+script = ExtResource("1_0")
+quest_id = "TIM-03"
+title = "Growing Strong"
+description = "Train a creature until it reaches at least 15 strength. Tim wants to see how well you can develop a creature's physical capabilities."
+prerequisites = Array[String](["TIM-02"])
+dialogue_snippet = "Physical training is crucial. Show me you can help a creature reach its potential!"
+rewards = {
+"gold": 100,
+"items": Array[String](["strength_supplement"]),
+"unlocks": Array[String](["advanced_training"]),
+"xp": 60
+}

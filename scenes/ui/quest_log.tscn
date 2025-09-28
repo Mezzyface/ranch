@@ -1,0 +1,145 @@
+[gd_scene load_steps=3 format=3 uid="uid://bxr1phvt4k2lg"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/quest_log_controller.gd" id="2_script"]
+
+[node name="QuestLog" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Background"]
+layout_mode = 2
+
+[node name="HeaderContainer" type="HBoxContainer" parent="Background/VBoxContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="Background/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Quest Log"
+
+[node name="RefreshButton" type="Button" parent="Background/VBoxContainer/HeaderContainer"]
+layout_mode = 2
+text = "Refresh"
+
+[node name="HSeparator" type="HSeparator" parent="Background/VBoxContainer"]
+layout_mode = 2
+
+[node name="MainContainer" type="HBoxContainer" parent="Background/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LeftPanel" type="VBoxContainer" parent="Background/VBoxContainer/MainContainer"]
+custom_minimum_size = Vector2(300, 0)
+layout_mode = 2
+
+[node name="TabContainer" type="TabContainer" parent="Background/VBoxContainer/MainContainer/LeftPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Active" type="Control" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer"]
+layout_mode = 2
+
+[node name="ActiveQuestScroll" type="ScrollContainer" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer/Active"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ActiveQuestList" type="VBoxContainer" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer/Active/ActiveQuestScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Completed" type="Control" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="CompletedQuestScroll" type="ScrollContainer" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer/Completed"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="CompletedQuestList" type="VBoxContainer" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer/Completed/CompletedQuestScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Available" type="Control" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="AvailableQuestScroll" type="ScrollContainer" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer/Available"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="AvailableQuestList" type="VBoxContainer" parent="Background/VBoxContainer/MainContainer/LeftPanel/TabContainer/Available/AvailableQuestScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="VSeparator" type="VSeparator" parent="Background/VBoxContainer/MainContainer"]
+layout_mode = 2
+
+[node name="RightPanel" type="VBoxContainer" parent="Background/VBoxContainer/MainContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DetailsHeader" type="Label" parent="Background/VBoxContainer/MainContainer/RightPanel"]
+layout_mode = 2
+text = "Quest Details"
+
+[node name="DetailsSeparator" type="HSeparator" parent="Background/VBoxContainer/MainContainer/RightPanel"]
+layout_mode = 2
+
+[node name="DetailsScroll" type="ScrollContainer" parent="Background/VBoxContainer/MainContainer/RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="DetailsContainer" type="VBoxContainer" parent="Background/VBoxContainer/MainContainer/RightPanel/DetailsScroll"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NoQuestLabel" type="Label" parent="Background/VBoxContainer/MainContainer/RightPanel/DetailsScroll/DetailsContainer"]
+layout_mode = 2
+text = "Select a quest to view details"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SelectedQuestCard" type="Control" parent="Background/VBoxContainer/MainContainer/RightPanel/DetailsScroll/DetailsContainer"]
+visible = false
+layout_mode = 2
+
+[node name="ActionContainer" type="HBoxContainer" parent="Background/VBoxContainer/MainContainer/RightPanel"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="StartQuestButton" type="Button" parent="Background/VBoxContainer/MainContainer/RightPanel/ActionContainer"]
+visible = false
+layout_mode = 2
+text = "Start Quest"
+
+[node name="AbandonQuestButton" type="Button" parent="Background/VBoxContainer/MainContainer/RightPanel/ActionContainer"]
+visible = false
+layout_mode = 2
+text = "Abandon Quest"

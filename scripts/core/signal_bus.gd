@@ -29,11 +29,13 @@ signal tag_add_failed(data: CreatureData, tag: String, reason: String)
 signal tag_validation_failed(tags: Array[String], errors: Array[String])
 
 # === QUEST SIGNALS ===
-# Quest management signals (will be used in later tasks)
-# signal quest_started(quest: QuestData)
-# signal quest_completed(quest: QuestData)
-# signal quest_requirements_met(quest: QuestData, creatures: Array[CreatureData])
-# signal quest_failed(quest: QuestData)
+# Quest management signals
+signal quest_started(quest_id: String)
+signal quest_objective_completed(quest_id: String, objective_index: int)
+signal quest_completed(quest_id: String)
+signal quest_failed(quest_id: String, reason: String)
+signal quest_requirements_met(quest_id: String, creatures: Array[CreatureData])
+signal quest_progress_updated(quest_id: String, progress: Dictionary)
 
 # === ECONOMY SIGNALS ===
 # Resource management signals (will be used in later tasks)
@@ -839,3 +841,70 @@ func emit_transition_completed() -> void:
 	if _debug_mode:
 		print("SignalBus: Emitting transition_completed")
 	transition_completed.emit()
+
+# === QUEST SIGNAL EMISSION ===
+func emit_quest_started(quest_id: String) -> void:
+	"""Emit quest_started signal with validation."""
+	if quest_id.is_empty():
+		push_error("SignalBus: Cannot emit quest_started with empty quest_id")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting quest_started: %s" % quest_id)
+	quest_started.emit(quest_id)
+
+func emit_quest_objective_completed(quest_id: String, objective_index: int) -> void:
+	"""Emit quest_objective_completed signal with validation."""
+	if quest_id.is_empty():
+		push_error("SignalBus: Cannot emit quest_objective_completed with empty quest_id")
+		return
+	if objective_index < 0:
+		push_error("SignalBus: Cannot emit quest_objective_completed with negative objective_index: %d" % objective_index)
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting quest_objective_completed: %s objective %d" % [quest_id, objective_index])
+	quest_objective_completed.emit(quest_id, objective_index)
+
+func emit_quest_completed(quest_id: String) -> void:
+	"""Emit quest_completed signal with validation."""
+	if quest_id.is_empty():
+		push_error("SignalBus: Cannot emit quest_completed with empty quest_id")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting quest_completed: %s" % quest_id)
+	quest_completed.emit(quest_id)
+
+func emit_quest_failed(quest_id: String, reason: String) -> void:
+	"""Emit quest_failed signal with validation."""
+	if quest_id.is_empty():
+		push_error("SignalBus: Cannot emit quest_failed with empty quest_id")
+		return
+	if reason.is_empty():
+		push_error("SignalBus: Cannot emit quest_failed with empty reason")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting quest_failed: %s - %s" % [quest_id, reason])
+	quest_failed.emit(quest_id, reason)
+
+func emit_quest_requirements_met(quest_id: String, creatures: Array[CreatureData]) -> void:
+	"""Emit quest_requirements_met signal with validation."""
+	if quest_id.is_empty():
+		push_error("SignalBus: Cannot emit quest_requirements_met with empty quest_id")
+		return
+	if creatures == null:
+		push_error("SignalBus: Cannot emit quest_requirements_met with null creatures")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting quest_requirements_met: %s with %d creatures" % [quest_id, creatures.size()])
+	quest_requirements_met.emit(quest_id, creatures)
+
+func emit_quest_progress_updated(quest_id: String, progress: Dictionary) -> void:
+	"""Emit quest_progress_updated signal with validation."""
+	if quest_id.is_empty():
+		push_error("SignalBus: Cannot emit quest_progress_updated with empty quest_id")
+		return
+	if progress == null or progress.is_empty():
+		push_error("SignalBus: Cannot emit quest_progress_updated with null/empty progress")
+		return
+	if _debug_mode:
+		print("SignalBus: Emitting quest_progress_updated: %s" % quest_id)
+	quest_progress_updated.emit(quest_id, progress)
