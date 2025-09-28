@@ -123,7 +123,20 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_dynamic_food_system.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_filtered_food_system.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_removal.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_card_updates.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_card_updates.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_quest_resources.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_quest_system.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_quest.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_quest_ui.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_quest_matching.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_shop_simple.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_quest_ui_walkthrough.tscn --quit-after 10)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_quest_ui_walkthrough.tscn --quit-after 5)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_shop_system.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_shop_ui.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script test_shop_keeper.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_shop_keeper.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_shop_integration.tscn)"
     ],
     "deny": [],
     "ask": []
