@@ -24,6 +24,11 @@ The TrainingSystem manages creature training activities through activity-based a
 - **Advanced**: 1.5x multiplier, 5 slots per activity
 - **Elite**: 2.0x multiplier, 2 slots per activity
 
+### Training Facilities (via FacilityResource system)
+- **Gym**: Supports Physical & Agility training (unlocked by default)
+- **Library**: Supports Mental & Discipline training (500 gold unlock cost)
+- **Custom facilities**: Defined via data/facilities/*.tres files
+
 ### Training Foods (50% effectiveness boost for 4 weeks)
 - **Power Bar**: Enhances physical training
 - **Speed Snack**: Enhances agility training

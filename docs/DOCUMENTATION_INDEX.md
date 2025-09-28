@@ -30,18 +30,21 @@ This index provides a complete overview of all documentation in the repository, 
 - **[SAVE_SYSTEM_API.md](systems/SAVE_SYSTEM_API.md)** - SaveSystem persistence
 - **[AGE_STAT_TAG_SYSTEMS_API.md](systems/AGE_STAT_TAG_SYSTEMS_API.md)** - Age, Stat, and Tag systems
 - **[STAMINA_SYSTEM_API.md](systems/STAMINA_SYSTEM_API.md)** - Activity-based stamina management
+- **[FACILITY_SYSTEM_API.md](systems/FACILITY_SYSTEM_API.md)** - FacilitySystem training facility management
 
 ### `/docs/resources/` - Resource Documentation
 - **[RESOURCE_SYSTEM_API.md](resources/RESOURCE_SYSTEM_API.md)** - ItemResource, SpeciesResource management
+- **[facility_resource.md](resources/facility_resource.md)** - FacilityResource training facility system
 
 ### `/docs/controllers/` - Controller Documentation
 - **[CONTROLLER_SYSTEM_API.md](controllers/CONTROLLER_SYSTEM_API.md)** - Main, Game, and UI controllers
 
 ### `/docs/ui/` - UI Component Documentation
-- **[UI_COMPONENTS_API.md](ui/UI_COMPONENTS_API.md)** - CreatureCard, FilterBar, and UI elements
+- **[UI_COMPONENTS_API.md](ui/UI_COMPONENTS_API.md)** - CreatureCard, FacilityCard, FacilityView, FilterBar, and UI elements
 
 ### `/docs/data/` - Data Class Documentation
 - **[DATA_CLASSES_API.md](data/DATA_CLASSES_API.md)** - CreatureData, StatsData, QuestData structures
+- **[facility_assignment_data.md](data/facility_assignment_data.md)** - FacilityAssignmentData for training assignments
 
 ### `/docs/entities/` - Entity Documentation
 - **[ENTITY_SYSTEM_API.md](entities/ENTITY_SYSTEM_API.md)** - CreatureEntity behavioral patterns
@@ -103,14 +106,33 @@ This index provides a complete overview of all documentation in the repository, 
 
 ## 🔄 Recent Updates
 
+### 2025-09-27 - FacilityView Main Game Interface
+Added FacilityView as the primary game screen for facility management:
+- **Scene**: `scenes/ui/facility_view.tscn` with responsive grid layout and status indicators
+- **Controller**: `scripts/ui/facility_view_controller.gd` with complete facility interaction handling
+- **Documentation**: Updated UI_COMPONENTS_API.md with full FacilityView API and usage patterns
+- **Features**: Dynamic grid layout, week advance warnings, processing indicators, unlock validation
+- **Integration**: Facility assignment requests, food warning detection, real-time status updates
+- **Visual Feedback**: Animated food warnings, notification popups, processing state display
+
+### 2025-09-27 - FacilityCard UI Component
+Added FacilityCard component for training facility management:
+- **Component**: `scenes/ui/components/facility_card.tscn` with visual state management
+- **Script**: `scripts/ui/facility_card.gd` with facility resource integration
+- **Documentation**: Updated UI_COMPONENTS_API.md with full component API
+- **Integration**: Added UI integration section to FACILITY_SYSTEM_API.md
+- **Features**: Locked/Empty/Occupied/No Food Warning visual states
+- **Signals**: assign_pressed, remove_pressed, unlock_pressed for user interactions
+
 ### 2025-09-27 - Comprehensive API Documentation
 Added complete API documentation for all systems:
-- **Systems**: Time, Collection, Save, Age/Stat/Tag systems
-- **Resources**: Item and Species resource management
+- **Systems**: Time, Collection, Save, Age/Stat/Tag, Stamina, and Facility systems
+- **Resources**: Item, Species, and Facility resource management
 - **Controllers**: Main, Game, and UI controller patterns
 - **UI Components**: Reusable UI elements and patterns
-- **Data Classes**: Core data structures
+- **Data Classes**: Core data structures and facility assignments
 - **Entities**: Behavioral entity system
+- **Interfaces**: ISaveable interface for persistent systems
 
 ### 2025-09-26 - Documentation Consolidation
 - `USAGE.md`, `QUICK_REFERENCE.md`, `API_REFERENCE.md`, `QUICK_START_GUIDE.md` → **[Comprehensive API Guide](development/COMPREHENSIVE_API_GUIDE.md)**

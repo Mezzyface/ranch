@@ -136,6 +136,23 @@ trigger_manual_save() -> void
         "achievements": [...]
     },
 
+    "facility": {
+        "version": 1,
+        "unlocked_facilities": ["gym", "library"],
+        "facility_assignments": {
+            "gym": {
+                "facility_id": "gym",
+                "creature_id": "creature_123",
+                "selected_activity": 0,
+                "food_type": 0
+            }
+        },
+        "facility_unlock_status": {
+            "gym": true,
+            "library": true
+        }
+    },
+
     # Game State
     "quests": {
         "active": [...],
@@ -170,6 +187,69 @@ func deserialize(data: Dictionary) -> bool:
     _cache_data = data.get("cache", {})
     return true
 ```
+
+## Integrated Systems
+
+The SaveSystem automatically handles save/load operations for the following systems:
+
+### Core Systems
+
+#### PlayerCollection (`collection`)
+- **Data**: Active roster, stable collection, metadata
+- **Integration**: Hybrid approach using ConfigFile + ResourceSaver
+- **Validation**: Creature data integrity checks
+- **Features**: Individual creature files, collection statistics
+
+#### TimeSystem (`time`)
+- **Data**: Current week/month/year, total progression
+- **Integration**: ConfigFile-based state persistence
+- **Validation**: Time progression consistency
+- **Features**: Event scheduling, temporal state
+
+#### ResourceTracker (`resource`)
+- **Data**: Gold, items, materials inventory
+- **Integration**: ConfigFile with item validation
+- **Validation**: Resource quantity constraints
+- **Features**: Transaction history, resource caps
+
+#### FacilitySystem (`facility`) *NEW*
+- **Data**: Facility unlock status, creature assignments
+- **Integration**: ConfigFile with comprehensive validation
+- **Validation**: Creature existence, facility registry checks
+- **Features**: Orphaned assignment cleanup, version migration
+
+### Support Systems
+
+#### StatSystem (`stat`)
+- **Data**: System state markers (minimal persistence)
+- **Integration**: ConfigFile-based initialization flags
+- **Validation**: System availability checks
+- **Features**: Calculation cache invalidation
+
+#### AgeSystem (`age`)
+- **Data**: System state markers (computed data)
+- **Integration**: ConfigFile-based initialization flags
+- **Validation**: System dependency checks
+- **Features**: Age category consistency
+
+### System Loading Order
+
+Systems are loaded in dependency order to ensure proper initialization:
+
+1. **Core Data**: TimeSystem, ResourceTracker
+2. **Collections**: PlayerCollection, FacilitySystem
+3. **Computed**: StatSystem, AgeSystem
+4. **UI**: UIManager (state restoration)
+
+### System Requirements
+
+For a system to integrate with SaveSystem:
+
+1. **Methods**: Implement `save_state()` and `load_state(data)`
+2. **Validation**: Handle missing/invalid data gracefully
+3. **Cleanup**: Remove orphaned references during load
+4. **Versioning**: Support save format migration
+5. **Logging**: Report validation issues and cleanup actions
 
 ## Signal Integration
 

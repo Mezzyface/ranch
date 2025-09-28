@@ -2,7 +2,7 @@
 
 ## Overview
 
-UI Components are reusable interface elements that provide consistent functionality and appearance throughout the game. They handle creature display, user interaction, notifications, and data visualization.
+UI Components are reusable interface elements that provide consistent functionality and appearance throughout the game. They handle creature display, facility management, user interaction, notifications, and data visualization.
 
 ## Core UI Components
 
@@ -410,6 +410,177 @@ animate_change(new_value: float, duration: float = 0.5) -> void
 
 set_color_by_percentage() -> void
 # Auto-color based on percentage (green->yellow->red)
+```
+
+### FacilityCard (`scripts/ui/facility_card.gd`)
+
+Displays facility information and assignment status in a card format for training facility management.
+
+#### Properties
+```gdscript
+var facility_resource: FacilityResource      # Facility configuration
+var current_assignment: FacilityAssignmentData  # Current assignment (null if empty)
+
+# UI Elements
+@onready var background: PanelContainer      # Card background
+@onready var facility_icon: TextureRect      # Facility icon (64x64)
+@onready var facility_name: Label           # Facility display name
+@onready var creature_portrait: TextureRect  # Assigned creature portrait
+@onready var empty_portrait_label: Label    # "Empty" text when unassigned
+@onready var activity_icon: TextureRect     # Training activity icon
+@onready var activity_label: Label          # Activity name
+@onready var food_icon: TextureRect         # Required food icon
+@onready var food_label: Label              # Food type name
+@onready var action_button: Button          # "Assign"/"Remove" button
+@onready var lock_overlay: ColorRect        # Lock state overlay
+@onready var cost_label: Label              # Unlock cost display
+@onready var unlock_button: Button          # Unlock facility button
+@onready var no_food_warning: ColorRect     # Food shortage warning
+```
+
+#### Signals
+```gdscript
+signal assign_pressed(facility_id: String)   # Request creature assignment
+signal remove_pressed(facility_id: String)   # Request creature removal
+signal unlock_pressed(facility_id: String)   # Request facility unlock
+```
+
+#### Methods
+```gdscript
+set_facility(facility: FacilityResource) -> void
+# Update displayed facility and reset assignment
+
+set_assignment(assignment: FacilityAssignmentData) -> void
+# Update assignment information and creature display
+
+update_display() -> void
+# Refresh all UI elements based on current state
+
+set_food_warning(has_warning: bool) -> void
+# Enable/disable food shortage warning animation
+
+get_facility_id() -> String
+# Get the facility ID for this card
+
+is_locked() -> bool
+# Check if facility is currently locked
+
+is_assigned() -> bool
+# Check if facility has a creature assigned
+```
+
+#### Visual States
+- **Locked**: Grayed out with lock overlay showing unlock cost
+- **Empty**: Normal colors, shows "Assign" button and "Empty" placeholder
+- **Occupied**: Shows creature portrait, activity, and food information with "Remove" button
+- **No Food Warning**: Animated red border when required food is missing
+
+#### Usage Example
+```gdscript
+# Create facility card
+var card_scene = preload("res://scenes/ui/components/facility_card.tscn")
+var card = card_scene.instantiate()
+
+# Configure facility
+var facility = facility_system.get_facility("training_ground_01")
+card.set_facility(facility)
+
+# Set assignment if creature is assigned
+var assignment = facility_system.get_assignment("training_ground_01")
+if assignment:
+    card.set_assignment(assignment)
+
+# Connect signals
+card.assign_pressed.connect(_on_assign_facility)
+card.remove_pressed.connect(_on_remove_from_facility)
+card.unlock_pressed.connect(_on_unlock_facility)
+
+# Add to facility grid
+facility_grid.add_child(card)
+```
+
+## Facility Management Components
+
+### FacilityView (`scripts/ui/facility_view_controller.gd`)
+
+Main facility management interface that displays all training facilities in a grid layout and handles facility interactions.
+
+#### Properties
+```gdscript
+var facility_system: Node                    # FacilitySystem reference
+var resource_tracker: Node                  # ResourceTracker reference
+var signal_bus: Node                        # SignalBus reference
+var facility_cards: Array[Control] = []     # Array of facility card instances
+
+# UI Elements
+@onready var facility_grid: GridContainer   # Grid for facility cards
+@onready var warning_container: HBoxContainer  # Week advance warnings
+@onready var warning_label: Label           # Warning message text
+@onready var processing_label: Label        # Week processing indicator
+@onready var notification_panel: PanelContainer  # User feedback popup
+@onready var notification_label: Label      # Notification message
+```
+
+#### Key Methods
+```gdscript
+refresh_facilities() -> void
+# Update all facility cards with current state and assignments
+
+_on_assign_pressed(facility_id: String) -> void
+# Handle creature assignment requests (emits facility_assignment_requested signal)
+
+_on_remove_pressed(facility_id: String) -> void
+# Remove creature from facility via FacilitySystem.unassign_creature()
+
+_on_unlock_pressed(facility_id: String) -> void
+# Check costs and unlock facility via FacilitySystem.unlock_facility()
+
+has_food_warnings() -> bool
+# Check if any assigned facilities are missing required food
+
+_check_food_warnings() -> void
+# Update warning display based on food availability
+```
+
+#### Signal Handling
+```gdscript
+# Facility Events
+_on_facility_unlocked(facility_id: String) -> void
+_on_facility_assigned(facility_id: String, creature_id: String) -> void
+_on_facility_unassigned(facility_id: String, creature_id: String) -> void
+
+# Resource Events
+_on_gold_changed(new_amount: int) -> void
+
+# Week Advance Events
+_on_week_advance_started() -> void
+_on_week_advance_completed() -> void
+_on_week_advance_blocked(reason: String, missing_food_facilities: Array[String]) -> void
+```
+
+#### Visual Features
+- **Dynamic Grid Layout**: Automatically adjusts column count based on facility count
+- **Week Advance Warnings**: Shows warning when facilities lack required food
+- **Processing Indicator**: Displays "Processing week advance..." during operations
+- **Notification System**: Shows feedback for unlock results and errors
+- **Food Warning Highlighting**: Highlights facilities missing food with animated borders
+
+#### Usage Example
+```gdscript
+# Create facility view (typically done in main UI)
+var facility_view = preload("res://scenes/ui/facility_view.tscn").instantiate()
+
+# Connect to assignment requests (handled by UI manager or game controller)
+var signal_bus = GameCore.get_signal_bus()
+if signal_bus.has_signal("facility_assignment_requested"):
+    signal_bus.facility_assignment_requested.connect(_on_assignment_requested)
+
+# Add to main game area
+main_content_area.add_child(facility_view)
+
+func _on_assignment_requested(facility_id: String):
+    # Open creature selection dialog
+    open_creature_selection_for_facility(facility_id)
 ```
 
 ### TooltipPanel (`scripts/ui/components/tooltip_panel.gd`)
