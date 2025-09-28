@@ -527,7 +527,7 @@ func _update_gold_display() -> void:
 	if not gold_amount or not resource_tracker:
 		return
 
-	var current_gold = resource_tracker.get_resource_amount("gold")
+	var current_gold = resource_tracker.get_balance()
 	gold_amount.text = str(current_gold)
 
 func _refresh_current_view() -> void:
