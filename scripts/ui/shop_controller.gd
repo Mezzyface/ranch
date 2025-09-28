@@ -201,10 +201,8 @@ func _load_category_items() -> void:
 	# Get items for current category
 	var category_items = shop_system.get_category_items(current_category)
 
-	# Special handling for creatures (not in shop system yet)
-	if current_category == "creatures":
-		category_items = _get_creature_items()
-	elif current_category == "facilities":
+	# Special handling for facilities (not in shop system yet)
+	if current_category == "facilities":
 		category_items = _get_facility_items()
 
 	# Create item cards
@@ -213,27 +211,6 @@ func _load_category_items() -> void:
 
 	print("ShopController: Loaded %d items for category '%s'" % [category_items.size(), current_category])
 
-func _get_creature_items() -> Array:
-	"""Get creature items (placeholder for future implementation)."""
-	var creature_items: Array = []
-
-	# Placeholder creature eggs
-	var eggs = [
-		{"item_id": "wind_dancer_egg", "display_name": "Wind Dancer Egg", "final_price": 150, "stock_quantity": 3},
-		{"item_id": "crystal_prowler_egg", "display_name": "Crystal Prowler Egg", "final_price": 200, "stock_quantity": 2},
-		{"item_id": "shadow_stalker_egg", "display_name": "Shadow Stalker Egg", "final_price": 250, "stock_quantity": 1}
-	]
-
-	for egg_data in eggs:
-		var shop_item = shop_system.ShopItem.new(
-			egg_data.item_id,
-			egg_data.stock_quantity,
-			egg_data.final_price,
-			"creatures"
-		)
-		creature_items.append(shop_item)
-
-	return creature_items
 
 func _get_facility_items() -> Array:
 	"""Get facility items (placeholder for future implementation)."""
@@ -463,7 +440,7 @@ func _animate_successful_purchase(quantity: int) -> void:
 	tween.tween_property(purchase_animation, "scale", Vector2.ONE, 0.3)
 
 	# Hold for a moment
-	tween.tween_delay(1.0)
+	tween.tween_interval(1.0)
 
 	# Fade out
 	tween.tween_property(success_label, "modulate", Color.TRANSPARENT, 0.3)
@@ -506,7 +483,7 @@ func _refresh_current_view() -> void:
 
 # === SIGNAL HANDLERS ===
 
-func _on_gold_changed(new_amount: int, change: int) -> void:
+func _on_gold_changed(old_amount: int, new_amount: int, change: int) -> void:
 	"""Handle gold amount changes."""
 
 	# Animate gold deduction if it's a purchase

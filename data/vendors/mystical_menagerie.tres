@@ -11,9 +11,9 @@ location = "Enchanted Grove"
 unlock_requirements = {
 "quest_completed": "TIM-04"
 }
-base_inventory = ["golden_nectar", "vitality_elixir"]
+base_inventory = ["golden_nectar", "vitality_elixir", "crystal_prowler_egg", "shadow_stalker_egg"]
 specialization_tags = ["Bioluminescent", "Sentient", "Cleanser"]
-specialization_creature_types = ["crystal_moth", "wisdom_owl", "dream_weaver"]
+specialization_creature_types = ["crystal_moth", "wisdom_owl", "dream_weaver", "crystal_prowler", "shadow_stalker"]
 reputation_bonuses = {
 25: 12,
 50: 20,

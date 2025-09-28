@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://btqxaym5n8r2l"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_egg3"]
+
+[resource]
+script = ExtResource("1_egg3")
+item_id = "shadow_stalker_egg"
+display_name = "Shadow Stalker Egg"
+item_type = 5
+base_price = 250
+sell_value = 125
+stack_size = 1
+stamina_restore = 0
+description = "A mysterious dark egg of a Shadow Stalker. These rare creatures are known for their stealth and intelligence."
+flavor_text = "The egg seems to absorb light around it and feels surprisingly cool to the touch."
+icon_path = "res://assets/sprites/items/egg_shadow.svg"
+drop_sources = Array[String](["shop", "legendary_quest"])

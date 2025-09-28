@@ -212,6 +212,8 @@ func _get_legacy_type_string(item_type: GlobalEnums.ItemType) -> String:
 			return "material"
 		GlobalEnums.ItemType.KEY_ITEM:
 			return "quest"
+		GlobalEnums.ItemType.CREATURE:
+			return "creature"
 		_:
 			return "unknown"
 
@@ -228,6 +230,8 @@ func _string_to_item_type(type_str: String) -> GlobalEnums.ItemType:
 			return GlobalEnums.ItemType.MATERIAL
 		"quest":
 			return GlobalEnums.ItemType.KEY_ITEM
+		"creature":
+			return GlobalEnums.ItemType.CREATURE
 		_:
 			return GlobalEnums.ItemType.CONSUMABLE
 

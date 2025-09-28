@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://b3yq8rp2nyavp"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_egg2"]
+
+[resource]
+script = ExtResource("1_egg2")
+item_id = "crystal_prowler_egg"
+display_name = "Crystal Prowler Egg"
+item_type = 5
+base_price = 200
+sell_value = 100
+stack_size = 1
+stamina_restore = 0
+description = "A crystalline egg of a Crystal Prowler. These strong and resilient creatures are prized for their defensive capabilities."
+flavor_text = "The egg has a translucent quality and emits a soft, crystalline chime when moved."
+icon_path = "res://assets/sprites/items/egg_crystal.svg"
+drop_sources = Array[String](["shop", "rare_quest"])

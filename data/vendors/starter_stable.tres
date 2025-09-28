@@ -9,9 +9,9 @@ display_name = "Starter Stable"
 description = "A friendly stable specializing in beginner-friendly creatures and basic supplies. Perfect for new tamers!"
 location = "Town Center"
 is_unlocked_by_default = true
-base_inventory = ["berries", "grain", "hay", "water"]
+base_inventory = ["berries", "grain", "hay", "water", "wind_dancer_egg"]
 specialization_tags = ["Small", "Territorial", "Bioluminescent"]
-specialization_creature_types = ["scuttleguard", "glow_grub"]
+specialization_creature_types = ["scuttleguard", "glow_grub", "wind_dancer"]
 reputation_bonuses = {
 10: 5,
 25: 10,

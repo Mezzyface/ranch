@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://ce5f0qfyqtl7p"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_egg1"]
+
+[resource]
+script = ExtResource("1_egg1")
+item_id = "wind_dancer_egg"
+display_name = "Wind Dancer Egg"
+item_type = 5
+base_price = 150
+sell_value = 75
+stack_size = 1
+stamina_restore = 0
+description = "A shimmering egg of a Wind Dancer. Known for their grace and speed, these creatures make excellent companions."
+flavor_text = "The egg pulses with a faint breeze and seems to move slightly when touched."
+icon_path = "res://assets/sprites/items/egg_wind.svg"
+drop_sources = Array[String](["shop", "rare_quest"])

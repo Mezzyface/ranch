@@ -111,7 +111,8 @@ enum ItemType {
 	EQUIPMENT = 1,
 	CONSUMABLE = 2,
 	MATERIAL = 3,
-	KEY_ITEM = 4
+	KEY_ITEM = 4,
+	CREATURE = 5
 }
 
 # Item rarity for drops/shop
