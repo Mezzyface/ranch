@@ -128,7 +128,7 @@ func _test_system_loading() -> void:
 
 	# CORRECT: Using get_system
 	var systems_to_test: Array[String] = [
-		"collection", "save", "tag", "age", "stat"
+		"collection", "save", "tag", "age", "stat", "quest"
 	]
 
 	for system_name in systems_to_test:
