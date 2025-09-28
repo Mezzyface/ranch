@@ -1,4 +1,4 @@
-[gd_scene load_steps=3 format=3 uid="uid://bwk2n3x8h5m9s"]
+[gd_scene load_steps=3 format=3 uid="uid://bwk2n3x8h5nas"]
 
 [ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
 [ext_resource type="Script" path="res://scripts/ui/shop_controller.gd" id="2_script"]
@@ -43,24 +43,6 @@ layout_mode = 2
 size_flags_horizontal = 3
 text = "Creature Emporium"
 horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="GoldDisplay" type="HBoxContainer" parent="Background/VBoxContainer/ShopHeader"]
-layout_mode = 2
-size_flags_horizontal = 0
-alignment = 1
-
-[node name="GoldIcon" type="TextureRect" parent="Background/VBoxContainer/ShopHeader/GoldDisplay"]
-custom_minimum_size = Vector2(24, 24)
-layout_mode = 2
-size_flags_horizontal = 0
-expand_mode = 1
-stretch_mode = 5
-
-[node name="GoldAmount" type="Label" parent="Background/VBoxContainer/ShopHeader/GoldDisplay"]
-layout_mode = 2
-size_flags_horizontal = 0
-text = "0"
 vertical_alignment = 1
 
 [node name="CloseButton" type="Button" parent="Background/VBoxContainer/ShopHeader"]

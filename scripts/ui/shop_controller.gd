@@ -8,8 +8,6 @@ class_name ShopController
 # === NODE REFERENCES ===
 @onready var background: Panel = $Background
 @onready var title_label: Label = $Background/VBoxContainer/ShopHeader/Title
-@onready var gold_icon: TextureRect = $Background/VBoxContainer/ShopHeader/GoldDisplay/GoldIcon
-@onready var gold_amount: Label = $Background/VBoxContainer/ShopHeader/GoldDisplay/GoldAmount
 @onready var close_button: Button = $Background/VBoxContainer/ShopHeader/CloseButton
 
 # Category tabs
@@ -108,28 +106,9 @@ func _setup_ui() -> void:
 		quantity_spinbox.max_value = 99
 		quantity_spinbox.value = 1
 
-	# Set initial gold icon (placeholder)
-	_setup_gold_icon()
 
 	# Set up shop keeper
 	_setup_shop_keeper()
-
-func _setup_gold_icon() -> void:
-	"""Set up gold icon or create fallback."""
-	if not gold_icon:
-		return
-
-	# Try to load gold icon, create fallback if needed
-	var gold_icon_path = "res://assets/ui/icons/gold.png"
-	if ResourceLoader.exists(gold_icon_path):
-		gold_icon.texture = load(gold_icon_path)
-	else:
-		# Create a simple gold-colored circle as fallback
-		var image = Image.create(24, 24, false, Image.FORMAT_RGBA8)
-		image.fill(Color(1.0, 0.8, 0.0, 1.0))
-		var texture = ImageTexture.new()
-		texture.set_image(image)
-		gold_icon.texture = texture
 
 func _setup_shop_keeper() -> void:
 	"""Set up the shop keeper portrait."""
@@ -171,7 +150,6 @@ func _connect_signals() -> void:
 
 func _load_initial_data() -> void:
 	"""Load initial shop data and display."""
-	_update_gold_display()
 	_switch_to_category(current_category)
 
 # === CATEGORY MANAGEMENT ===
@@ -522,24 +500,14 @@ func _show_purchase_error() -> void:
 
 # === DISPLAY UPDATES ===
 
-func _update_gold_display() -> void:
-	"""Update the gold amount display."""
-	if not gold_amount or not resource_tracker:
-		return
-
-	var current_gold = resource_tracker.get_balance()
-	gold_amount.text = str(current_gold)
-
 func _refresh_current_view() -> void:
 	"""Refresh the current category view."""
 	_load_category_items()
-	_update_gold_display()
 
 # === SIGNAL HANDLERS ===
 
 func _on_gold_changed(new_amount: int, change: int) -> void:
 	"""Handle gold amount changes."""
-	_update_gold_display()
 
 	# Animate gold deduction if it's a purchase
 	if change < 0:
