@@ -2,6 +2,7 @@ class_name WeeklyUpdateOrchestrator extends Node
 
 enum UpdatePhase {
 	PRE_UPDATE,
+	FACILITIES,
 	AGING,
 	STAMINA,
 	FOOD,
@@ -25,6 +26,7 @@ func _ready() -> void:
 func _initialize_pipeline() -> void:
 	update_pipeline = [
 		UpdatePhase.PRE_UPDATE,
+		UpdatePhase.FACILITIES,
 		UpdatePhase.AGING,
 		UpdatePhase.STAMINA,
 		UpdatePhase.FOOD,
@@ -37,6 +39,7 @@ func _initialize_pipeline() -> void:
 
 	phase_handlers = {
 		UpdatePhase.PRE_UPDATE: _handle_pre_update,
+		UpdatePhase.FACILITIES: _handle_facilities,
 		UpdatePhase.AGING: _handle_aging,
 		UpdatePhase.STAMINA: _handle_stamina,
 		UpdatePhase.FOOD: _handle_food,
@@ -57,6 +60,20 @@ func execute_weekly_update() -> Dictionary:
 
 	var _t0: int = Time.get_ticks_msec()
 
+	# Check facility food requirements before processing the week
+	var facility_system = GameCore.get_system("facility")
+	if facility_system:
+		if not facility_system.has_food_for_all_facilities():
+			var bus = GameCore.get_signal_bus()
+			if bus:
+				bus.emit_week_advance_blocked("Missing food for facilities")
+			is_updating = false
+			return {
+				"success": false,
+				"reason": "Missing food for facilities",
+				"processed_facilities": 0
+			}
+
 	_prepare_update()
 
 	for phase in update_pipeline:
@@ -72,7 +89,13 @@ func execute_weekly_update() -> Dictionary:
 	print("AI_NOTE: performance(weekly_update) = %d ms (baseline <200ms)" % _dt)
 
 	is_updating = false
-	return {"success": true, "summary": summary, "time_ms": _dt}
+	var processed_facilities = update_results.get("facilities", {}).get("processed_count", 0)
+	return {
+		"success": true,
+		"summary": summary,
+		"time_ms": _dt,
+		"processed_facilities": processed_facilities
+	}
 
 func _execute_phase(phase: UpdatePhase) -> bool:
 	if not phase_handlers.has(phase):
@@ -103,6 +126,72 @@ func _handle_pre_update() -> bool:
 		"creature_count": all_creatures.size(),
 		"active_count": active_creatures.size(),
 		"stable_count": stable_creatures.size()
+	}
+
+	return true
+
+func _handle_facilities() -> bool:
+	var facility_system = GameCore.get_system("facility")
+	if not facility_system:
+		# No facilities to process
+		update_results["facilities"] = {
+			"processed_count": 0,
+			"training_results": []
+		}
+		return true
+
+	var resource_tracker = GameCore.get_system("resource")
+	var training_system = GameCore.get_system("training")
+	var collection = GameCore.get_system("collection")
+
+	if not resource_tracker or not training_system or not collection:
+		push_error("WeeklyUpdateOrchestrator: Required systems not available for facility processing")
+		return false
+
+	var processed_count = 0
+	var training_results = []
+	var food_items = ["power_bar", "speed_snack", "brain_food", "focus_tea"]
+
+	# Process each facility assignment
+	var assignments = facility_system.facility_assignments
+	for facility_id in assignments:
+		var assignment = assignments[facility_id]
+
+		# Get the assigned creature
+		var creature = collection.get_creature_by_id(assignment.creature_id)
+		if not creature:
+			push_warning("WeeklyUpdateOrchestrator: Creature %s not found for facility %s" % [assignment.creature_id, facility_id])
+			continue
+
+		# Skip if creature has expired (will be cleaned up later)
+		if assignment.creature_id in expired_creature_ids:
+			continue
+
+		# Consume the specified food
+		var food_type = assignment.food_type
+		if food_type >= 0 and food_type < food_items.size():
+			var item_id = food_items[food_type]
+			if not resource_tracker.remove_item(item_id, 1):
+				push_warning("WeeklyUpdateOrchestrator: Failed to consume food %s for facility %s" % [item_id, facility_id])
+				continue
+
+		# Delegate training to TrainingSystem
+		var training_result = training_system.schedule_training(creature, assignment.selected_activity)
+
+		training_results.append({
+			"facility_id": facility_id,
+			"creature_id": assignment.creature_id,
+			"creature_name": creature.creature_name,
+			"activity": assignment.selected_activity,
+			"food_consumed": food_items[food_type] if (food_type >= 0 and food_type < food_items.size()) else "none",
+			"training_successful": training_result
+		})
+
+		processed_count += 1
+
+	update_results["facilities"] = {
+		"processed_count": processed_count,
+		"training_results": training_results
 	}
 
 	return true
@@ -250,6 +339,7 @@ func _handle_economy() -> bool:
 	return true
 
 func _handle_post_update() -> bool:
+	# Remove expired creatures from collections
 	for creature_name in update_results.get("aging", {}).get("expired_creatures", []):
 		var collection = GameCore.get_system("collection")
 		var all_creatures = collection.get_active_creatures() + collection.get_stable_creatures()
@@ -260,6 +350,14 @@ func _handle_post_update() -> bool:
 				elif collection.has_method("remove_from_stable"):
 					collection.remove_from_stable(creature.id)
 				break
+
+	# Clean up facility assignments for dead creatures
+	var facility_system = GameCore.get_system("facility")
+	if facility_system:
+		for creature_id in expired_creature_ids:
+			var facility_id = facility_system.get_creature_facility(creature_id)
+			if not facility_id.is_empty():
+				facility_system.remove_creature(facility_id)
 
 	return true
 

@@ -383,6 +383,24 @@ func release_creature(creature_id: String, reason: String) -> bool:
 
 	return success
 
+# === CREATURE LOOKUP ===
+func get_creature_by_id(creature_id: String) -> CreatureData:
+	"""Get a creature by ID from either active roster or stable collection."""
+	if creature_id.is_empty():
+		return null
+
+	# Check active roster first
+	if creature_id in _active_lookup:
+		var index = _active_lookup[creature_id]
+		if index < active_roster.size():
+			return active_roster[index]
+
+	# Check stable collection
+	if creature_id in stable_collection:
+		return stable_collection[creature_id]
+
+	return null
+
 # === COLLECTION STATISTICS ===
 func get_collection_stats() -> Dictionary:
 	"""Get comprehensive collection statistics."""

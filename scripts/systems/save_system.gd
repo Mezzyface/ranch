@@ -639,6 +639,15 @@ func _save_system_states(slot_name: String) -> bool:
 	else:
 		config.set_value("time_system", "not_loaded", true)
 
+	# Save FacilitySystem state
+	if GameCore.has_system("facility"):
+		var facility_system = GameCore.get_system("facility")
+		var facility_state = facility_system.save_state()
+		for key in facility_state.keys():
+			config.set_value("facility_system", key, facility_state[key])
+	else:
+		config.set_value("facility_system", "not_loaded", true)
+
 	# Save other system states as needed
 	config.set_value("save_system", "auto_save_enabled", auto_save_enabled)
 	config.set_value("save_system", "auto_save_interval", auto_save_interval_minutes)
@@ -677,6 +686,22 @@ func _load_system_states(slot_name: String) -> bool:
 
 		if not time_data.is_empty():
 			time_system.load_time_state(time_data)
+
+	# Restore FacilitySystem state
+	if config.has_section("facility_system") and GameCore.has_system("facility"):
+		var facility_system = GameCore.get_system("facility")
+		var facility_data = {}
+
+		# Load all facility system keys
+		var facility_keys = config.get_section_keys("facility_system")
+		for key in facility_keys:
+			if key != "not_loaded":
+				facility_data[key] = config.get_value("facility_system", key)
+
+		if not facility_data.is_empty():
+			facility_system.load_state(facility_data)
+	elif config.has_section("facility_system"):
+		print("SaveSystem: FacilitySystem not loaded, skipping facility data")
 
 	# Restore system states as needed
 	print("SaveSystem: System states loaded successfully")
