@@ -174,18 +174,43 @@ Purpose: Behavioral wrapper for CreatureData, manages system interactions and si
 ## 3. Planned Formal Interfaces
 (Scaffolds—implement when first consumer exists.)
 
-### 3.1 ISaveable (planned)
-Proposed location: `scripts/core/interfaces/i_saveable.gd`
-Minimum contract (draft):
-```
-interface ISaveable:
-  func get_save_namespace() -> String
-  func save_state() -> Dictionary
-  func load_state(data: Dictionary) -> void
+### 3.1 ISaveable (implemented)
+Location: `scripts/core/interfaces/i_saveable.gd`
+Contract:
+```gdscript
+class_name ISaveable
+
+func get_save_namespace() -> String
+func save_state() -> Dictionary
+func load_state(data: Dictionary) -> void
+func validate_interface() -> Dictionary  # Returns {valid: bool, errors: Array[String]}
 ```
 Notes:
-- Systems implement to allow SaveSystem modular enumeration instead of hardcoded switch.
-- Must be idempotent: calling `load_state(save_state())` should not drift state.
+- Systems implement to allow SaveSystem modular enumeration instead of hardcoded switch
+- Must be idempotent: calling `load_state(save_state())` should not drift state
+- Namespace must be stable across versions for save compatibility
+- load_state() must handle missing keys gracefully with defaults
+- validate_interface() provides runtime verification of correct implementation
+
+Implementation Example:
+```gdscript
+# In FacilitySystem:
+func get_save_namespace() -> String:
+    return "facility_system"
+
+func save_state() -> Dictionary:
+    return {
+        "facility_unlock_status": facility_unlock_status.duplicate(),
+        "facility_assignments": _serialize_assignments()
+    }
+
+func load_state(data: Dictionary) -> void:
+    facility_unlock_status = data.get("facility_unlock_status", {})
+    _deserialize_assignments(data.get("facility_assignments", {}))
+```
+
+Current Implementations:
+- FacilitySystem: facility_system namespace (with legacy compatibility methods and comprehensive validation)
 
 ### 3.2 ITickable (planned)
 ```
@@ -213,6 +238,8 @@ Notes:
 | 2025-09-27 | Added creature cleanup signal system | creature_cleanup_required signal ensures proper memory cleanup when creatures are removed from collection |
 | 2025-09-27 | Fixed expired creatures processing bug | WeeklyUpdateOrchestrator now tracks expired_creature_ids and prevents dead creatures from gaining stats |
 | 2025-09-27 | Enhanced system initialization with fail-fast patterns | StaminaSystem and dependent systems now explicitly report initialization failures instead of silent fallbacks |
+| 2025-09-27 | Weekly Update Facility Integration (Task 1.3) | Added facility food validation, FACILITIES phase, enhanced return structure with success/reason/processed_facilities, week_advance_blocked signal, automatic dead creature cleanup |
+| 2025-09-27 | Facility Persistence Implementation (Task 2.1) | Added comprehensive save/load support to FacilitySystem with versioning, validation, orphaned assignment cleanup, and SaveSystem integration; implemented PlayerCollection.get_creature_by_id() method |
 
 ---
 ## 5. Maintenance Rules
@@ -479,7 +506,7 @@ Public Methods:
 | Method | Signature | Notes |
 |--------|----------|-------|
 | get_signal_bus | `func get_signal_bus() -> SignalBus` | Returns singleton instance |
-| get_system | `func get_system(system_name: String) -> Node` | Lazy-loads + caches; names: `creature`, `save`, `quest`, `stat`, `tag`, `age`, `collection`, `resource` (`resources` alias), `species` |
+| get_system | `func get_system(system_name: String) -> Node` | Lazy-loads + caches; names: `creature`, `save`, `quest`, `stat`, `tag`, `age`, `collection`, `resource` (`resources` alias), `species`, `facility`, `training`, `stamina`, `time`, `weekly_update`, `ui` |
 
 Invariants:
 - All system access must go through `get_system()` (no direct scene tree lookups in client code).
@@ -498,7 +525,9 @@ Signal Domains (grouped):
 - Collection: `creature_acquired`, `creature_released`, `active_roster_changed`, `stable_collection_updated`, `collection_milestone_reached`
 - Save Extended: `auto_save_triggered`, `save_progress`, `data_corrupted`, `backup_created`, `backup_restored`
 - Economy / Inventory: `gold_changed`, `item_added`, `item_removed`, `transaction_failed`, `creature_fed`
-- (Commented / Future) Quest, Time progression signals
+- Time / Weekly: `week_advanced`, `week_advance_blocked`, `time_advance_blocked`, `weekly_update_started`, `weekly_update_completed`, `weekly_update_failed`
+- Facilities: `facility_unlocked`, `creature_assigned_to_facility`, `facility_assignment_removed`
+- Training / Stamina: `training_scheduled`, `stamina_activity_performed`, `stamina_depleted`, `stamina_restored`
 
 Emission Helper Pattern (subset):
 | Helper | Signature | Validation Focus |
@@ -512,6 +541,7 @@ Emission Helper Pattern (subset):
 | emit_item_added | `func emit_item_added(item_id: String, quantity: int, total: int) -> void` | quantity > 0, total > 0 |
 | emit_active_roster_changed | `func emit_active_roster_changed(new_roster: Array[CreatureData]) -> void` | roster size <= 6 |
 | emit_backup_created | `func emit_backup_created(slot_name: String, backup_name: String) -> void` | Non-empty strings |
+| emit_week_advance_blocked | `func emit_week_advance_blocked(reason: String) -> void` | Non-empty reason |
 
 Invariants:
 - All external emission should prefer helpers (enforces validation + debug gating).
@@ -847,7 +877,209 @@ Performance Optimizations:
 
 ---
 
-## 11. Training & Food Systems (Stage 4)
+## 11. Facility Resource System (Task 1.1)
+
+### 10.1 FacilityResource (Resource)
+Path: `scripts/resources/facility_resource.gd`
+Purpose: Training facility specification and configuration
+Type: Resource with @tool annotation
+
+Properties:
+| Name | Type | Default | Notes |
+|------|------|---------|-------|
+| facility_id | String | "" | Unique facility identifier (non-empty) |
+| display_name | String | "" | UI display name (non-empty) |
+| description | String | "" | Facility description text |
+| icon_path | String | "" | Asset path for facility icon |
+| unlock_cost | int | 0 | Gold cost to unlock (≥0) |
+| is_unlocked | bool | false | Unlock status |
+| supported_activities | Array[int] | [] | TrainingActivity enum values (0-3) |
+| max_creatures | int | 1 | Maximum creatures allowed (>0) |
+
+Methods:
+| Method | Signature | Notes |
+|--------|----------|-------|
+| is_valid | `func is_valid() -> bool` | Quick validation check |
+| validate | `func validate() -> Dictionary` | `{valid: bool, errors: Array[String]}` |
+| supports_activity | `func supports_activity(activity: int) -> bool` | Activity support check |
+| get_activity_names | `func get_activity_names() -> Array[String]` | Human-readable activity names |
+
+Activity Mapping:
+| Activity Value | Name | Description |
+|---------------|------|-------------|
+| 0 | Physical Training | TrainingActivity.PHYSICAL |
+| 1 | Agility Training | TrainingActivity.AGILITY |
+| 2 | Mental Training | TrainingActivity.MENTAL |
+| 3 | Discipline Training | TrainingActivity.DISCIPLINE |
+
+Validation Rules:
+- facility_id and display_name must be non-empty
+- unlock_cost cannot be negative
+- max_creatures must be positive
+- supported_activities cannot be empty
+- Activity values must be within range 0-3
+
+### 10.2 FacilityAssignmentData (Resource)
+Path: `scripts/data/facility_assignment_data.gd`
+Purpose: Training facility assignment tracking
+Type: Resource class for persistence
+
+Properties:
+| Name | Type | Default | Notes |
+|------|------|---------|-------|
+| facility_id | String | "" | Target facility identifier |
+| creature_id | String | "" | Assigned creature identifier |
+| selected_activity | int | -1 | TrainingActivity enum value |
+| food_type | int | -1 | FoodType enum value |
+
+Methods:
+| Method | Signature | Notes |
+|--------|----------|-------|
+| is_valid | `func is_valid() -> bool` | Quick validation check |
+| validate | `func validate() -> Dictionary` | Comprehensive validation |
+| get_activity_name | `func get_activity_name() -> String` | Human-readable activity name |
+| clear | `func clear() -> void` | Reset to default state |
+
+Validation Rules:
+- All string fields must be non-empty
+- selected_activity must be 0-3 (TrainingActivity range)
+- food_type must be ≥0 (valid FoodType)
+
+Resource Files Created:
+- `data/facilities/gym.tres` - Basic training facility (PHYSICAL, AGILITY)
+- `data/facilities/library.tres` - Advanced facility (MENTAL, DISCIPLINE, costs 500 gold)
+
+Invariants:
+- Resources use proper Godot .tres format with script_class references
+- Integration with existing TrainingActivity enum from TrainingSystem
+- All validation follows fail-fast patterns with explicit error reporting
+- Resources loaded through standard Resource.load() mechanism
+
+---
+
+## 12. Facility System (Task 1.2)
+
+### 11.1 FacilitySystem
+Path: `scripts/systems/facility_system.gd`
+Purpose: Training facility management with creature assignments and resource integration
+System Key: `"facility"`
+
+Public Methods:
+| Method | Signature | Side Effects | Notes |
+|--------|----------|--------------|-------|
+| get_all_facilities | `func get_all_facilities() -> Array[FacilityResource]` | None | Returns all facilities (locked + unlocked) |
+| get_unlocked_facilities | `func get_unlocked_facilities() -> Array[FacilityResource]` | None | Only accessible facilities |
+| get_facility | `func get_facility(facility_id: String) -> FacilityResource` | None | Single facility lookup |
+| is_facility_unlocked | `func is_facility_unlocked(facility_id: String) -> bool` | None | Unlock status check |
+| unlock_facility | `func unlock_facility(facility_id: String) -> bool` | Spends gold + emits signals | Gold validation via ResourceTracker |
+| assign_creature | `func assign_creature(facility_id: String, creature_id: String, activity: int, food_type: int) -> bool` | Creates assignment + emits | Full validation pipeline |
+| remove_creature | `func remove_creature(facility_id: String) -> bool` | Clears assignment + emits | Assignment cleanup |
+| get_assignment | `func get_assignment(facility_id: String) -> FacilityAssignmentData` | None | Current assignment data |
+| get_creature_facility | `func get_creature_facility(creature_id: String) -> String` | None | Reverse lookup facility_id |
+| has_food_for_all_facilities | `func has_food_for_all_facilities() -> bool` | None | Resource availability check |
+| get_save_data | `func get_save_data() -> Dictionary` | None | Legacy persistence method |
+| load_save_data | `func load_save_data(data: Dictionary) -> void` | Rebuilds state | Legacy persistence method |
+| get_save_namespace | `func get_save_namespace() -> String` | None | ISaveable interface - returns "facility_system" |
+| save_state | `func save_state() -> Dictionary` | None | ISaveable interface - comprehensive state |
+| load_state | `func load_state(data: Dictionary) -> void` | Rebuilds state | ISaveable interface - idempotent load |
+
+Assignment Structure:
+```gdscript
+# FacilityAssignmentData properties:
+{
+    "facility_id": String,      # Target facility identifier
+    "creature_id": String,      # Assigned creature identifier
+    "selected_activity": int,   # TrainingActivity enum (0-3)
+    "food_type": int           # FoodType enum (-1 for none)
+}
+```
+
+Activity Integration:
+| Value | Activity | Target Stats |
+|-------|----------|-------------|
+| 0 | PHYSICAL | Strength, Constitution |
+| 1 | AGILITY | Dexterity |
+| 2 | MENTAL | Intelligence, Wisdom |
+| 3 | DISCIPLINE | Discipline |
+
+Signals Emitted:
+- `facility_unlocked(facility_id: String)` - When facility purchased
+- `creature_assigned_to_facility(creature_id: String, facility_id: String, activity: int, food_type: int)` - On assignment
+- `facility_assignment_removed(facility_id: String, creature_id: String)` - On removal
+
+Invariants:
+- One creature per facility maximum (based on max_creatures = 1)
+- One facility per creature maximum
+- Gold validation through ResourceTracker
+- Activity support validation against FacilityResource
+- Fail-fast validation with explicit error logging
+- Food type mapping: power_bar(0), speed_snack(1), brain_food(2), focus_tea(3)
+
+### 11.2 FacilityResource (Resource)
+Path: `scripts/resources/facility_resource.gd`
+Purpose: Training facility specification and configuration
+Type: Resource with @tool annotation
+
+Properties:
+| Name | Type | Default | Validation |
+|------|------|---------|------------|
+| facility_id | String | "" | Non-empty (unique identifier) |
+| display_name | String | "" | Non-empty (UI display) |
+| description | String | "" | Optional facility description |
+| icon_path | String | "" | Asset path for icon |
+| unlock_cost | int | 0 | ≥0 (gold cost) |
+| is_unlocked | bool | false | Default unlock status |
+| supported_activities | Array[int] | [] | TrainingActivity enum values (0-3) |
+| max_creatures | int | 1 | >0 (capacity limit) |
+
+Methods:
+| Method | Signature | Notes |
+|--------|----------|-------|
+| is_valid | `func is_valid() -> bool` | Quick validation check |
+| validate | `func validate() -> Dictionary` | `{valid: bool, errors: Array[String]}` |
+| supports_activity | `func supports_activity(activity: int) -> bool` | Activity support check |
+| get_activity_names | `func get_activity_names() -> Array[String]` | Human-readable activity list |
+
+Validation Rules:
+- facility_id and display_name must be non-empty
+- unlock_cost cannot be negative
+- max_creatures must be positive
+- supported_activities cannot be empty
+- Activity values must be within range 0-3
+
+Built-in Facilities:
+- `gym.tres`: Physical/Agility training, free, unlocked by default
+- `library.tres`: Mental/Discipline training, 500 gold, locked by default
+
+### 11.3 FacilityAssignmentData (Resource)
+Path: `scripts/data/facility_assignment_data.gd`
+Purpose: Training facility assignment tracking
+Type: Resource class for persistence
+
+Properties:
+| Name | Type | Default | Validation |
+|------|------|---------|------------|
+| facility_id | String | "" | Non-empty target facility |
+| creature_id | String | "" | Non-empty assigned creature |
+| selected_activity | int | -1 | TrainingActivity enum (0-3) |
+| food_type | int | -1 | FoodType enum (≥0) or -1 for none |
+
+Methods:
+| Method | Signature | Notes |
+|--------|----------|-------|
+| is_valid | `func is_valid() -> bool` | Quick assignment validation |
+| validate | `func validate() -> Dictionary` | Comprehensive validation with errors |
+| get_activity_name | `func get_activity_name() -> String` | Human-readable activity name |
+| clear | `func clear() -> void` | Reset to default/empty state |
+
+Validation Rules:
+- All string fields must be non-empty for valid assignment
+- selected_activity must be 0-3 (TrainingActivity range)
+- food_type must be ≥0 (valid FoodType) or -1 (no food)
+
+---
+
+## 13. Training & Food Systems (Stage 4)
 
 ### 10.1 TrainingSystem
 Path: `scripts/systems/training_system.gd`
@@ -976,5 +1208,107 @@ Invariants:
 - Multiple food effects can be active simultaneously
 - Effects expire at beginning of week (before training processing)
 - Food items consumed from ItemManager inventory
+
+---
+
+## 14. Weekly Update Integration (Task 1.3)
+
+### 13.1 WeeklyUpdateOrchestrator (Enhanced)
+Path: `scripts/systems/weekly_update_orchestrator.gd`
+Purpose: Weekly progression orchestration with facility food validation
+Enhanced: Facility integration and error state handling
+
+Enhanced Methods:
+| Method | Signature | Side Effects | Notes |
+|--------|----------|--------------|-------|
+| execute_weekly_update | `func execute_weekly_update() -> Dictionary` | Validates facilities + processes all phases | Enhanced return structure |
+
+Enhanced UpdatePhase Enum:
+```gdscript
+enum UpdatePhase {
+    PRE_UPDATE,    # Creature counting
+    FACILITIES,    # New: Facility processing with food validation
+    AGING,         # Creature aging (active only)
+    STAMINA,       # Activity processing
+    FOOD,          # Food consumption (legacy)
+    QUESTS,        # Quest processing (placeholder)
+    COMPETITIONS,  # Competition processing (placeholder)
+    ECONOMY,       # Economic updates (placeholder)
+    POST_UPDATE,   # Cleanup (including dead creature facility removal)
+    SAVE           # Auto-save
+}
+```
+
+Enhanced Return Structure:
+```gdscript
+# Success case:
+{
+    "success": true,
+    "summary": WeeklySummary,
+    "time_ms": int,
+    "processed_facilities": int
+}
+
+# Failure case (food validation):
+{
+    "success": false,
+    "reason": String,           # e.g., "Missing food for facilities"
+    "processed_facilities": 0
+}
+
+# Legacy failure case:
+{
+    "success": false,
+    "failed_phase": String     # Phase name where failure occurred
+}
+```
+
+Food Validation Flow:
+1. **Pre-Validation**: Before processing any phase, check `FacilitySystem.has_food_for_all_facilities()`
+2. **Hard Stop**: If food missing, emit `week_advance_blocked(reason)` signal and return error immediately
+3. **No Processing**: Week does not advance; no phases execute; no state changes occur
+
+Facility Processing Phase (_handle_facilities):
+1. **Validation**: Check all required systems available (FacilitySystem, ResourceTracker, TrainingSystem, PlayerCollection)
+2. **Iteration**: Process each facility assignment sequentially
+3. **Food Consumption**: Consume food via `ResourceTracker.remove_item()` for each assigned creature
+4. **Training Delegation**: Call `TrainingSystem.schedule_training()` for stat gains
+5. **Skip Expired**: Dead creatures (in expired_creature_ids) are skipped during processing
+6. **Result Tracking**: Build detailed training results array
+
+Dead Creature Cleanup (Enhanced _handle_post_update):
+- **Existing Logic**: Remove expired creatures from PlayerCollection
+- **New Logic**: Automatically remove dead creatures from facility assignments via `FacilitySystem.remove_creature()`
+- **Timing**: Occurs after aging phase, ensuring cleanup happens every week
+
+Signals Integration:
+- **Emits**: `week_advance_blocked(reason: String)` when food validation fails
+- **Uses**: Existing facility signals (`creature_assigned_to_facility`, `facility_assignment_removed`)
+- **Preserves**: All existing weekly progression signals
+
+Performance Characteristics:
+- **Food validation**: <10ms (inventory lookup only)
+- **Facility processing**: Scales with number of assignments (typically 0-10)
+- **Overall weekly update**: Still maintains <200ms baseline
+- **Measured performance**: 3ms for typical scenarios
+
+Error Handling Patterns:
+```gdscript
+# Food validation failure
+if not facility_system.has_food_for_all_facilities():
+    bus.emit_week_advance_blocked("Missing food for facilities")
+    return {"success": false, "reason": "Missing food for facilities"}
+
+# System dependency failure
+if not required_system:
+    push_error("Required system not available")
+    return false  # Triggers rollback
+```
+
+Integration Requirements:
+- **Player Response**: Must either provide food, remove creatures, or clear assignments to proceed
+- **No Bypass**: Week cannot advance through any other mechanism when blocked
+- **State Preservation**: All game state remains unchanged during blocked week attempts
+- **Signal Emission**: UI and other systems can respond to `week_advance_blocked` for user feedback
 
 ---

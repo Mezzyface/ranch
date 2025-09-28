@@ -43,7 +43,7 @@ func _resolve_system_key(system_key) -> String:
 		return ""
 
 func _is_valid_system_name(system_name: String) -> bool:
-	var valid_systems = ["creature", "save", "quest", "stat", "tag", "age", "collection", "resource", "resources", "species", "item_manager", "items", "time", "ui", "stamina", "shop", "training", "food", "weekly_update", "weekly_orchestrator"]
+	var valid_systems = ["creature", "save", "quest", "stat", "tag", "age", "collection", "resource", "resources", "species", "item_manager", "items", "time", "ui", "stamina", "shop", "training", "food", "weekly_update", "weekly_orchestrator", "facility"]
 	return system_name in valid_systems
 
 func _load_system(system_name: String) -> void:
@@ -84,6 +84,8 @@ func _load_system(system_name: String) -> void:
 			system = preload("res://scripts/systems/food_system.gd").new()
 		"weekly_update", "weekly_orchestrator":
 			system = preload("res://scripts/systems/weekly_update_orchestrator.gd").new()
+		"facility":
+			system = preload("res://scripts/systems/facility_system.gd").new()
 		_:
 			push_error("Unknown system: " + system_name)
 			return

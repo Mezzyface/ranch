@@ -69,6 +69,7 @@ signal week_advanced(new_week: int, total_weeks: int)
 signal month_completed(month: int, year: int)
 signal year_completed(year: int)
 signal time_advance_blocked(reasons: Array[String])
+signal week_advance_blocked(reason: String)
 signal weekly_event_triggered(event: WeeklyEvent)
 signal weekly_update_started()
 signal weekly_update_completed(duration_ms: int)
@@ -106,6 +107,12 @@ signal training_scheduled(creature_data: CreatureData, activity: String, facilit
 signal training_cancelled(creature_id: String, status: String)
 signal training_completed(creature_data: CreatureData, activity: String, stat_gains: Dictionary)
 signal training_food_consumed(creature_id: String, food_name: String, expires_week: int)
+
+# === FACILITY SIGNALS ===
+# Facility system signals (Task 1.2)
+signal facility_unlocked(facility_id: String)
+signal creature_assigned_to_facility(creature_id: String, facility_id: String, activity: int, food_type: int)
+signal facility_assignment_removed(facility_id: String, creature_id: String)
 
 # === GAME STATE SIGNALS ===
 # GameController state signals (migrated from GameController)
@@ -667,6 +674,17 @@ func emit_week_advanced(new_week: int, total_weeks: int) -> void:
 		print("SignalBus: Emitting week_advanced: week %d (total: %d)" % [new_week, total_weeks])
 
 	week_advanced.emit(new_week, total_weeks)
+
+func emit_week_advance_blocked(reason: String) -> void:
+	"""Emit week_advance_blocked signal with validation."""
+	if reason.is_empty():
+		push_error("SignalBus: Cannot emit week_advance_blocked with empty reason")
+		return
+
+	if _debug_mode:
+		print("SignalBus: Emitting week_advance_blocked: %s" % reason)
+
+	week_advance_blocked.emit(reason)
 
 func emit_month_completed(month: int, year: int) -> void:
 	"""Emit month_completed signal with validation."""
