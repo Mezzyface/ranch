@@ -29,13 +29,23 @@ func _initialize_systems() -> void:
 	time_system = GameCore.get_system("time")
 	signal_bus = GameCore.get_signal_bus()
 
+	print("OverlayMenu: Systems initialized - ResourceTracker: %s, TimeSystem: %s, SignalBus: %s" % [resource_tracker != null, time_system != null, signal_bus != null])
+
 func _setup_signals() -> void:
 	if signal_bus:
 		# Connect to resource and time updates
 		if signal_bus.has_signal("gold_changed"):
-			signal_bus.gold_changed.connect(_on_gold_changed)
+			if not signal_bus.gold_changed.is_connected(_on_gold_changed):
+				signal_bus.gold_changed.connect(_on_gold_changed)
+				print("OverlayMenu: Connected to gold_changed signal")
 		if signal_bus.has_signal("week_advanced"):
-			signal_bus.week_advanced.connect(_on_week_advanced)
+			if not signal_bus.week_advanced.is_connected(_on_week_advanced):
+				signal_bus.week_advanced.connect(_on_week_advanced)
+				print("OverlayMenu: Connected to week_advanced signal")
+	else:
+		print("OverlayMenu: SignalBus not available, retrying in next frame")
+		# Retry signal setup in the next frame
+		call_deferred("_setup_signals")
 
 func _connect_buttons() -> void:
 	if facilities_button:
@@ -87,6 +97,9 @@ func _update_gold_display() -> void:
 	if gold_label and resource_tracker:
 		var gold_amount = resource_tracker.get_balance()
 		gold_label.text = "%d Gold" % gold_amount
+		print("OverlayMenu: Updated gold display to '%s'" % gold_label.text)
+	else:
+		print("OverlayMenu: Cannot update gold display - gold_label: %s, resource_tracker: %s" % [gold_label != null, resource_tracker != null])
 
 func set_game_controller(controller) -> void:
 	game_controller = controller
@@ -118,6 +131,7 @@ func _on_menu_pressed() -> void:
 
 # Signal handlers
 func _on_gold_changed(old_amount: int, new_amount: int, change: int) -> void:
+	print("OverlayMenu: Gold changed %d -> %d (change: %d)" % [old_amount, new_amount, change])
 	_update_gold_display()
 
 func _on_week_advanced(new_week: int, total_weeks: int) -> void:
