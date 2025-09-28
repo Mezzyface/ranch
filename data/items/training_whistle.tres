@@ -1,0 +1,31 @@
+[gd_resource type="Resource" script_class="ItemResource" load_steps=2 format=3 uid="uid://training_whistle_item"]
+
+[ext_resource type="Script" uid="uid://btdxvksui8fil" path="res://scripts/resources/item_resource.gd" id="1_whistle"]
+
+[resource]
+script = ExtResource("1_whistle")
+item_id = "training_whistle"
+display_name = "Training Whistle"
+item_type = 1
+rarity = 1
+base_price = 500
+sell_value = 300
+stack_size = 1
+is_consumable = false
+is_tradeable = true
+is_quest_item = false
+stamina_restore = 0
+stat_boosts = {
+"discipline": 5
+}
+stat_boost_duration_hours = 0
+healing_amount = 0
+required_level = 1
+required_tags = Array[String]([])
+description = "A sturdy whistle that helps improve training focus and discipline when used by trainers."
+flavor_text = "The sharp sound cuts through any distraction, helping creatures focus on their training."
+icon_path = ""
+crafting_recipe = Array[Dictionary]([])
+crafting_time_minutes = 0
+drop_sources = Array[String](["shop", "trainer_quest"])
+drop_chance = 0.0

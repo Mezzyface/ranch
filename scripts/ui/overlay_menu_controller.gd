@@ -98,8 +98,7 @@ func _on_facilities_pressed() -> void:
 
 func _on_shop_pressed() -> void:
 	print("OverlayMenu: Shop button pressed")
-	# TODO: Load shop view when available
-	# _load_view_in_game_area("res://scenes/ui/shop_view.tscn")
+	_load_view_in_game_area("res://scenes/ui/shop.tscn")
 
 func _on_inventory_pressed() -> void:
 	print("OverlayMenu: Inventory button pressed")
