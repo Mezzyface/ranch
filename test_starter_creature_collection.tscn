@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwnxqkp6lm5r3"]
+
+[ext_resource type="Script" path="res://test_starter_creature_collection.gd" id="1_abc"]
+
+[node name="TestStarterCreatureCollection" type="Node"]
+script = ExtResource("1_abc")

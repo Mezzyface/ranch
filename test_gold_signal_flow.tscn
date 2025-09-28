@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bk8m6xy4h5xar"]
+
+[ext_resource type="Script" path="res://test_gold_signal_flow.gd" id="1_test"]
+
+[node name="TestGoldSignalFlow" type="Node"]
+script = ExtResource("1_test")

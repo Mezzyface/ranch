@@ -1,0 +1,37 @@
+[gd_scene load_steps=3 format=3 uid="uid://cvw5lh8a3h2pn"]
+
+[ext_resource type="PackedScene" uid="uid://bqr7k8ymhs7yt" path="res://scenes/entities/creature_entity.tscn" id="1_6e4vn"]
+[ext_resource type="Script" path="res://test_creature_entity.gd" id="2_a8k5m"]
+
+[node name="TestCreatureEntity" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_right = 800.0
+offset_bottom = 600.0
+script = ExtResource("2_a8k5m")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+color = Color(0.2, 0.3, 0.4, 1)
+
+[node name="TestArea" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 50.0
+offset_top = 50.0
+offset_right = -50.0
+offset_bottom = -50.0
+
+[node name="CreatureEntity" parent="TestArea" instance=ExtResource("1_6e4vn")]
+layout_mode = 0
+offset_left = 100.0
+offset_top = 100.0
+offset_right = 164.0
+offset_bottom = 164.0

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://e6b121ywv180"]
+
+[ext_resource type="Script" path="res://test_overlay_with_purchase.gd" id="1_test"]
+
+[node name="TestOverlayWithPurchase" type="Node"]
+script = ExtResource("1_test")

@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://c8k5m3x7h2xar"]
+
+[ext_resource type="Script" path="res://test_overlay_gold_update.gd" id="1_test"]
+
+[node name="TestOverlayGoldUpdate" type="Node"]
+script = ExtResource("1_test")
