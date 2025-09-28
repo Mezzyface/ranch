@@ -133,6 +133,7 @@ If a new domain event truly required, follow Section 13 before adding.
 | Weekly time progression | <200ms |
 | Event processing (100 events) | <50ms |
 | Batch training (100 trainings) | <100ms |
+| Shop operations (100 operations) | <50ms |
 If exceeded, add timing + mitigation note in summary.
 
 ## 9. SUBMISSION CHECKLIST

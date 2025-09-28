@@ -235,7 +235,11 @@ func get_shop_inventory() -> Dictionary:
 
 func get_category_items(category: String) -> Array[ShopItem]:
 	"""Get all items in a category."""
-	return shop_inventory.get(category, [])
+	var items: Array[ShopItem] = []
+	var category_data = shop_inventory.get(category, [])
+	for item in category_data:
+		items.append(item)
+	return items
 
 func get_available_items() -> Array[ShopItem]:
 	"""Get all currently available items."""
