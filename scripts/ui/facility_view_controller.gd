@@ -105,6 +105,11 @@ func _setup_signals() -> void:
 	if signal_bus.has_signal("stable_collection_updated"):
 		signal_bus.stable_collection_updated.connect(_on_stable_updated)
 
+	# Setup food selection popup
+	if food_selection_popup:
+		food_selection_popup.food_selected.connect(_on_food_selected)
+		food_selection_popup.popup_closed.connect(_on_food_popup_closed)
+
 func _load_facilities() -> void:
 	if not facility_system:
 		return
@@ -284,6 +289,7 @@ func _create_facility_card(facility_resource) -> void:
 	facility_card.assign_pressed.connect(_on_assign_pressed)
 	facility_card.remove_pressed.connect(_on_remove_pressed)
 	facility_card.unlock_pressed.connect(_on_unlock_pressed)
+	facility_card.food_selection_requested.connect(_on_food_selection_requested)
 
 	# Add to grid and tracking array
 	facility_grid.add_child(facility_card)
