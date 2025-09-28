@@ -10,6 +10,7 @@ var _save_system
 var _training_system
 var _food_system
 var _resource_tracker
+var _facility_system
 var _signal_bus: SignalBus
 
 func _ready() -> void:
@@ -25,6 +26,7 @@ func _setup_systems() -> void:
 	_training_system = GameCore.get_system("training")
 	_food_system = GameCore.get_system("food")
 	_resource_tracker = GameCore.get_system("resource")
+	_facility_system = GameCore.get_system("facility")
 	_signal_bus = GameCore.get_signal_bus()
 
 func _connect_signals() -> void:

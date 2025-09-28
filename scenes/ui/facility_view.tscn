@@ -1,0 +1,117 @@
+[gd_scene load_steps=3 format=3 uid="uid://bx7k8l2v6gaj1"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/facility_view_controller.gd" id="2_script"]
+
+[node name="FacilityView" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.15, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="Header" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="TitleLabel" type="Label" parent="MarginContainer/VBoxContainer/Header"]
+layout_mode = 2
+text = "Training Facilities"
+theme_override_font_sizes/font_size = 32
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer/Header"]
+layout_mode = 2
+
+[node name="StatusBar" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Header"]
+layout_mode = 2
+
+[node name="WarningContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/Header/StatusBar"]
+visible = false
+layout_mode = 2
+
+[node name="WarningIcon" type="Label" parent="MarginContainer/VBoxContainer/Header/StatusBar/WarningContainer"]
+layout_mode = 2
+text = "⚠️"
+
+[node name="WarningLabel" type="Label" parent="MarginContainer/VBoxContainer/Header/StatusBar/WarningContainer"]
+layout_mode = 2
+text = "Some facilities are missing food and cannot advance to next week"
+theme_override_colors/font_color = Color(1, 0.6, 0.4, 1)
+
+[node name="Spacer" type="Control" parent="MarginContainer/VBoxContainer/Header/StatusBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ProcessingLabel" type="Label" parent="MarginContainer/VBoxContainer/Header/StatusBar"]
+visible = false
+layout_mode = 2
+text = "Processing week advance..."
+theme_override_colors/font_color = Color(0.6, 0.8, 1, 1)
+
+[node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+horizontal_scroll_mode = 0
+
+[node name="FacilityGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/h_separation = 20
+theme_override_constants/v_separation = 20
+columns = 3
+
+[node name="NotificationPanel" type="PanelContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -150.0
+offset_top = -50.0
+offset_right = 150.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="NotificationPanel"]
+layout_mode = 2
+
+[node name="NotificationLabel" type="Label" parent="NotificationPanel/VBoxContainer"]
+layout_mode = 2
+text = "Facility unlocked!"
+horizontal_alignment = 1
+
+[node name="CloseButton" type="Button" parent="NotificationPanel/VBoxContainer"]
+layout_mode = 2
+text = "OK"
+
+[connection signal="pressed" from="NotificationPanel/VBoxContainer/CloseButton" to="." method="_on_notification_close"]

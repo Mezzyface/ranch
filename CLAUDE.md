@@ -69,8 +69,9 @@ Main Controller: `scripts/controllers/main_controller.gd` (persistent scene mana
 Game Controller: `scripts/controllers/game_controller.gd` (game state abstraction)
 UI Manager: `scripts/ui/ui_manager.gd` (scene/window management)
 UI Controllers: `scripts/ui/*_controller.gd` (UI scene logic)
-UI Scenes: `scenes/ui/*.tscn` (main_menu, game_ui)
+UI Scenes: `scenes/ui/*.tscn` (main_menu, overlay_menu, facility_view)
 UI Components: `scenes/ui/components/*.tscn` (reusable UI elements)
+Overlay Menu: `scripts/ui/overlay_menu_controller.gd` + `scenes/ui/overlay_menu.tscn` (primary game interface)
 UI Theme: `resources/themes/default_theme.tres`
 Main Scene: `scenes/main/main.tscn` (application entry point)
 ItemManager: `scripts/systems/item_manager.gd` (replaces ItemDatabase)
@@ -95,7 +96,7 @@ Test Automation: `tests/run_tests.bat`, `tests/run_tests.ps1`
 - Add `# AI_NOTE:` only when rationale is non-obvious to future reviewers
 
 ## 7. CURRENT SYSTEM KEYS
-`collection` (PlayerCollection), `save` (SaveSystem), `tag` (TagSystem), `age` (AgeSystem), `stat` (StatSystem), `resource` (ResourceTracker), `species` (SpeciesSystem), `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager), `stamina` (StaminaSystem), `weekly_update` (WeeklyUpdateOrchestrator), `shop` (ShopSystem), `training` (TrainingSystem), `food` (FoodSystem)
+`collection` (PlayerCollection), `save` (SaveSystem), `tag` (TagSystem), `age` (AgeSystem), `stat` (StatSystem), `resource` (ResourceTracker), `species` (SpeciesSystem), `item_manager` (ItemManager), `time` (TimeSystem), `ui` (UIManager), `stamina` (StaminaSystem), `weekly_update` (WeeklyUpdateOrchestrator), `shop` (ShopSystem), `training` (TrainingSystem), `food` (FoodSystem), `facility` (FacilitySystem)
 (Extend list when adding new system; update tests referencing keys.)
 
 Canonical signal usage (do NOT invent new wrappers):
@@ -113,10 +114,12 @@ time_system.schedule_event(event, target_week)  # event scheduling
 UIManager access pattern:
 ```gdscript
 var ui_manager = GameCore.get_system("ui")
-ui_manager.change_scene("res://scenes/ui/game_ui.tscn")  # scene management
+ui_manager.change_scene("res://scenes/ui/facility_view.tscn")  # routes to overlay_menu.tscn
 ui_manager.show_window("shop")  # window management
 ```
-Architecture: Main scene (persistent) → GameController → Systems. UI scenes receive GameController reference, never access systems directly.
+Architecture: Main scene (persistent) → GameController → Systems.
+**UI Flow (Task 3.3)**: game_ui.tscn and facility_view.tscn requests → overlay_menu.tscn (with facility_view in GameArea).
+UI scenes receive GameController reference, never access systems directly.
 
 If a new domain event truly required, follow Section 13 before adding.
 

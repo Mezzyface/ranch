@@ -4,13 +4,8 @@ class_name UIManager extends Node
 # Signals moved to SignalBus for centralized management
 # Use _signal_bus.emit_*() methods instead
 
-var current_scene: Control = null
 var scene_stack: Array[String] = []
 var windows: Dictionary = {}
-var is_transitioning: bool = false
-
-var _scene_cache: Dictionary = {}
-var _transition_duration: float = 0.3
 var _signal_bus: SignalBus
 
 func _ready() -> void:
@@ -18,34 +13,21 @@ func _ready() -> void:
 	_signal_bus = GameCore.get_signal_bus()
 
 func change_scene(scene_path: String) -> void:
-	if is_transitioning:
-		push_error("UIManager: Cannot change scene while transitioning")
-		return
-
 	if scene_path.is_empty():
 		push_error("UIManager: Scene path cannot be empty")
 		return
 
-	_start_transition()
+	# Handle game scene mapping - use overlay_menu as the main game interface
+	var target_scene = scene_path
+	if scene_path == "res://scenes/ui/game_ui.tscn" or scene_path == "res://scenes/ui/facility_view.tscn":
+		target_scene = "res://scenes/ui/overlay_menu.tscn"
 
-	if current_scene:
-		_fade_out_scene(current_scene)
-
-	var new_scene = _load_scene(scene_path)
-	if new_scene:
-		current_scene = new_scene
-		scene_stack.clear()
-		scene_stack.push_back(scene_path)
-		_fade_in_scene(new_scene)
-		_signal_bus.emit_scene_changed(scene_path)
-
-	_end_transition()
+	# Just emit the signal and let MainController handle the actual scene change
+	scene_stack.clear()
+	scene_stack.push_back(target_scene)
+	_signal_bus.emit_scene_changed(target_scene)
 
 func push_scene(scene_path: String) -> void:
-	if is_transitioning:
-		push_error("UIManager: Cannot push scene while transitioning")
-		return
-
 	if scene_path.is_empty():
 		push_error("UIManager: Scene path cannot be empty")
 		return
@@ -73,7 +55,7 @@ func show_window(window_name: String) -> void:
 
 	var window = windows[window_name] as Window
 	if window and not window.visible:
-		window.show()
+		#window.show()
 		_signal_bus.emit_window_opened(window_name)
 
 func hide_window(window_name: String) -> void:
@@ -134,63 +116,3 @@ func is_window_open(window_name: String) -> bool:
 
 	var window = windows[window_name] as Window
 	return window and window.visible
-
-func _load_scene(scene_path: String) -> Control:
-	if _scene_cache.has(scene_path):
-		return _scene_cache[scene_path]
-
-	var scene = load(scene_path)
-	if not scene:
-		push_error("UIManager: Failed to load scene '%s'" % scene_path)
-		return null
-
-	var instance = scene.instantiate()
-	if not instance is Control:
-		push_error("UIManager: Scene '%s' must be a Control node" % scene_path)
-		instance.queue_free()
-		return null
-
-	_scene_cache[scene_path] = instance
-	return instance
-
-func _start_transition() -> void:
-	is_transitioning = true
-	_signal_bus.emit_transition_started()
-
-func _end_transition() -> void:
-	is_transitioning = false
-	_signal_bus.emit_transition_completed()
-
-func _fade_out_scene(scene: Control) -> void:
-	if not scene:
-		return
-
-	var tween = create_tween()
-	tween.tween_property(scene, "modulate:a", 0.0, _transition_duration / 2.0)
-	await tween.finished
-
-	if scene.get_parent():
-		scene.get_parent().remove_child(scene)
-
-func _fade_in_scene(scene: Control) -> void:
-	if not scene:
-		return
-
-	scene.modulate.a = 0.0
-	get_tree().current_scene.add_child(scene)
-
-	var tween = create_tween()
-	tween.tween_property(scene, "modulate:a", 1.0, _transition_duration / 2.0)
-	await tween.finished
-
-func clear_scene_cache() -> void:
-	for scene in _scene_cache.values():
-		if scene and is_instance_valid(scene):
-			scene.queue_free()
-	_scene_cache.clear()
-
-func set_transition_duration(duration: float) -> void:
-	if duration < 0.0:
-		push_error("UIManager: Transition duration must be non-negative")
-		return
-	_transition_duration = duration

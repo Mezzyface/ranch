@@ -1,0 +1,114 @@
+[gd_scene load_steps=4 format=3 uid="uid://csu3ch7cmlpm"]
+
+[ext_resource type="Theme" uid="uid://dgiaiav03ru50" path="res://scenes/ui/green.tres" id="1_my4ng"]
+[ext_resource type="Script" path="res://scripts/ui/overlay_menu_controller.gd" id="2_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_hb6n1"]
+bg_color = Color(0.9411765, 0.9411765, 0.9411765, 1)
+
+[node name="OverlayMenu" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("2_script")
+
+[node name="ColorRect" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.5882353, 0.654902, 0.5529412, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="Panel" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 75)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_hb6n1")
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer/Panel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="Date" type="Label" parent="VBoxContainer/Panel/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(0.20392157, 0.30980393, 0.12156863, 1)
+theme_override_font_sizes/font_size = 32
+text = "Year 0 Week 0"
+
+[node name="Gold" type="Label" parent="VBoxContainer/Panel/MarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 8
+theme_override_colors/font_color = Color(0.20392157, 0.30980393, 0.12156863, 1)
+theme_override_font_sizes/font_size = 32
+text = "0 Gold"
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 0
+
+[node name="Facilities" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+theme = ExtResource("1_my4ng")
+theme_override_font_sizes/font_size = 32
+text = "Facilities"
+
+[node name="Shop" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 200)
+layout_mode = 2
+theme = ExtResource("1_my4ng")
+theme_override_font_sizes/font_size = 32
+text = "Shop
+"
+
+[node name="Inventory" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 150)
+layout_mode = 2
+theme = ExtResource("1_my4ng")
+theme_override_font_sizes/font_size = 32
+text = "Inventory"
+
+[node name="Stable" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 150)
+layout_mode = 2
+theme = ExtResource("1_my4ng")
+theme_override_font_sizes/font_size = 32
+text = "Stable"
+
+[node name="Menu" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 100)
+layout_mode = 2
+theme = ExtResource("1_my4ng")
+theme_override_font_sizes/font_size = 32
+text = "Menu"
+
+[node name="GameArea" type="Control" parent="VBoxContainer/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme = ExtResource("1_my4ng")

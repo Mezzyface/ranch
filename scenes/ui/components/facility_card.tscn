@@ -1,0 +1,171 @@
+[gd_scene load_steps=3 format=3 uid="uid://bqf7x8e2m4oap"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/facility_card.gd" id="2_script"]
+
+[node name="FacilityCard" type="Control"]
+custom_minimum_size = Vector2(200, 250)
+layout_mode = 3
+anchors_preset = 0
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Background"]
+layout_mode = 2
+
+[node name="FacilityIcon" type="TextureRect" parent="Background/VBoxContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FacilityName" type="Label" parent="Background/VBoxContainer"]
+clip_contents = true
+layout_mode = 2
+text = "Facility Name"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="Background/VBoxContainer"]
+layout_mode = 2
+
+[node name="CreatureContainer" type="Control" parent="Background/VBoxContainer"]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="CreaturePortrait" type="TextureRect" parent="Background/VBoxContainer/CreatureContainer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -32.0
+offset_top = -32.0
+offset_right = 32.0
+offset_bottom = 32.0
+grow_horizontal = 2
+grow_vertical = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="EmptyPortraitLabel" type="Label" parent="Background/VBoxContainer/CreatureContainer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -32.0
+offset_top = -10.0
+offset_right = 32.0
+offset_bottom = 10.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Empty"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ActivityContainer" type="HBoxContainer" parent="Background/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="ActivityIcon" type="TextureRect" parent="Background/VBoxContainer/ActivityContainer"]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ActivityLabel" type="Label" parent="Background/VBoxContainer/ActivityContainer"]
+layout_mode = 2
+text = "No Activity"
+
+[node name="FoodContainer" type="HBoxContainer" parent="Background/VBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 4
+
+[node name="FoodIcon" type="TextureRect" parent="Background/VBoxContainer/FoodContainer"]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="FoodLabel" type="Label" parent="Background/VBoxContainer/FoodContainer"]
+layout_mode = 2
+text = "No Food"
+
+[node name="ActionButton" type="Button" parent="Background/VBoxContainer"]
+layout_mode = 2
+text = "Assign"
+
+[node name="LockOverlay" type="ColorRect" parent="Background"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 0.7)
+
+[node name="LockContainer" type="VBoxContainer" parent="Background/LockOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -25.0
+offset_right = 50.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="LockIcon" type="Label" parent="Background/LockOverlay/LockContainer"]
+layout_mode = 2
+text = "🔒"
+horizontal_alignment = 1
+
+[node name="CostLabel" type="Label" parent="Background/LockOverlay/LockContainer"]
+layout_mode = 2
+text = "0 g"
+horizontal_alignment = 1
+
+[node name="UnlockButton" type="Button" parent="Background/LockOverlay/LockContainer"]
+layout_mode = 2
+text = "Unlock"
+
+[node name="HoverArea" type="Button" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+flat = true
+
+[node name="NoFoodWarning" type="ColorRect" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 2.0
+offset_top = 2.0
+offset_right = -2.0
+offset_bottom = -2.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 0, 0, 0)
+mouse_filter = 2

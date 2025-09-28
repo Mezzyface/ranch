@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="FacilityResource" load_steps=2 format=3 uid="uid://c9f2h5k8t3w7q"]
+
+[ext_resource type="Script" path="res://scripts/resources/facility_resource.gd" id="1_library_facility"]
+
+[resource]
+script = ExtResource("1_library_facility")
+facility_id = "library"
+display_name = "Study Library"
+description = "Train intelligence and discipline"
+icon_path = ""
+unlock_cost = 500
+is_unlocked = false
+supported_activities = Array[int]([2, 3])
+max_creatures = 1
