@@ -30,6 +30,11 @@ func _setup_controllers() -> void:
 		signal_bus.scene_changed.connect(_on_ui_scene_changed)
 
 func _load_initial_ui() -> void:
+	# Check if this is a new game or existing save
+	if game_controller and not game_controller.has_existing_save("default"):
+		print("MainController: New game detected - initializing...")
+		game_controller.initialize_new_game()
+
 	change_ui_scene("res://scenes/ui/main_menu.tscn")
 
 func change_ui_scene(scene_path: String) -> void:

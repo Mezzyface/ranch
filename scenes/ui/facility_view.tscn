@@ -1,7 +1,8 @@
-[gd_scene load_steps=3 format=3 uid="uid://bx7k8l2v6gaj1"]
+[gd_scene load_steps=4 format=3 uid="uid://bx7k8l2v6gaj1"]
 
 [ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
 [ext_resource type="Script" uid="uid://bw67b6coboq7u" path="res://scripts/ui/facility_view_controller.gd" id="2_script"]
+[ext_resource type="Texture2D" uid="uid://bbrbewyt72weg" path="res://assets/origbig1.png" id="3_kuctx"]
 
 [node name="FacilityView" type="Control"]
 layout_mode = 3
@@ -79,6 +80,7 @@ text = "Processing week advance..."
 [node name="ScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer"]
 layout_mode = 2
 size_flags_vertical = 3
+size_flags_stretch_ratio = 0.5
 horizontal_scroll_mode = 0
 
 [node name="FacilityGrid" type="GridContainer" parent="MarginContainer/VBoxContainer/ScrollContainer"]
@@ -87,6 +89,66 @@ size_flags_horizontal = 3
 theme_override_constants/h_separation = 20
 theme_override_constants/v_separation = 20
 columns = 3
+
+[node name="CreaturePanel" type="PanelContainer" parent="MarginContainer/VBoxContainer"]
+custom_minimum_size = Vector2(0, 250)
+layout_mode = 2
+size_flags_vertical = 3
+size_flags_stretch_ratio = 0.5
+theme_type_variation = &"CreatureBox"
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/CreaturePanel"]
+layout_mode = 2
+
+[node name="Label" type="Label" parent="MarginContainer/VBoxContainer/CreaturePanel/VBoxContainer"]
+layout_mode = 2
+text = "Unassigned Creatures"
+horizontal_alignment = 1
+
+[node name="CreatureArea" type="Control" parent="MarginContainer/VBoxContainer/CreaturePanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+custom_minimum_size = Vector2(0, 200)
+
+[node name="Background" type="TextureRect" parent="MarginContainer/VBoxContainer/CreaturePanel/VBoxContainer/CreatureArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+modulate = Color(1, 1, 1, 0.3)
+texture = ExtResource("3_kuctx")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="NextWeekButtonOverlay" type="Control" parent="."]
+z_index = 100
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="NextWeekButton" type="Button" parent="NextWeekButtonOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -120.0
+offset_top = -25.0
+offset_right = 120.0
+offset_bottom = 25.0
+grow_horizontal = 2
+grow_vertical = 2
+tooltip_text = "Tutorial conditions not yet met"
+theme_override_font_sizes/font_size = 24
+disabled = true
+text = "Next Week"
 
 [node name="NotificationPanel" type="PanelContainer" parent="."]
 visible = false
@@ -115,4 +177,5 @@ horizontal_alignment = 1
 layout_mode = 2
 text = "OK"
 
+[connection signal="pressed" from="NextWeekButtonOverlay/NextWeekButton" to="." method="_on_next_week_pressed"]
 [connection signal="pressed" from="NotificationPanel/VBoxContainer/CloseButton" to="." method="_on_notification_close"]

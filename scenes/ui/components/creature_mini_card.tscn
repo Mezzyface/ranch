@@ -1,0 +1,43 @@
+[gd_scene load_steps=3 format=3 uid="uid://cxk6t5kq7rn2v"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/creature_mini_card.gd" id="2_script"]
+
+[node name="CreatureMiniCard" type="Control"]
+custom_minimum_size = Vector2(100, 120)
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 1
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="PanelContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 1
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Background"]
+layout_mode = 2
+
+[node name="Portrait" type="TextureRect" parent="Background/VBoxContainer"]
+custom_minimum_size = Vector2(48, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+expand_mode = 1
+stretch_mode = 5
+
+[node name="NameLabel" type="Label" parent="Background/VBoxContainer"]
+layout_mode = 2
+text = "Creature"
+horizontal_alignment = 1
+autowrap_mode = 2
+
+[node name="AgeLabel" type="Label" parent="Background/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 10
+text = "Age"
+horizontal_alignment = 1

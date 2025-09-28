@@ -2,9 +2,9 @@ extends Node
 class_name ResourceTracker
 
 # Currency tracking
-var gold: int = 500  # Starting gold from design doc
+var gold: int = 0  # Starting gold now provided by starter popup
 var transaction_history: Array[Dictionary] = []
-var total_earned: int = 500
+var total_earned: int = 0
 var total_spent: int = 0
 
 # Inventory tracking
@@ -29,8 +29,8 @@ func _ready() -> void:
 		if signal_bus.has_signal("item_purchased"):
 			signal_bus.item_purchased.connect(_on_item_purchased)
 
-	# Initialize starting items if inventory is empty (new game)
-	_initialize_starting_items()
+	# NOTE: Starting items now provided by starter popup system
+	# _initialize_starting_items()
 
 func _initialize_starting_items() -> void:
 	"""Initialize starting items for new players."""

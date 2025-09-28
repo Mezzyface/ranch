@@ -2,7 +2,6 @@ class_name PlayerCollection
 extends Node
 
 # === CONSTANTS ===
-const MAX_ACTIVE_CREATURES: int = 6
 const COLLECTION_SAVE_KEY: String = "player_collection"
 
 # === MILESTONES ===
@@ -20,10 +19,12 @@ var signal_bus: SignalBus = null
 var save_system: Node = null
 var age_system: Node = null
 var tag_system: Node = null
+var facility_system: Node = null
 
 # === COLLECTION DATA ===
-var active_roster: Array[CreatureData] = []
-var stable_collection: Dictionary = {}  # creature_id -> CreatureData
+# Note: "Active" creatures are now those assigned to facilities (tracked by FacilitySystem)
+# All owned creatures are stored in the main collection
+var creature_collection: Dictionary = {}  # creature_id -> CreatureData
 var collection_metadata: Dictionary = {
 	"total_acquired": 0,
 	"total_released": 0,
@@ -32,9 +33,14 @@ var collection_metadata: Dictionary = {
 	"milestones_reached": []
 }
 
+# Legacy active roster system (deprecated but still referenced)
+const MAX_ACTIVE_CREATURES: int = 6
+var active_roster: Array[CreatureData] = []
+var stable_collection: Dictionary = {}  # creature_id -> CreatureData
+var _active_lookup: Dictionary = {}     # creature_id -> index in active_roster
+var _stable_lookup: Dictionary = {}     # creature_id -> CreatureData
+
 # === PERFORMANCE OPTIMIZATIONS ===
-var _active_lookup: Dictionary = {}  # creature_id -> index in active_roster
-var _stable_lookup: Dictionary = {}  # creature_id -> cached for fast access
 var _stats_cache: Dictionary = {}    # cached collection statistics
 var _stats_cache_dirty: bool = true
 var _quiet_mode: bool = false        # Reduce logging during bulk operations
@@ -51,8 +57,8 @@ func _ready() -> void:
 
 	print("PlayerCollection initialized with active/stable roster management")
 
-	# Initialize starting creature if collection is empty (new game)
-	call_deferred("_initialize_starting_creature")
+	# NOTE: Starting creature initialization now handled by starter popup system
+	# call_deferred("_initialize_starting_creature")
 
 # === QUIET MODE CONTROL ===
 func set_quiet_mode(enabled: bool) -> void:
@@ -68,43 +74,40 @@ func _ensure_systems_loaded() -> void:
 		age_system = GameCore.get_system("age")
 	if tag_system == null:
 		tag_system = GameCore.get_system("tag")
+	if facility_system == null:
+		facility_system = GameCore.get_system("facility")
 
-# === ACTIVE ROSTER MANAGEMENT ===
-func add_to_active(creature_data: CreatureData) -> bool:
-	"""Add a creature to the active roster (6 creature limit)."""
+# === CREATURE COLLECTION MANAGEMENT ===
+func acquire_creature(creature_data: CreatureData, source: String) -> bool:
+	"""Add a creature to the player's collection."""
 	if creature_data == null:
-		push_error("PlayerCollection: Cannot add null creature to active roster")
+		push_error("PlayerCollection: Cannot acquire null creature")
 		return false
 
-	if active_roster.size() >= MAX_ACTIVE_CREATURES:
-		push_error("PlayerCollection: Active roster is full (%d/%d)" % [active_roster.size(), MAX_ACTIVE_CREATURES])
-		return false
-
-	if creature_data.id in _active_lookup:
-		push_warning("PlayerCollection: Creature '%s' already in active roster" % creature_data.creature_name)
+	if creature_data.id in creature_collection:
+		push_warning("PlayerCollection: Creature '%s' already in collection" % creature_data.creature_name)
 		return true
 
-	# Remove from stable collection if present
-	if creature_data.id in stable_collection:
-		stable_collection.erase(creature_data.id)
-		_stable_lookup.erase(creature_data.id)
-		if signal_bus:
-			signal_bus.emit_stable_collection_updated("removed", creature_data.id)
-
-	# Add to active roster
-	active_roster.append(creature_data)
-	_active_lookup[creature_data.id] = active_roster.size() - 1
+	# Add to main collection
+	creature_collection[creature_data.id] = creature_data
 	_invalidate_stats_cache()
 
 	# Update species tracking
 	_update_species_count(creature_data.species_id, 1)
 
+	# Update metadata
+	collection_metadata.total_acquired += 1
+	_add_to_acquisition_history(creature_data, source)
+	_check_milestones()
+
 	# Emit signals
 	if signal_bus:
-		signal_bus.emit_creature_activated(creature_data)
-		signal_bus.emit_active_roster_changed(active_roster.duplicate())
+		signal_bus.emit_creature_acquired(creature_data, source)
+		# Update active roster signal to use facility-assigned creatures
+		signal_bus.emit_active_roster_changed(get_active_creatures())
 
-	print("PlayerCollection: Added '%s' to active roster (%d/%d)" % [creature_data.creature_name, active_roster.size(), MAX_ACTIVE_CREATURES])
+	if not _quiet_mode:
+		print("PlayerCollection: Acquired '%s' from '%s'" % [creature_data.creature_name, source])
 	return true
 
 func remove_from_active(creature_id: String) -> bool:
@@ -157,17 +160,48 @@ func move_to_stable(creature_id: String) -> bool:
 	return add_to_stable(creature_data)
 
 func get_active_creatures() -> Array[CreatureData]:
-	"""Get a copy of the active roster."""
-	return active_roster.duplicate()
+	"""Get creatures that are assigned to facilities (now considered 'active')."""
+	_ensure_systems_loaded()
+	var active_creatures: Array[CreatureData] = []
+
+	if facility_system:
+		# Get all facility assignments and collect the assigned creatures
+		var assignments = facility_system.facility_assignments
+		for facility_id in assignments:
+			var assignment = assignments[facility_id]
+			var creature_id = assignment.creature_id
+			if creature_id in creature_collection:
+				active_creatures.append(creature_collection[creature_id])
+
+	return active_creatures
+
+func get_all_creatures() -> Array[CreatureData]:
+	"""Get all creatures in the collection."""
+	var all_creatures: Array[CreatureData] = []
+	for creature_data in creature_collection.values():
+		all_creatures.append(creature_data)
+	return all_creatures
 
 func get_available_for_quest(required_tags: Array[String]) -> Array[CreatureData]:
-	"""Get active creatures that meet quest requirements."""
+	"""Get creatures available for quests (not assigned to facilities)."""
 	var available: Array[CreatureData] = []
-
 	_ensure_systems_loaded()
 
-	for creature in active_roster:
+	# Get creatures not assigned to facilities
+	var active_creature_ids: Array[String] = []
+	if facility_system:
+		var assignments = facility_system.facility_assignments
+		for facility_id in assignments:
+			var assignment = assignments[facility_id]
+			active_creature_ids.append(assignment.creature_id)
+
+	# Check all creatures for quest availability
+	for creature in creature_collection.values():
 		if creature == null:
+			continue
+
+		# Skip creatures assigned to facilities
+		if creature.id in active_creature_ids:
 			continue
 
 		# Check if creature meets tag requirements
@@ -179,6 +213,37 @@ func get_available_for_quest(required_tags: Array[String]) -> Array[CreatureData
 			available.append(creature)
 
 	return available
+
+# === LEGACY ACTIVE ROSTER METHODS ===
+func add_to_active(creature_data: CreatureData) -> bool:
+	"""Add a creature to the active roster."""
+	if creature_data == null:
+		push_error("PlayerCollection: Cannot add null creature to active roster")
+		return false
+
+	if active_roster.size() >= MAX_ACTIVE_CREATURES:
+		push_error("PlayerCollection: Active roster is full (%d/%d)" % [active_roster.size(), MAX_ACTIVE_CREATURES])
+		return false
+
+	if creature_data.id in _active_lookup:
+		push_warning("PlayerCollection: Creature '%s' already in active roster" % creature_data.creature_name)
+		return true
+
+	# Add to active roster
+	active_roster.append(creature_data)
+	_active_lookup[creature_data.id] = active_roster.size() - 1
+	_invalidate_stats_cache()
+
+	# Add to main collection as well
+	creature_collection[creature_data.id] = creature_data
+
+	# Emit signals
+	if signal_bus:
+		signal_bus.emit_creature_activated(creature_data)
+		signal_bus.emit_active_roster_changed(active_roster.duplicate())
+
+	print("PlayerCollection: Added '%s' to active roster (%d/%d)" % [creature_data.creature_name, active_roster.size(), MAX_ACTIVE_CREATURES])
+	return true
 
 # === STABLE COLLECTION MANAGEMENT ===
 func add_to_stable(creature_data: CreatureData) -> bool:
@@ -305,47 +370,6 @@ func search_creatures(criteria: Dictionary) -> Array[CreatureData]:
 	return results
 
 # === CREATURE LIFECYCLE MANAGEMENT ===
-func acquire_creature(creature_data: CreatureData, source: String) -> bool:
-	"""Acquire a new creature from various sources."""
-	if creature_data == null:
-		push_error("PlayerCollection: Cannot acquire null creature")
-		return false
-
-	if source.is_empty():
-		source = "unknown"
-
-	# Record acquisition
-	collection_metadata.total_acquired += 1
-	var acquisition_record: Dictionary = {
-		"creature_id": creature_data.id,
-		"creature_name": creature_data.creature_name,
-		"species_id": creature_data.species_id,
-		"source": source,
-		"timestamp": Time.get_unix_time_from_system()
-	}
-	collection_metadata.acquisition_history.append(acquisition_record)
-
-	# Species counts are now tracked in add_to_active/add_to_stable methods
-
-	# Add to active roster if space, otherwise to stable
-	var success: bool = false
-	if active_roster.size() < MAX_ACTIVE_CREATURES:
-		success = add_to_active(creature_data)
-	else:
-		success = add_to_stable(creature_data)
-
-	if success:
-		# Check for milestones
-		_check_milestones()
-
-		# Emit acquisition signal
-		if signal_bus:
-			signal_bus.emit_creature_acquired(creature_data, source)
-
-		print("PlayerCollection: Acquired '%s' from '%s'" % [creature_data.creature_name, source])
-
-	return success
-
 func release_creature(creature_id: String, reason: String) -> bool:
 	"""Release a creature from the collection."""
 	if creature_id.is_empty():
@@ -388,19 +412,13 @@ func release_creature(creature_id: String, reason: String) -> bool:
 
 # === CREATURE LOOKUP ===
 func get_creature_by_id(creature_id: String) -> CreatureData:
-	"""Get a creature by ID from either active roster or stable collection."""
+	"""Get a creature by ID from the main collection."""
 	if creature_id.is_empty():
 		return null
 
-	# Check active roster first
-	if creature_id in _active_lookup:
-		var index = _active_lookup[creature_id]
-		if index < active_roster.size():
-			return active_roster[index]
-
-	# Check stable collection
-	if creature_id in stable_collection:
-		return stable_collection[creature_id]
+	# Check main creature collection
+	if creature_id in creature_collection:
+		return creature_collection[creature_id]
 
 	return null
 
@@ -676,3 +694,14 @@ func _rebuild_stable_lookup() -> void:
 	_stable_lookup.clear()
 	for creature_id in stable_collection:
 		_stable_lookup[creature_id] = stable_collection[creature_id]
+
+func _add_to_acquisition_history(creature_data: CreatureData, source: String) -> void:
+	"""Add acquisition record to history."""
+	var acquisition_record: Dictionary = {
+		"creature_id": creature_data.id,
+		"creature_name": creature_data.creature_name,
+		"species_id": creature_data.species_id,
+		"source": source,
+		"timestamp": Time.get_unix_time_from_system()
+	}
+	collection_metadata.acquisition_history.append(acquisition_record)

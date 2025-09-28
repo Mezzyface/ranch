@@ -119,6 +119,34 @@ func load_game(save_name: String = "default") -> bool:
 		return _save_system.load_game_state(save_name)
 	return false
 
+# === NEW GAME INITIALIZATION ===
+
+func has_existing_save(save_name: String = "default") -> bool:
+	"""Check if a save file exists for detecting new game vs load game"""
+	if _save_system:
+		return _save_system._validate_slot_exists(save_name)
+	return false
+
+func initialize_new_game() -> bool:
+	"""Initialize a new game flow - resources handled by starter popup"""
+	print("GameController: Initializing new game...")
+
+	# 1. Initialize tutorial state (placeholder for now)
+	_initialize_tutorial_state()
+
+	# 2. Emit new game started signal (triggers starter popup which handles resources)
+	if _signal_bus:
+		_signal_bus.emit_new_game_started()
+		print("GameController: Emitted new_game_started signal")
+
+	print("GameController: New game initialization completed")
+	return true
+
+func _initialize_tutorial_state() -> void:
+	"""Initialize tutorial progression state (placeholder)"""
+	# TODO: Implement tutorial system in future tasks
+	print("GameController: Tutorial state initialized (placeholder)")
+
 func _on_week_advanced(new_week: int, total_weeks: int) -> void:
 	_signal_bus.emit_time_updated()
 	_signal_bus.emit_game_state_changed()

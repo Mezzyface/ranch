@@ -16,11 +16,14 @@ var resource_tracker
 var time_system
 var signal_bus
 var current_view: Control = null
+var starter_popup_scene = preload("res://scenes/ui/starter_popup.tscn")
+var tutorial_completed: bool = false
 
 func _ready() -> void:
 	_initialize_systems()
 	_setup_signals()
 	_connect_buttons()
+	_set_navigation_visibility(tutorial_completed)
 	_load_default_view()
 	_update_ui()
 
@@ -42,6 +45,14 @@ func _setup_signals() -> void:
 			if not signal_bus.week_advanced.is_connected(_on_week_advanced):
 				signal_bus.week_advanced.connect(_on_week_advanced)
 				print("OverlayMenu: Connected to week_advanced signal")
+		if signal_bus.has_signal("new_game_started"):
+			if not signal_bus.new_game_started.is_connected(_on_new_game_started):
+				signal_bus.new_game_started.connect(_on_new_game_started)
+				print("OverlayMenu: Connected to new_game_started signal")
+		if signal_bus.has_signal("tutorial_completed"):
+			if not signal_bus.tutorial_completed.is_connected(_on_tutorial_completed):
+				signal_bus.tutorial_completed.connect(_on_tutorial_completed)
+				print("OverlayMenu: Connected to tutorial_completed signal")
 	else:
 		print("OverlayMenu: SignalBus not available, retrying in next frame")
 		# Retry signal setup in the next frame
@@ -136,3 +147,42 @@ func _on_gold_changed(old_amount: int, new_amount: int, change: int) -> void:
 
 func _on_week_advanced(new_week: int, total_weeks: int) -> void:
 	_update_date_display()
+
+func _on_new_game_started() -> void:
+	print("OverlayMenu: New game started, showing starter popup")
+	_show_starter_popup()
+
+func _show_starter_popup() -> void:
+	"""Create and display the starter popup."""
+	if starter_popup_scene:
+		var popup_instance = starter_popup_scene.instantiate()
+		if popup_instance:
+			# Add popup as a child of this control (overlays the game area)
+			add_child(popup_instance)
+
+			# Ensure the popup appears above all other UI elements including Next Week button
+			popup_instance.z_index = 1000
+
+			popup_instance.show_popup()
+			print("OverlayMenu: Starter popup displayed")
+
+func _set_navigation_visibility(visible: bool) -> void:
+	"""Show or hide navigation buttons based on tutorial state."""
+	if facilities_button:
+		facilities_button.visible = visible
+	if shop_button:
+		shop_button.visible = visible
+	if inventory_button:
+		inventory_button.visible = visible
+	if stable_button:
+		stable_button.visible = visible
+	if menu_button:
+		menu_button.visible = visible
+
+	print("OverlayMenu: Navigation buttons visibility set to %s" % visible)
+
+func _on_tutorial_completed() -> void:
+	"""Handle tutorial completion signal to show navigation buttons."""
+	print("OverlayMenu: Tutorial completed, showing navigation buttons")
+	tutorial_completed = true
+	_set_navigation_visibility(true)

@@ -13,16 +13,14 @@ signal unlock_pressed(facility_id: String)
 @onready var background: PanelContainer = $Background
 @onready var facility_icon: TextureRect = $Background/VBoxContainer/FacilityIcon
 @onready var facility_name: Label = $Background/VBoxContainer/FacilityName
-@onready var creature_container: Control = $Background/VBoxContainer/CreatureContainer
-@onready var creature_portrait: TextureRect = $Background/VBoxContainer/CreatureContainer/CreaturePortrait
-@onready var empty_portrait_label: Label = $Background/VBoxContainer/CreatureContainer/EmptyPortraitLabel
-@onready var activity_container: HBoxContainer = $Background/VBoxContainer/ActivityContainer
-@onready var activity_icon: TextureRect = $Background/VBoxContainer/ActivityContainer/ActivityIcon
-@onready var activity_label: Label = $Background/VBoxContainer/ActivityContainer/ActivityLabel
-@onready var food_container: HBoxContainer = $Background/VBoxContainer/FoodContainer
-@onready var food_icon: TextureRect = $Background/VBoxContainer/FoodContainer/FoodIcon
-@onready var food_label: Label = $Background/VBoxContainer/FoodContainer/FoodLabel
-@onready var action_button: Button = $Background/VBoxContainer/ActionButton
+@onready var creature_container: Control = $Background/CreatureContainer if has_node("Background/CreatureContainer") else null
+@onready var creature_portrait: TextureRect = $Background/CreatureContainer/CreaturePortrait if has_node("Background/CreatureContainer/CreaturePortrait") else null
+@onready var empty_portrait_label: Label = $Background/CreatureContainer/EmptyPortraitLabel if has_node("Background/CreatureContainer/EmptyPortraitLabel") else null
+@onready var activity_container: HBoxContainer = $Background/VBoxContainer/HBoxContainer
+@onready var activity_icon: TextureRect = $Background/VBoxContainer/HBoxContainer/ActivityIcon if has_node("Background/VBoxContainer/HBoxContainer/ActivityIcon") else null
+@onready var food_button: Button = $Background/VBoxContainer/HBoxContainer/Food if has_node("Background/VBoxContainer/HBoxContainer/Food") else null
+@onready var activity_button: Button = $Background/VBoxContainer/HBoxContainer/Activity if has_node("Background/VBoxContainer/HBoxContainer/Activity") else null
+@onready var action_button: Button = $Background/VBoxContainer/ActionButton if has_node("Background/VBoxContainer/ActionButton") else null
 @onready var lock_overlay: ColorRect = $Background/LockOverlay
 @onready var cost_label: Label = $Background/LockOverlay/LockContainer/CostLabel
 @onready var unlock_button: Button = $Background/LockOverlay/LockContainer/UnlockButton
@@ -129,41 +127,32 @@ func _update_assignment_info() -> void:
 			empty_portrait_label.visible = true
 
 	# Update activity info
-	if activity_container and activity_label and activity_icon:
+	if activity_button:
 		if is_assigned:
-			activity_label.text = current_assignment.get_activity_name()
+			# Could update activity button appearance here
 			_load_activity_icon()
 		else:
-			activity_label.text = "No Activity"
-			activity_icon.texture = null
+			# Reset activity button
+			pass
 
 	# Update food info
-	if food_container and food_label and food_icon:
+	if food_button:
 		if is_assigned:
 			_update_food_display()
 		else:
-			food_label.text = "No Food"
-			food_icon.texture = null
+			# Reset food button
+			pass
 
 func _update_food_display() -> void:
 	if not current_assignment:
 		return
 
-	var food_system = GameCore.get_system("food")
-	if not food_system:
-		food_label.text = "Food System Error"
-		_missing_food = true
-		return
-
-	# Get food type name - assuming FoodSystem has a method to get food names
-	var food_type_name = _get_food_type_name(current_assignment.food_type)
-	food_label.text = food_type_name
-
 	# Check if food is available
 	_missing_food = not _has_required_food()
 
-	# Load food icon
-	_load_food_icon()
+	# Update food button icon if needed
+	if food_button:
+		_load_food_icon()
 
 func _update_action_button() -> void:
 	if not action_button or not facility_resource:
@@ -236,35 +225,30 @@ func _load_activity_icon() -> void:
 	activity_icon.texture = texture
 
 func _load_food_icon() -> void:
-	if not food_icon or not current_assignment:
+	if not food_button or not current_assignment:
 		return
 
 	var item_manager = GameCore.get_system("item_manager")
 	if not item_manager:
-		_set_fallback_food_icon()
 		return
 
-	# Get food item based on food type - this needs to be mapped to actual items
+	# Get food item based on food type
 	var food_item_id = _get_food_item_id(current_assignment.food_type)
 	if food_item_id.is_empty():
-		_set_fallback_food_icon()
 		return
 
 	var item_resource = item_manager.get_item_resource(food_item_id)
 	if not item_resource:
-		_set_fallback_food_icon()
 		return
 
 	var icon_path = item_resource.icon_path
-	if icon_path.is_empty() or not ResourceLoader.exists(icon_path):
-		_set_fallback_food_icon()
-		return
-
-	var texture = load(icon_path)
-	if texture is Texture2D:
-		food_icon.texture = texture
-	else:
-		_set_fallback_food_icon()
+	if not icon_path.is_empty() and ResourceLoader.exists(icon_path):
+		var texture = load(icon_path)
+		if texture is Texture2D:
+			# Update the food button's texture rect
+			var texture_rect = food_button.get_node_or_null("MarginContainer/TextureRect")
+			if texture_rect:
+				texture_rect.texture = texture
 
 func _set_fallback_facility_icon() -> void:
 	if not facility_icon:
@@ -287,14 +271,16 @@ func _set_fallback_creature_portrait() -> void:
 	creature_portrait.texture = texture
 
 func _set_fallback_food_icon() -> void:
-	if not food_icon:
+	if not food_button:
 		return
 
-	var image = Image.create(16, 16, false, Image.FORMAT_RGBA8)
-	image.fill(Color(0.6, 0.8, 0.4, 1))  # Green for food
-	var texture = ImageTexture.new()
-	texture.set_image(image)
-	food_icon.texture = texture
+	var texture_rect = food_button.get_node_or_null("MarginContainer/TextureRect")
+	if texture_rect:
+		var image = Image.create(16, 16, false, Image.FORMAT_RGBA8)
+		image.fill(Color(0.6, 0.8, 0.4, 1))  # Green for food
+		var texture = ImageTexture.new()
+		texture.set_image(image)
+		texture_rect.texture = texture
 
 func _get_activity_color(activity: int) -> Color:
 	match activity:
@@ -404,3 +390,86 @@ func is_assigned() -> bool:
 func set_food_warning(has_warning: bool) -> void:
 	_missing_food = has_warning
 	_update_visual_state()
+
+func can_accept_creature() -> bool:
+	"""Check if this facility can accept a new creature assignment"""
+	if not facility_resource:
+		return false
+
+	# Check if unlocked
+	var is_unlocked: bool
+	if _has_unlock_override:
+		is_unlocked = _override_unlock_status
+	else:
+		is_unlocked = facility_resource.is_unlocked
+
+	if not is_unlocked:
+		return false
+
+	# Check if already has assignment
+	if current_assignment and current_assignment.is_valid():
+		return false  # Already occupied
+
+	return true
+
+func _can_drop_data(position: Vector2, data: Variant) -> bool:
+	"""Check if we can accept dropped data"""
+	if not can_accept_creature():
+		return false
+
+	# Check if it's creature data
+	if data is Dictionary and data.has("creature_data"):
+		var creature = data.get("creature_data")
+		if creature is CreatureData:
+			return true
+	return false
+
+func _drop_data(position: Vector2, data: Variant) -> void:
+	"""Handle dropped data"""
+	if data is Dictionary and data.has("creature_data"):
+		var creature = data.get("creature_data") as CreatureData
+		if creature:
+			# Show assignment dialog for this creature
+			_show_assignment_dialog_for_creature(creature)
+
+func _show_assignment_dialog_for_creature(creature_data: CreatureData) -> void:
+	"""Open assignment dialog with pre-selected creature"""
+	if not facility_resource or not creature_data:
+		return
+
+	# Emit the signal to open dialog (handled by facility_view_controller)
+	# The controller will handle opening the dialog and pre-selecting the creature
+	assign_pressed.emit(facility_resource.facility_id)
+
+	# Store dropped creature data for the controller to use
+	# This approach uses a temporary property that the controller can check
+	set_meta("dropped_creature_id", creature_data.id)
+
+func _notification(what: int) -> void:
+	"""Handle drag and drop visual feedback"""
+	match what:
+		NOTIFICATION_DRAG_BEGIN:
+			# Check if we can accept the drag data
+			var viewport = get_viewport()
+			if viewport:
+				var drag_data = viewport.gui_get_drag_data()
+				if _can_drop_data(Vector2.ZERO, drag_data):
+					# Highlight as valid drop target
+					modulate = Color(1.1, 1.1, 1.1, 1.0)
+					if background:
+						var tween = create_tween()
+						tween.tween_property(background, "scale", Vector2(1.05, 1.05), 0.1)
+		NOTIFICATION_DRAG_END:
+			# Reset visual state
+			modulate = Color.WHITE
+			if background:
+				var tween = create_tween()
+				tween.tween_property(background, "scale", Vector2.ONE, 0.1)
+
+func get_dropped_creature_id() -> String:
+	"""Get and clear any dropped creature ID"""
+	if has_meta("dropped_creature_id"):
+		var id = get_meta("dropped_creature_id")
+		remove_meta("dropped_creature_id")
+		return id
+	return ""

@@ -119,6 +119,9 @@ signal facility_assignment_requested(facility_id: String)
 
 # === GAME STATE SIGNALS ===
 # GameController state signals (migrated from GameController)
+signal new_game_started()
+signal starter_popup_closed()
+signal tutorial_completed()
 signal game_state_changed()
 signal creatures_updated()
 signal resources_updated()
@@ -766,6 +769,24 @@ func _setup_signal_validation() -> void:
 	pass
 
 # === GAME STATE SIGNAL EMISSION ===
+func emit_new_game_started() -> void:
+	"""Emit new_game_started signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting new_game_started")
+	new_game_started.emit()
+
+func emit_starter_popup_closed() -> void:
+	"""Emit starter_popup_closed signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting starter_popup_closed")
+	starter_popup_closed.emit()
+
+func emit_tutorial_completed() -> void:
+	"""Emit tutorial_completed signal."""
+	if _debug_mode:
+		print("SignalBus: Emitting tutorial_completed")
+	tutorial_completed.emit()
+
 func emit_game_state_changed() -> void:
 	"""Emit game_state_changed signal."""
 	if _debug_mode:

@@ -22,7 +22,14 @@ func _setup_navigation() -> void:
 func _on_new_game_pressed() -> void:
 	print("MainMenu: Starting new game")
 	if _ui_manager:
-		_ui_manager.change_scene("res://scenes/ui/facility_view.tscn")
+		# Navigate to overlay menu (main game interface)
+		_ui_manager.change_scene("res://scenes/ui/overlay_menu.tscn")
+
+		# Emit new game started signal to trigger starter popup
+		var signal_bus = GameCore.get_signal_bus()
+		if signal_bus:
+			signal_bus.emit_new_game_started()
+			print("MainMenu: Emitted new_game_started signal")
 
 func _on_load_game_pressed() -> void:
 	print("MainMenu: Loading game")

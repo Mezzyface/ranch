@@ -74,6 +74,7 @@ layout_mode = 2
 theme_override_constants/separation = 0
 
 [node name="Facilities" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 theme = ExtResource("1_my4ng")
@@ -81,6 +82,7 @@ theme_override_font_sizes/font_size = 32
 text = "Facilities"
 
 [node name="Shop" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(200, 200)
 layout_mode = 2
 theme = ExtResource("1_my4ng")
@@ -89,6 +91,7 @@ text = "Shop
 "
 
 [node name="Inventory" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(200, 150)
 layout_mode = 2
 theme = ExtResource("1_my4ng")
@@ -96,6 +99,7 @@ theme_override_font_sizes/font_size = 32
 text = "Inventory"
 
 [node name="Stable" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(200, 150)
 layout_mode = 2
 theme = ExtResource("1_my4ng")
@@ -103,6 +107,7 @@ theme_override_font_sizes/font_size = 32
 text = "Stable"
 
 [node name="Menu" type="Button" parent="VBoxContainer/HBoxContainer/VBoxContainer"]
+visible = false
 custom_minimum_size = Vector2(200, 100)
 layout_mode = 2
 theme = ExtResource("1_my4ng")

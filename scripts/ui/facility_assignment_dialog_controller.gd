@@ -76,6 +76,20 @@ func setup(facility: FacilityResource) -> void:
 	populate_food_items()
 	_update_confirm_button()
 
+func set_selected_creature(creature_id: String) -> void:
+	"""Pre-select a specific creature in the dialog"""
+	selected_creature_id = creature_id
+
+	# Find and select the creature button
+	for button in creature_buttons:
+		if is_instance_valid(button) and button.has_meta("creature_id"):
+			if button.get_meta("creature_id") == creature_id:
+				button.button_pressed = true
+				button.grab_focus()  # Optional: focus the button for better visibility
+				break
+
+	_update_confirm_button()
+
 func _reset_selections() -> void:
 	"""Reset all selection state"""
 	selected_creature_id = ""
@@ -94,11 +108,17 @@ func populate_creatures() -> void:
 	if not player_collection:
 		return
 
+	# Get both active and stable creatures for assignment
 	var active_creatures = player_collection.get_active_creatures()
+	var stable_creatures = player_collection.get_stable_creatures()
+	var all_creatures: Array[CreatureData] = []
+	all_creatures.append_array(active_creatures)
+	all_creatures.append_array(stable_creatures)
+
 	var available_creatures: Array[CreatureData] = []
 
 	# Filter out creatures already assigned to facilities
-	for creature in active_creatures:
+	for creature in all_creatures:
 		if not _is_creature_assigned_to_facility(creature.id):
 			available_creatures.append(creature)
 
@@ -134,9 +154,23 @@ func _create_creature_button(creature: CreatureData) -> void:
 	button.toggle_mode = true
 	button.button_group = creature_button_group
 
-	# Set button text with creature info
+	# Determine if creature is in active roster or stable collection
+	var location_text = ""
+	if player_collection:
+		var active_creatures = player_collection.get_active_creatures()
+		var is_active = false
+		for active_creature in active_creatures:
+			if active_creature.id == creature.id:
+				is_active = true
+				break
+		location_text = " [Active]" if is_active else " [Stable]"
+
+	# Set button text with creature info and location
 	var age_category_name = _get_age_category_name(creature.get_age_category())
-	button.text = "%s (%s, %d weeks)" % [creature.creature_name, age_category_name, creature.age_weeks]
+	button.text = "%s (%s, %d weeks)%s" % [creature.creature_name, age_category_name, creature.age_weeks, location_text]
+
+	# Store creature ID as metadata for later reference
+	button.set_meta("creature_id", creature.id)
 
 	# Connect signal with correct parameter order
 	button.toggled.connect(func(pressed: bool): _on_creature_button_toggled(creature.id, pressed))
