@@ -1,356 +1,332 @@
 extends Node
 class_name ShopSystem
 
-# ShopSystem - Manages all vendors and shop transactions
-# Handles 6 specialized vendors with dynamic inventory management using existing ItemManager
+# Shop system for creature management game
+# Manages item inventory, pricing, and purchasing
+
+# === PROPERTIES ===
+var shop_inventory: Dictionary = {}  # category -> Array[ShopItem]
+var restock_timer: int = 1  # weeks until restock
+var discount_rate: float = 0.0  # current sale percentage (0.0 - 1.0)
+var purchase_history: Array[String] = []  # item IDs purchased
 
 # === CONSTANTS ===
-const VENDORS_DATA_PATH: String = "res://data/vendors/"
-const FILE_EXTENSION: String = ".tres"
+const MAX_PURCHASE_HISTORY: int = 100
+const DEFAULT_RESTOCK_WEEKS: int = 4
+const SHOP_CATEGORIES: Array[String] = ["food", "equipment", "consumable", "material"]
 
-# === VENDOR DATA ===
-var vendor_registry: Dictionary = {}  # vendor_id -> VendorResource
-var vendor_inventories: Dictionary = {}  # vendor_id -> Dictionary[item_id -> stock_info]
-var vendor_unlock_status: Dictionary = {}  # vendor_id -> bool
+# === SHOP ITEM DATA STRUCTURE ===
+class ShopItem:
+	var item_id: String
+	var quantity: int
+	var base_price: int
+	var current_price: int
+	var category: String
+	var in_stock: bool
 
-# === TRANSACTION TRACKING ===
-var transaction_history: Array[Dictionary] = []
-var weekly_purchase_counts: Dictionary = {}  # item_id -> count_this_week
-var vendor_reputation: Dictionary = {}  # vendor_id -> reputation_points
+	func _init(id: String, qty: int, price: int, cat: String) -> void:
+		item_id = id
+		quantity = qty
+		base_price = price
+		current_price = price
+		category = cat
+		in_stock = qty > 0
 
-# === CACHING & PERFORMANCE ===
-var _price_cache: Dictionary = {}
-var _last_restock_week: int = 0
-
-func _init() -> void:
+func _ready() -> void:
 	print("ShopSystem initialized")
-	_load_all_vendors()
-	_initialize_vendor_inventories()
-	_setup_weekly_restock()
+	_initialize_shop()
+	_connect_signals()
 
-func _load_all_vendors() -> void:
-	"""Load all vendor resources from data directory."""
-	var dir: DirAccess = DirAccess.open(VENDORS_DATA_PATH)
-	if not dir:
-		push_warning("ShopSystem: Vendors data directory not found: %s" % VENDORS_DATA_PATH)
+func _initialize_shop() -> void:
+	"""Initialize shop with default inventory."""
+	var item_manager = GameCore.get_system("item_manager")
+	if not item_manager:
+		push_error("ShopSystem: ItemManager required but not loaded")
 		return
 
-	dir.list_dir_begin()
-	var file_name: String = dir.get_next()
+	# Initialize categories
+	for category in SHOP_CATEGORIES:
+		shop_inventory[category] = []
 
-	while file_name != "":
-		if file_name.ends_with(FILE_EXTENSION):
-			var vendor_path: String = VENDORS_DATA_PATH + file_name
-			_load_vendor_from_file(vendor_path)
-		file_name = dir.get_next()
+	# Load initial inventory from ItemManager
+	_stock_initial_inventory()
 
-	print("ShopSystem: Loaded %d vendors" % vendor_registry.size())
+	print("ShopSystem: Shop initialized with %d categories" % shop_inventory.size())
 
-func _load_vendor_from_file(file_path: String) -> bool:
-	"""Load a single vendor from file."""
-	var vendor: VendorResource = load(file_path) as VendorResource
-	if not vendor:
-		push_error("ShopSystem: Failed to load vendor from %s" % file_path)
+func _connect_signals() -> void:
+	"""Connect to relevant signals."""
+	var signal_bus = GameCore.get_signal_bus()
+	if signal_bus:
+		# Connect to time progression for restocking
+		if signal_bus.has_signal("week_advanced"):
+			signal_bus.week_advanced.connect(_on_week_advanced)
+
+func _stock_initial_inventory() -> void:
+	"""Stock initial inventory with items from ItemManager."""
+	var item_manager = GameCore.get_system("item_manager")
+	if not item_manager:
+		return
+
+	# Stock basic food items
+	_add_shop_item("grain", 20, 5, "food")
+	_add_shop_item("hay", 15, 8, "food")
+	_add_shop_item("berries", 10, 12, "food")
+	_add_shop_item("water", 25, 3, "food")
+
+	# Stock some consumables if they exist
+	var all_items = item_manager.get_all_item_resources()
+	for item_resource in all_items:
+		# Use string comparison for now to avoid GlobalEnums dependency
+		var item_type_str = item_manager.get_item_type(item_resource.item_id)
+		if item_type_str == "consumable":
+			_add_shop_item(item_resource.item_id, 5, item_resource.base_price, "consumable")
+		elif item_type_str == "material":
+			_add_shop_item(item_resource.item_id, 3, item_resource.base_price, "material")
+
+func _add_shop_item(item_id: String, quantity: int, price: int, category: String) -> void:
+	"""Add an item to shop inventory."""
+	var item_manager = GameCore.get_system("item_manager")
+	if not item_manager or not item_manager.is_valid_item(item_id):
+		# Create basic shop item even if not in ItemManager (for basic foods)
+		pass
+
+	if not shop_inventory.has(category):
+		shop_inventory[category] = []
+
+	var shop_item = ShopItem.new(item_id, quantity, price, category)
+	shop_inventory[category].append(shop_item)
+
+# === CORE METHODS ===
+
+func purchase_item(item_id: String, quantity: int) -> bool:
+	"""Purchase an item from the shop."""
+	if quantity <= 0:
+		push_error("ShopSystem: Cannot purchase negative or zero quantity")
 		return false
 
-	if not vendor.is_valid():
-		push_error("ShopSystem: Invalid vendor data in %s" % file_path)
+	var shop_item = _find_shop_item(item_id)
+	if not shop_item:
+		push_error("ShopSystem: Item not found in shop: %s" % item_id)
 		return false
 
-	vendor_registry[vendor.vendor_id] = vendor
-	vendor_unlock_status[vendor.vendor_id] = vendor.is_unlocked_by_default
-	vendor_reputation[vendor.vendor_id] = 0
+	if not shop_item.in_stock or shop_item.quantity < quantity:
+		push_error("ShopSystem: Insufficient stock for %s (have %d, need %d)" % [item_id, shop_item.quantity, quantity])
+		return false
+
+	var total_cost = calculate_total_cost(item_id, quantity)
+	if not can_afford(item_id, quantity):
+		push_error("ShopSystem: Cannot afford %d x %s (cost: %d)" % [quantity, item_id, total_cost])
+		return false
+
+	# Process the purchase
+	var resource_tracker = GameCore.get_system("resource")
+	if not resource_tracker:
+		push_error("ShopSystem: ResourceTracker required but not loaded")
+		return false
+
+	# Deduct from shop inventory
+	shop_item.quantity -= quantity
+	if shop_item.quantity <= 0:
+		shop_item.in_stock = false
+
+	# Add to purchase history
+	for i in quantity:
+		purchase_history.append(item_id)
+		if purchase_history.size() > MAX_PURCHASE_HISTORY:
+			purchase_history.pop_front()
+
+	# Emit purchase signal for ResourceTracker to handle payment and inventory
+	var signal_bus = GameCore.get_signal_bus()
+	if signal_bus:
+		signal_bus.item_purchased.emit(item_id, quantity, "shop", total_cost)
+
+	print("ShopSystem: Purchased %d x %s for %d gold" % [quantity, item_id, total_cost])
 	return true
 
-func _initialize_vendor_inventories() -> void:
-	"""Initialize vendor inventories based on their base inventory lists."""
-	var item_manager = GameCore.get_system("item_manager")
-	if not item_manager:
-		push_error("ShopSystem: ItemManager not available")
-		return
+func can_afford(item_id: String, quantity: int) -> bool:
+	"""Check if player can afford the purchase."""
+	var resource_tracker = GameCore.get_system("resource")
+	if not resource_tracker:
+		return false
 
-	for vendor_id in vendor_registry:
-		var vendor: VendorResource = vendor_registry[vendor_id]
-		var inventory: Dictionary = {}
+	var total_cost = calculate_total_cost(item_id, quantity)
+	return resource_tracker.can_afford(total_cost)
 
-		for item_id in vendor.base_inventory:
-			var item_resource = item_manager.get_item_resource(item_id)
-			if item_resource:
-				inventory[item_id] = {
-					"stock_quantity": int(10 * vendor.inventory_size_multiplier),
-					"max_stock": int(15 * vendor.inventory_size_multiplier),
-					"restock_rate": 2,
-					"base_price": int(item_resource.base_price * vendor.markup_modifier)
-				}
-			else:
-				# For missing items, create placeholder data
-				inventory[item_id] = {
-					"stock_quantity": int(5 * vendor.inventory_size_multiplier),
-					"max_stock": int(10 * vendor.inventory_size_multiplier),
-					"restock_rate": 1,
-					"base_price": int(100 * vendor.markup_modifier)
-				}
-
-		vendor_inventories[vendor_id] = inventory
-
-func _setup_weekly_restock() -> void:
-	"""Setup weekly restock system integration with TimeSystem."""
-	var time_system = GameCore.get_system("time")
-	if time_system:
-		_last_restock_week = time_system.current_week
-
-# === PUBLIC API ===
-
-func get_vendor(vendor_id: String) -> VendorResource:
-	"""Get vendor resource by ID."""
-	return vendor_registry.get(vendor_id, null)
-
-func get_all_vendors() -> Array[VendorResource]:
-	"""Get all vendor resources."""
-	var vendors: Array[VendorResource] = []
-	for vendor in vendor_registry.values():
-		vendors.append(vendor)
-	return vendors
-
-func get_unlocked_vendors() -> Array[VendorResource]:
-	"""Get all unlocked vendors."""
-	var unlocked: Array[VendorResource] = []
-	for vendor_id in vendor_registry:
-		if is_vendor_unlocked(vendor_id):
-			var vendor = vendor_registry[vendor_id]
-			unlocked.append(vendor)
-	return unlocked
-
-func is_vendor_unlocked(vendor_id: String) -> bool:
-	"""Check if vendor is unlocked."""
-	return vendor_unlock_status.get(vendor_id, false)
-
-func unlock_vendor(vendor_id: String) -> bool:
-	"""Unlock a vendor."""
-	if vendor_id in vendor_registry:
-		vendor_unlock_status[vendor_id] = true
-		var bus = GameCore.get_signal_bus()
-		if bus and bus.has_signal("vendor_unlocked"):
-			bus.emit_signal("vendor_unlocked", vendor_id)
-		return true
-	return false
-
-func get_vendor_inventory(vendor_id: String) -> Array[Dictionary]:
-	"""Get vendor's current inventory as array of item info."""
-	var inventory_dict = vendor_inventories.get(vendor_id, {})
-	var inventory_array: Array[Dictionary] = []
-
-	var item_manager = GameCore.get_system("item_manager")
-	if not item_manager:
-		return inventory_array
-
-	for item_id in inventory_dict:
-		var stock_info = inventory_dict[item_id]
-		var item_resource = item_manager.get_item_resource(item_id)
-
-		var item_info = {
-			"item_id": item_id,
-			"display_name": item_resource.display_name if item_resource else item_id,
-			"description": item_resource.description if item_resource else "",
-			"stock_quantity": stock_info.stock_quantity,
-			"base_price": stock_info.base_price,
-			"final_price": calculate_item_price(vendor_id, item_id)
-		}
-		inventory_array.append(item_info)
-
-	return inventory_array
-
-func get_vendor_reputation(vendor_id: String) -> int:
-	"""Get reputation with specific vendor."""
-	return vendor_reputation.get(vendor_id, 0)
-
-func calculate_item_price(vendor_id: String, item_id: String) -> int:
-	"""Calculate final price for item at vendor including reputation discounts."""
-	var vendor_inventory = vendor_inventories.get(vendor_id, {})
-	var vendor = get_vendor(vendor_id)
-
-	if not vendor or not vendor_inventory.has(item_id):
+func calculate_total_cost(item_id: String, quantity: int) -> int:
+	"""Calculate total cost including discounts."""
+	var shop_item = _find_shop_item(item_id)
+	if not shop_item:
 		return 0
 
-	var stock_info = vendor_inventory[item_id]
-	var base_price = stock_info.base_price
-	var reputation = get_vendor_reputation(vendor_id)
-	var reputation_discount = vendor.get_reputation_discount(reputation)
+	var base_cost = shop_item.current_price * quantity
+	var discount_amount = int(base_cost * discount_rate)
+	return base_cost - discount_amount
 
-	var final_price = int(base_price * (100 - reputation_discount) / 100.0)
-	return maxi(final_price, 1)
+func is_item_available(item_id: String, quantity: int = 1) -> bool:
+	"""Check if item is available in sufficient quantity."""
+	var shop_item = _find_shop_item(item_id)
+	if not shop_item:
+		return false
 
-func can_purchase_item(vendor_id: String, item_id: String, player_gold: int) -> Dictionary:
-	"""Check if player can purchase item. Returns detailed result."""
-	var result = {"can_purchase": false, "reason": ""}
+	return shop_item.in_stock and shop_item.quantity >= quantity
 
-	if not is_vendor_unlocked(vendor_id):
-		result.reason = "Vendor is locked"
-		return result
+func get_item_price(item_id: String) -> int:
+	"""Get current price for an item."""
+	var shop_item = _find_shop_item(item_id)
+	if not shop_item:
+		return 0
 
-	var vendor_inventory = vendor_inventories.get(vendor_id, {})
-	if not vendor_inventory.has(item_id):
-		result.reason = "Item not available at this vendor"
-		return result
+	var discounted_price = int(shop_item.current_price * (1.0 - discount_rate))
+	return discounted_price
 
-	var stock_info = vendor_inventory[item_id]
-	if stock_info.stock_quantity <= 0:
-		result.reason = "Out of stock"
-		return result
+func get_item_stock(item_id: String) -> int:
+	"""Get current stock quantity for an item."""
+	var shop_item = _find_shop_item(item_id)
+	return shop_item.quantity if shop_item else 0
 
-	var final_price = calculate_item_price(vendor_id, item_id)
-	if player_gold < final_price:
-		result.reason = "Insufficient funds"
-		return result
+# === SHOP MANAGEMENT ===
 
-	result.can_purchase = true
-	return result
+func set_discount(discount_percentage: float) -> void:
+	"""Set shop-wide discount percentage."""
+	discount_rate = clamp(discount_percentage, 0.0, 1.0)
+	print("ShopSystem: Discount set to %.1f%%" % (discount_rate * 100))
 
-func purchase_item(vendor_id: String, item_id: String, player_gold: int) -> Dictionary:
-	"""Attempt to purchase item. Returns transaction result."""
-	var _t0: int = Time.get_ticks_msec()
+func restock_shop() -> void:
+	"""Restock the shop inventory."""
+	print("ShopSystem: Restocking shop...")
 
-	var result = {"success": false, "gold_spent": 0, "item_received": null, "message": ""}
+	# Restock existing items
+	for category in shop_inventory:
+		for shop_item in shop_inventory[category]:
+			var restock_amount = _calculate_restock_amount(shop_item)
+			shop_item.quantity += restock_amount
+			shop_item.in_stock = shop_item.quantity > 0
 
-	var purchase_check = can_purchase_item(vendor_id, item_id, player_gold)
-	if not purchase_check.can_purchase:
-		result.message = purchase_check.reason
-		return result
-
-	var vendor_inventory = vendor_inventories.get(vendor_id, {})
-	var stock_info = vendor_inventory[item_id]
-	var final_price = calculate_item_price(vendor_id, item_id)
-
-	# Process purchase (ShopSystem only handles shop-side logic)
-	stock_info.stock_quantity -= 1
-	result.success = true
-	result.gold_spent = final_price
-	result.item_received = {"item_id": item_id, "quantity": 1}
-	result.message = "Purchase successful"
-
-	# Update tracking
-	weekly_purchase_counts[item_id] = weekly_purchase_counts.get(item_id, 0) + 1
-	_increase_vendor_reputation(vendor_id, 1)
-
-	# Record transaction
-	var transaction = {
-		"vendor_id": vendor_id,
-		"item_id": item_id,
-		"price_paid": final_price,
-		"timestamp": Time.get_ticks_msec(),
-		"week": _get_current_week()
-	}
-	transaction_history.append(transaction)
-
-	# Emit signals for other systems to handle
-	var bus = GameCore.get_signal_bus()
-	if bus:
-		if bus.has_signal("item_purchased"):
-			# Emit comprehensive purchase data
-			bus.emit_signal("item_purchased", item_id, 1, vendor_id, final_price)
-
-	var _dt: int = Time.get_ticks_msec() - _t0
-	if _dt > 10:  # Log if transaction takes more than 10ms
-		print("AI_NOTE: performance(shop_purchase) = %d ms" % _dt)
-
-	return result
-
-func restock_all_vendors() -> void:
-	"""Restock all vendor inventories."""
-	var _t0: int = Time.get_ticks_msec()
-
-	var current_week = _get_current_week()
-	var weeks_passed = current_week - _last_restock_week
-
-	if weeks_passed <= 0:
-		return
-
-	for vendor_id in vendor_inventories:
-		var inventory = vendor_inventories[vendor_id]
-		for item_id in inventory:
-			var stock_info = inventory[item_id]
-			var new_stock = stock_info.stock_quantity + (stock_info.restock_rate * weeks_passed)
-			stock_info.stock_quantity = mini(new_stock, stock_info.max_stock)
-
-	# Reset weekly purchase limits
-	weekly_purchase_counts.clear()
-	_last_restock_week = current_week
+	# Reset restock timer
+	restock_timer = DEFAULT_RESTOCK_WEEKS
 
 	# Emit restock signal
-	var bus = GameCore.get_signal_bus()
-	if bus and bus.has_signal("shop_refreshed"):
-		bus.emit_signal("shop_refreshed", weeks_passed)
+	var signal_bus = GameCore.get_signal_bus()
+	if signal_bus:
+		signal_bus.shop_refreshed.emit(DEFAULT_RESTOCK_WEEKS)
 
-	var _dt: int = Time.get_ticks_msec() - _t0
-	print("AI_NOTE: performance(shop_restock) = %d ms (baseline <50ms)" % _dt)
+	print("ShopSystem: Shop restocked")
 
-func _increase_vendor_reputation(vendor_id: String, amount: int) -> void:
-	"""Increase reputation with vendor."""
-	var vendor = get_vendor(vendor_id)
-	if not vendor:
-		return
+func _calculate_restock_amount(shop_item: ShopItem) -> int:
+	"""Calculate how much to restock for an item."""
+	# Basic restocking logic - could be enhanced with demand tracking
+	match shop_item.category:
+		"food":
+			return 15  # Food restocks generously
+		"consumable":
+			return 5   # Consumables restock moderately
+		"material":
+			return 3   # Materials restock sparingly
+		"equipment":
+			return 2   # Equipment restocks rarely
+		_:
+			return 5
 
-	var old_reputation = vendor_reputation.get(vendor_id, 0)
-	var new_reputation = mini(old_reputation + amount, vendor.max_reputation)
-	vendor_reputation[vendor_id] = new_reputation
+# === INVENTORY QUERIES ===
 
-func _get_current_week() -> int:
-	"""Get current week from TimeSystem."""
-	var time_system = GameCore.get_system("time")
-	return time_system.current_week if time_system else 0
+func get_shop_inventory() -> Dictionary:
+	"""Get current shop inventory."""
+	return shop_inventory.duplicate()
 
-# === SAVE/LOAD SUPPORT ===
+func get_category_items(category: String) -> Array[ShopItem]:
+	"""Get all items in a category."""
+	return shop_inventory.get(category, [])
 
-func get_save_data() -> Dictionary:
-	"""Get shop system data for saving."""
+func get_available_items() -> Array[ShopItem]:
+	"""Get all currently available items."""
+	var available: Array[ShopItem] = []
+
+	for category in shop_inventory:
+		for shop_item in shop_inventory[category]:
+			if shop_item.in_stock:
+				available.append(shop_item)
+
+	return available
+
+func get_purchase_statistics() -> Dictionary:
+	"""Get purchase statistics."""
+	var stats = {}
+	for item_id in purchase_history:
+		stats[item_id] = stats.get(item_id, 0) + 1
+
 	return {
-		"vendor_unlock_status": vendor_unlock_status.duplicate(),
-		"vendor_reputation": vendor_reputation.duplicate(),
-		"weekly_purchase_counts": weekly_purchase_counts.duplicate(),
-		"last_restock_week": _last_restock_week,
-		"transaction_history": transaction_history.duplicate(),
-		"vendor_inventories": vendor_inventories.duplicate(true)  # Deep duplicate for nested dictionaries
+		"total_purchases": purchase_history.size(),
+		"unique_items": stats.size(),
+		"items_purchased": stats,
+		"restock_timer": restock_timer,
+		"current_discount": discount_rate
 	}
 
-func load_save_data(data: Dictionary) -> void:
-	"""Load shop system data from save."""
-	# Clear existing data first
-	vendor_unlock_status.clear()
-	vendor_reputation.clear()
-	weekly_purchase_counts.clear()
-	transaction_history.clear()
-	vendor_inventories.clear()
+# === SIGNAL HANDLERS ===
 
-	# Load the saved data
-	var saved_unlocks = data.get("vendor_unlock_status", {})
-	for vendor_id in saved_unlocks:
-		vendor_unlock_status[vendor_id] = saved_unlocks[vendor_id]
+func _on_week_advanced(new_week: int, total_weeks: int) -> void:
+	"""Handle weekly progression for restocking."""
+	restock_timer -= 1
 
-	var saved_reputation = data.get("vendor_reputation", {})
-	for vendor_id in saved_reputation:
-		vendor_reputation[vendor_id] = saved_reputation[vendor_id]
+	if restock_timer <= 0:
+		restock_shop()
 
-	var saved_purchases = data.get("weekly_purchase_counts", {})
-	for item_id in saved_purchases:
-		weekly_purchase_counts[item_id] = saved_purchases[item_id]
+	print("ShopSystem: Week %d, restock in %d weeks" % [new_week, restock_timer])
 
-	var saved_transactions = data.get("transaction_history", [])
-	for transaction in saved_transactions:
-		transaction_history.append(transaction)
+# === HELPER METHODS ===
 
-	var saved_inventories = data.get("vendor_inventories", {})
-	for vendor_id in saved_inventories:
-		vendor_inventories[vendor_id] = saved_inventories[vendor_id]
+func _find_shop_item(item_id: String) -> ShopItem:
+	"""Find a shop item by ID."""
+	for category in shop_inventory:
+		for shop_item in shop_inventory[category]:
+			if shop_item.item_id == item_id:
+				return shop_item
+	return null
 
-	_last_restock_week = data.get("last_restock_week", 0)
+# === SAVE/LOAD ===
 
-# === STATISTICS ===
+func save_state() -> Dictionary:
+	"""Save shop state."""
+	var inventory_data = {}
+	for category in shop_inventory:
+		inventory_data[category] = []
+		for shop_item in shop_inventory[category]:
+			inventory_data[category].append({
+				"item_id": shop_item.item_id,
+				"quantity": shop_item.quantity,
+				"base_price": shop_item.base_price,
+				"current_price": shop_item.current_price,
+				"category": shop_item.category,
+				"in_stock": shop_item.in_stock
+			})
 
-func get_shop_statistics() -> Dictionary:
-	"""Get shop system statistics."""
 	return {
-		"total_vendors": vendor_registry.size(),
-		"unlocked_vendors": vendor_unlock_status.values().count(true),
-		"total_transactions": transaction_history.size(),
-		"weekly_purchases": weekly_purchase_counts.size()
+		"shop_inventory": inventory_data,
+		"restock_timer": restock_timer,
+		"discount_rate": discount_rate,
+		"purchase_history": purchase_history.slice(max(0, purchase_history.size() - MAX_PURCHASE_HISTORY))
 	}
+
+func load_state(data: Dictionary) -> void:
+	"""Load shop state."""
+	restock_timer = data.get("restock_timer", DEFAULT_RESTOCK_WEEKS)
+	discount_rate = data.get("discount_rate", 0.0)
+	purchase_history = data.get("purchase_history", [])
+
+	var inventory_data = data.get("shop_inventory", {})
+	shop_inventory.clear()
+
+	for category in inventory_data:
+		shop_inventory[category] = []
+		for item_data in inventory_data[category]:
+			var shop_item = ShopItem.new(
+				item_data.get("item_id", ""),
+				item_data.get("quantity", 0),
+				item_data.get("base_price", 0),
+				item_data.get("category", "")
+			)
+			shop_item.current_price = item_data.get("current_price", shop_item.base_price)
+			shop_item.in_stock = item_data.get("in_stock", shop_item.quantity > 0)
+			shop_inventory[category].append(shop_item)
+
+	print("ShopSystem loaded: %d categories, %d purchase history" % [shop_inventory.size(), purchase_history.size()])

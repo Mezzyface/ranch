@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ShopItemResource" load_steps=3 format=3 uid="uid://shop_energy_drink"]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_resource.gd" id="1_shop_item"]
+[ext_resource type="Resource" uid="uid://bgpmt7addusxb" path="res://data/items/vitality_elixir.tres" id="2_vitality_elixir"]
+
+[resource]
+script = ExtResource("1_shop_item")
+item_id = "energy_drink"
+display_name = "Energy Drink"
+description = "A revitalizing drink that restores stamina and provides a boost to your creature's energy levels."
+category = "food"
+base_price = 100
+icon_path = "res://assets/sprites/items/all-svgs_milk-carton.svg"
+stock_quantity = -1
+unlock_requirements = {}
+item_data = ExtResource("2_vitality_elixir")

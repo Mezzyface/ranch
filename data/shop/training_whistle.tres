@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ShopItemResource" load_steps=3 format=3 uid="uid://shop_training_whistle"]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_resource.gd" id="1_shop_item"]
+[ext_resource type="Resource" uid="uid://training_whistle_item" path="res://data/items/training_whistle.tres" id="2_training_whistle"]
+
+[resource]
+script = ExtResource("1_shop_item")
+item_id = "training_whistle"
+display_name = "Training Whistle"
+description = "A sturdy whistle that helps improve training focus and discipline when used by trainers."
+category = "equipment"
+base_price = 500
+icon_path = ""
+stock_quantity = 10
+unlock_requirements = {}
+item_data = ExtResource("2_training_whistle")

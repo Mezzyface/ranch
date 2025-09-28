@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ShopItemResource" load_steps=3 format=3 uid="uid://shop_power_bar"]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_resource.gd" id="1_shop_item"]
+[ext_resource type="Resource" uid="uid://b5k2gx4p8v6nl" path="res://data/items/power_bar.tres" id="2_power_bar"]
+
+[resource]
+script = ExtResource("1_shop_item")
+item_id = "power_bar"
+display_name = "Power Bar"
+description = "A nutritious protein bar that enhances physical training effectiveness. Popular among strength and endurance athletes."
+category = "food"
+base_price = 50
+icon_path = ""
+stock_quantity = -1
+unlock_requirements = {}
+item_data = ExtResource("2_power_bar")

@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="ShopItemResource" load_steps=2 format=3 uid="uid://shop_starter_scuttleguard"]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_resource.gd" id="1_shop_item"]
+
+[resource]
+script = ExtResource("1_shop_item")
+item_id = "starter_scuttleguard"
+display_name = "Starter Scuttleguard"
+description = "A reliable and hardy Scuttleguard, perfect for new trainers. These small but vigilant creatures make excellent first companions."
+category = "creatures"
+base_price = 1000
+icon_path = "res://assets/sprites/creatures/scuttleguard/all-svgs_alien-bug.svg"
+stock_quantity = -1
+unlock_requirements = {}
+species_id = "scuttleguard"
+item_data = null

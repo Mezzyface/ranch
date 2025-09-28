@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="ShopItemResource" load_steps=2 format=3 uid="uid://shop_facility_upgrade_1"]
+
+[ext_resource type="Script" path="res://scripts/resources/shop_item_resource.gd" id="1_shop_item"]
+
+[resource]
+script = ExtResource("1_shop_item")
+item_id = "facility_upgrade_1"
+display_name = "Basic Facility Upgrade"
+description = "Upgrade materials and blueprints to improve your facilities and unlock new training opportunities."
+category = "facilities"
+base_price = 5000
+icon_path = ""
+stock_quantity = 1
+unlock_requirements = {
+"owned_creatures": 3
+}
+item_data = null
