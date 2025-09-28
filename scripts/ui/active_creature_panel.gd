@@ -13,7 +13,7 @@ func _ready() -> void:
 		_setup_collection_panel()
 
 	# Connect to the resized signal of the GridContainer itself
-	resized.connect(active_grid._on_grid_container_resized)
+	resized.connect(_on_grid_container_resized)
 	# Optionally, call it once on ready to set initial columns
 	_on_grid_container_resized()
 	

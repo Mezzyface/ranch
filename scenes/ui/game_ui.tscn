@@ -1,10 +1,11 @@
-[gd_scene load_steps=5 format=3 uid="uid://cc8p0eswhr2yi"]
+[gd_scene load_steps=7 format=3 uid="uid://cc8p0eswhr2yi"]
 
 [ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_mxp7l"]
 [ext_resource type="Script" uid="uid://cslrpvvy3w1vf" path="res://scripts/ui/game_ui_controller.gd" id="2_5w82k"]
 [ext_resource type="PackedScene" uid="uid://k2mp7y30jqcb" path="res://scenes/ui/panels/collection_panel.tscn" id="3_k2mp7"]
+[ext_resource type="PackedScene" uid="uid://w0g8fwsypty5" path="res://scenes/ui/panels/active_creature_panel.tscn" id="3_v1bdg"]
 [ext_resource type="PackedScene" uid="uid://bx5d0leh0v4xd" path="res://scenes/ui/panels/shop_panel.tscn" id="4_shop"]
-[ext_resource type="PackedScene" uid="uid://cy6k8lp9m2vxs" path="res://scenes/ui/panels/training_panel.tscn" id="5_training"]
+[ext_resource type="PackedScene" uid="uid://cy6k8lqam2vxs" path="res://scenes/ui/panels/training_panel.tscn" id="5_training"]
 
 [node name="GameUI" type="Control"]
 layout_mode = 3
@@ -23,7 +24,6 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-mouse_filter = 0
 
 [node name="TopBar" type="HBoxContainer" parent="HUD"]
 clip_contents = true
@@ -136,6 +136,7 @@ grow_vertical = 2
 color = Color(0.1, 0.1, 0.15, 1)
 
 [node name="ContentSwitcher" type="Control" parent="HUD/MainContent"]
+clip_contents = true
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -143,7 +144,11 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
+[node name="ActiveCreaturePanel" parent="HUD/MainContent/ContentSwitcher" instance=ExtResource("3_v1bdg")]
+layout_mode = 1
+
 [node name="DefaultView" type="Control" parent="HUD/MainContent/ContentSwitcher"]
+visible = false
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -177,9 +182,8 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="CollectionPanel" parent="HUD/MainContent/ContentSwitcher/CollectionView" instance=ExtResource("3_k2mp7")]
+visible = false
 layout_mode = 1
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="ShopView" type="Control" parent="HUD/MainContent/ContentSwitcher"]
 visible = false
@@ -192,8 +196,6 @@ grow_vertical = 2
 
 [node name="ShopPanel" parent="HUD/MainContent/ContentSwitcher/ShopView" instance=ExtResource("4_shop")]
 layout_mode = 1
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="TrainingView" type="Control" parent="HUD/MainContent/ContentSwitcher"]
 visible = false
@@ -206,23 +208,14 @@ grow_vertical = 2
 
 [node name="TrainingPanel" parent="HUD/MainContent/ContentSwitcher/TrainingView" instance=ExtResource("5_training")]
 layout_mode = 1
-grow_horizontal = 2
-grow_vertical = 2
 
 [node name="Windows" type="Control" parent="."]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-
-[node name="Dialogs" type="Control" parent="."]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2

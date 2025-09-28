@@ -74,8 +74,9 @@ func _input(event: InputEvent) -> void:
 		if current_ui_scene and current_ui_scene.has_method("_on_collect_pressed"):
 			current_ui_scene._on_collect_pressed()
 		else:
-			# If not on game UI, switch to it first
-			change_ui_scene("res://scenes/ui/game_ui.tscn")
+			pass
+			## If not on game UI, switch to it first
+			#change_ui_scene("res://scenes/ui/game_ui.tscn")
 	elif event.is_action_pressed("ui_open_quests"):
 		print("Quests input detected (Q key)!")
 		if current_ui_scene and current_ui_scene.has_method("_on_quest_pressed"):
