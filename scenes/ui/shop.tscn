@@ -1,0 +1,268 @@
+[gd_scene load_steps=3 format=3 uid="uid://bwk2n3x8h5m9s"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/shop_controller.gd" id="2_script"]
+
+[node name="Shop" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="Panel" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Background"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ShopHeader" type="HBoxContainer" parent="Background/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 0
+alignment = 1
+
+[node name="Title" type="Label" parent="Background/VBoxContainer/ShopHeader"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Creature Emporium"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GoldDisplay" type="HBoxContainer" parent="Background/VBoxContainer/ShopHeader"]
+layout_mode = 2
+size_flags_horizontal = 0
+alignment = 1
+
+[node name="GoldIcon" type="TextureRect" parent="Background/VBoxContainer/ShopHeader/GoldDisplay"]
+custom_minimum_size = Vector2(24, 24)
+layout_mode = 2
+size_flags_horizontal = 0
+expand_mode = 1
+stretch_mode = 5
+
+[node name="GoldAmount" type="Label" parent="Background/VBoxContainer/ShopHeader/GoldDisplay"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "0"
+vertical_alignment = 1
+
+[node name="CloseButton" type="Button" parent="Background/VBoxContainer/ShopHeader"]
+layout_mode = 2
+size_flags_horizontal = 0
+text = "X"
+
+[node name="ShopKeeperArea" type="Control" parent="Background/VBoxContainer"]
+custom_minimum_size = Vector2(0, 160)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="ShopKeeperPortrait" type="Control" parent="Background/VBoxContainer/ShopKeeperArea"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MainContent" type="HSplitContainer" parent="Background/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+split_offset = 150
+
+[node name="CategoryPanel" type="VBoxContainer" parent="Background/VBoxContainer/MainContent"]
+custom_minimum_size = Vector2(150, 0)
+layout_mode = 2
+size_flags_horizontal = 0
+
+[node name="CategoryLabel" type="Label" parent="Background/VBoxContainer/MainContent/CategoryPanel"]
+layout_mode = 2
+text = "Categories"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="Background/VBoxContainer/MainContent/CategoryPanel"]
+layout_mode = 2
+
+[node name="CreaturesTab" type="Button" parent="Background/VBoxContainer/MainContent/CategoryPanel"]
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "Creatures"
+
+[node name="FoodTab" type="Button" parent="Background/VBoxContainer/MainContent/CategoryPanel"]
+layout_mode = 2
+toggle_mode = true
+text = "Food"
+
+[node name="EquipmentTab" type="Button" parent="Background/VBoxContainer/MainContent/CategoryPanel"]
+layout_mode = 2
+toggle_mode = true
+text = "Equipment"
+
+[node name="FacilitiesTab" type="Button" parent="Background/VBoxContainer/MainContent/CategoryPanel"]
+layout_mode = 2
+toggle_mode = true
+text = "Facilities"
+
+[node name="ConsumablesTab" type="Button" parent="Background/VBoxContainer/MainContent/CategoryPanel"]
+layout_mode = 2
+toggle_mode = true
+text = "Consumables"
+
+[node name="ItemsPanel" type="ScrollContainer" parent="Background/VBoxContainer/MainContent"]
+layout_mode = 2
+size_flags_horizontal = 3
+horizontal_scroll_mode = 0
+
+[node name="ItemGrid" type="GridContainer" parent="Background/VBoxContainer/MainContent/ItemsPanel"]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 0
+columns = 3
+
+[node name="PurchasePanel" type="Panel" parent="Background/VBoxContainer"]
+custom_minimum_size = Vector2(0, 120)
+layout_mode = 2
+size_flags_vertical = 0
+
+[node name="PurchaseContent" type="VBoxContainer" parent="Background/VBoxContainer/PurchasePanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PurchaseHeader" type="Label" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent"]
+layout_mode = 2
+text = "Purchase Details"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent"]
+layout_mode = 2
+
+[node name="DetailsContainer" type="HBoxContainer" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="LeftColumn" type="VBoxContainer" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SelectedItem" type="Label" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer/LeftColumn"]
+layout_mode = 2
+text = "No item selected"
+autowrap_mode = 2
+
+[node name="ItemDescription" type="Label" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer/LeftColumn"]
+layout_mode = 2
+size_flags_vertical = 3
+text = "Select an item to see details"
+autowrap_mode = 2
+vertical_alignment = 1
+
+[node name="RightColumn" type="VBoxContainer" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+alignment = 1
+
+[node name="QuantityContainer" type="HBoxContainer" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer/RightColumn"]
+layout_mode = 2
+alignment = 1
+
+[node name="QuantityLabel" type="Label" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer/RightColumn/QuantityContainer"]
+layout_mode = 2
+text = "Quantity:"
+
+[node name="Quantity" type="SpinBox" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer/RightColumn/QuantityContainer"]
+layout_mode = 2
+min_value = 1.0
+value = 1.0
+
+[node name="TotalCost" type="Label" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer/RightColumn"]
+layout_mode = 2
+text = "Total: 0 g"
+horizontal_alignment = 1
+
+[node name="BuyButton" type="Button" parent="Background/VBoxContainer/PurchasePanel/PurchaseContent/DetailsContainer/RightColumn"]
+layout_mode = 2
+disabled = true
+text = "Buy"
+
+[node name="AnimationContainer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="PurchaseAnimation" type="Control" parent="AnimationContainer"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -50.0
+offset_top = -50.0
+offset_right = 50.0
+offset_bottom = 50.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="SuccessLabel" type="Label" parent="AnimationContainer/PurchaseAnimation"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+text = "Purchase Successful!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GoldAnimation" type="Control" parent="AnimationContainer"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="GoldChangeLabel" type="Label" parent="AnimationContainer/GoldAnimation"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 100.0
+offset_top = -100.0
+offset_right = 300.0
+offset_bottom = -50.0
+grow_vertical = 0
+text = "-50 g"
+horizontal_alignment = 1
+vertical_alignment = 1

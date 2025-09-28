@@ -1,0 +1,81 @@
+[gd_scene load_steps=3 format=3 uid="uid://bpk5qvjr8nxy2"]
+
+[ext_resource type="Script" path="res://scripts/ui/shop_keeper_portrait_controller.gd" id="1_keeper"]
+[ext_resource type="Theme" uid="uid://daax7m1iera0u" path="res://assets/modern.tres" id="2_theme"]
+
+[node name="ShopKeeperPortrait" type="PanelContainer"]
+custom_minimum_size = Vector2(200, 150)
+theme = ExtResource("2_theme")
+script = ExtResource("1_keeper")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="HBox" type="HBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+
+[node name="KeeperArea" type="VBoxContainer" parent="MarginContainer/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="NameLabel" type="Label" parent="MarginContainer/HBox/KeeperArea"]
+layout_mode = 2
+text = "Merchant Mallow"
+horizontal_alignment = 1
+
+[node name="PortraitContainer" type="CenterContainer" parent="MarginContainer/HBox/KeeperArea"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="Portrait" type="AnimatedSprite2D" parent="MarginContainer/HBox/KeeperArea/PortraitContainer"]
+scale = Vector2(2, 2)
+
+[node name="EmotionIndicator" type="Label" parent="MarginContainer/HBox/KeeperArea/PortraitContainer"]
+layout_mode = 2
+offset_left = 40.0
+offset_top = -10.0
+offset_right = 60.0
+offset_bottom = 10.0
+text = "!"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SpeechArea" type="VBoxContainer" parent="MarginContainer/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SpeechBubble" type="PanelContainer" parent="MarginContainer/HBox/SpeechArea"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SpeechMargin" type="MarginContainer" parent="MarginContainer/HBox/SpeechArea/SpeechBubble"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="DialogueLabel" type="RichTextLabel" parent="MarginContainer/HBox/SpeechArea/SpeechBubble/SpeechMargin"]
+layout_mode = 2
+bbcode_enabled = true
+text = "[center]Welcome to my shop![/center]"
+fit_content = true
+autowrap_mode = 3
+
+[node name="MoodContainer" type="HBoxContainer" parent="MarginContainer/HBox/SpeechArea"]
+layout_mode = 2
+
+[node name="MoodLabel" type="Label" parent="MarginContainer/HBox/SpeechArea/MoodContainer"]
+layout_mode = 2
+text = "Mood: Happy"
+modulate = Color(0.7, 0.7, 0.7, 1)
+
+[node name="AnimationTimer" type="Timer" parent="."]
+wait_time = 3.0
+autostart = true
+
+[connection signal="timeout" from="AnimationTimer" to="." method="_on_animation_timer_timeout"]
