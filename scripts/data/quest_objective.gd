@@ -7,7 +7,7 @@ enum ObjectiveType {
 }
 
 var type: ObjectiveType = ObjectiveType.PROVIDE_CREATURE
-var required_tags: Array[String] = []
+var required_tags: Array = []
 var required_stats: Dictionary = {}
 var quantity: int = 1
 var description: String = ""
@@ -29,7 +29,7 @@ func matches_creature(creature_data: CreatureData) -> bool:
 
 	for stat_name: String in required_stats.keys():
 		var required_value: int = required_stats[stat_name]
-		var creature_stat_value: int = creature_data.get_current_stat(stat_name)
+		var creature_stat_value: int = creature_data.get_stat(stat_name)
 
 		if creature_stat_value < required_value:
 			return false

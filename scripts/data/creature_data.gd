@@ -139,6 +139,24 @@ func has_any_tag(required_tags: Array[String]) -> bool:
 			return true
 	return false
 
+# Quest validation helpers
+func meets_quest_requirements(required_tags: Array[String], min_stats: Dictionary) -> bool:
+	"""Check if this creature meets quest requirements for tags and minimum stats."""
+
+	# Check tag requirements (must have ALL required tags)
+	if not has_all_tags(required_tags):
+		return false
+
+	# Check stat requirements (must meet ALL minimum values)
+	for stat_name in min_stats.keys():
+		var required_value: int = min_stats[stat_name]
+		var creature_value: int = get_stat(stat_name)
+
+		if creature_value < required_value:
+			return false
+
+	return true
+
 # Serialization with proper property names
 func to_dict() -> Dictionary:
 	return {

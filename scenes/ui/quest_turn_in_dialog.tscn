@@ -1,0 +1,172 @@
+[gd_scene load_steps=3 format=3 uid="uid://ceh7y2qwurhqr"]
+
+[ext_resource type="Theme" path="res://resources/themes/default_theme.tres" id="1_theme"]
+[ext_resource type="Script" path="res://scripts/ui/quest_turn_in_dialog_controller.gd" id="2_script"]
+
+[node name="QuestTurnInDialog" type="Window"]
+title = "Complete Quest"
+initial_position = 2
+size = Vector2i(600, 700)
+unresizable = true
+popup_window = true
+theme = ExtResource("1_theme")
+script = ExtResource("2_script")
+
+[node name="Background" type="ColorRect" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.15, 1)
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 20
+theme_override_constants/margin_top = 20
+theme_override_constants/margin_right = 20
+theme_override_constants/margin_bottom = 20
+
+[node name="VBoxContainer" type="VBoxContainer" parent="MarginContainer"]
+layout_mode = 2
+theme_override_constants/separation = 15
+
+[node name="QuestInfoSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="QuestTitle" type="Label" parent="MarginContainer/VBoxContainer/QuestInfoSection"]
+layout_mode = 2
+text = "Quest Title"
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+
+[node name="QuestDescription" type="RichTextLabel" parent="MarginContainer/VBoxContainer/QuestInfoSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 60)
+bbcode_enabled = true
+text = "Quest description will appear here..."
+fit_content = true
+
+[node name="HSeparator" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="RequirementsSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="RequirementsLabel" type="Label" parent="MarginContainer/VBoxContainer/RequirementsSection"]
+layout_mode = 2
+text = "Requirements:"
+theme_override_font_sizes/font_size = 18
+
+[node name="ObjectivesList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/RequirementsSection"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="HSeparator2" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="CreatureSelectionSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="SelectionLabel" type="Label" parent="MarginContainer/VBoxContainer/CreatureSelectionSection"]
+layout_mode = 2
+text = "Select Creatures to Turn In:"
+theme_override_font_sizes/font_size = 18
+
+[node name="SelectionContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer/CreatureSelectionSection"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 15
+
+[node name="AvailableCreatures" type="VBoxContainer" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="AvailableLabel" type="Label" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/AvailableCreatures"]
+layout_mode = 2
+text = "Eligible Creatures:"
+theme_override_font_sizes/font_size = 14
+
+[node name="AvailableScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/AvailableCreatures"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AvailableList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/AvailableCreatures/AvailableScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="ArrowContainer" type="VBoxContainer" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="AddButton" type="Button" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/ArrowContainer"]
+layout_mode = 2
+text = "Add →"
+disabled = true
+
+[node name="RemoveButton" type="Button" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/ArrowContainer"]
+layout_mode = 2
+text = "← Remove"
+disabled = true
+
+[node name="SelectedCreatures" type="VBoxContainer" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="SelectedLabel" type="Label" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/SelectedCreatures"]
+layout_mode = 2
+text = "Selected for Turn-in:"
+theme_override_font_sizes/font_size = 14
+
+[node name="SelectedScrollContainer" type="ScrollContainer" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/SelectedCreatures"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="SelectedList" type="VBoxContainer" parent="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/SelectedCreatures/SelectedScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 5
+
+[node name="HSeparator3" type="HSeparator" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+
+[node name="StatusSection" type="VBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 5
+
+[node name="StatusLabel" type="RichTextLabel" parent="MarginContainer/VBoxContainer/StatusSection"]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 40)
+bbcode_enabled = true
+text = "Select creatures to complete this quest..."
+fit_content = true
+
+[node name="ButtonContainer" type="HBoxContainer" parent="MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_constants/separation = 10
+alignment = 1
+
+[node name="CancelButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Cancel"
+
+[node name="CompleteButton" type="Button" parent="MarginContainer/VBoxContainer/ButtonContainer"]
+layout_mode = 2
+text = "Complete Quest"
+disabled = true
+
+[connection signal="pressed" from="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/ArrowContainer/AddButton" to="." method="_on_add_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/CreatureSelectionSection/SelectionContainer/ArrowContainer/RemoveButton" to="." method="_on_remove_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/CancelButton" to="." method="_on_cancel_button_pressed"]
+[connection signal="pressed" from="MarginContainer/VBoxContainer/ButtonContainer/CompleteButton" to="." method="_on_complete_button_pressed"]
