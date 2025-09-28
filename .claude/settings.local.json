@@ -98,7 +98,21 @@
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_gold_fix.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_training.tscn)",
       "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --scene scenes/main/main.tscn)",
-      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_training_stat_gains.tscn)"
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_training_stat_gains.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/main/main.tscn --quit-after 5)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene tests/individual/test_facility.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_save_load.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_card.tscn --quit-after 3)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_view.tscn --quit-after 3)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/main/main.tscn --quit-after 3)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/ui/overlay_menu.tscn --quit-after 3)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene scenes/ui/facility_view.tscn --quit-after 3)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --script test_gold_display.gd)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_unlock.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_facility_card_debug.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_overlay_facility_debug.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_unlock_button.tscn)",
+      "Bash(\"C:\\Program Files\\Godot\\Godot.exe\" --headless --scene test_unlock_flow.tscn)"
     ],
     "deny": [],
     "ask": []
